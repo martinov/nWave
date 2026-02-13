@@ -6,14 +6,22 @@ nWave runs inside [Claude Code](https://claude.ai/claude-code). You describe wha
 
 ## Quick Start
 
+**1. Install** (in your terminal — not inside Claude Code):
+
 ```bash
 pipx install nwave-ai
 nwave-ai install
 ```
 
-Close and reopen Claude Code, then:
+No repository clone needed. This installs nWave from PyPI and sets up agents and commands in `~/.claude/`.
 
-```bash
+> **Don't have pipx?** Install it first: `pip install pipx && pipx ensurepath`, then restart your terminal. [pipx docs](https://pipx.pypa.io). Windows users: use WSL, not PowerShell.
+
+Full setup details: **[Installation Guide](https://github.com/nWave-ai/nWave/blob/main/docs/guides/installation-guide.md)**
+
+**2. Use** (inside Claude Code, after reopening it):
+
+```
 /nw:discuss "user login with email and password"   # Requirements
 /nw:design --architecture=hexagonal                 # Architecture
 /nw:distill "user-login"                            # Acceptance tests
@@ -53,8 +61,8 @@ The full workflow has six waves. Use all six for greenfield projects, or jump st
 
 ### Getting Started
 
+- **[Installation Guide](https://github.com/nWave-ai/nWave/blob/main/docs/guides/installation-guide.md)** — Setup instructions
 - **[Your First Feature](https://github.com/nwave-ai/nwave/tree/main/docs/guides/tutorial-first-feature.md)** — Build a feature end-to-end (tutorial)
-- **[Installation Guide](https://github.com/nwave-ai/nwave/tree/main/docs/guides/installation-guide.md)** — Setup instructions
 - **[Jobs To Be Done](https://github.com/nwave-ai/nwave/tree/main/docs/guides/jobs-to-be-done-guide.md)** — Which workflow fits your task
 
 ### Guides & Reference
