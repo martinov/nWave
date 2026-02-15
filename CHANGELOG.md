@@ -2,7 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.7.0] - 2026-02-03
+## [1.2.0] - 2026-02-15
+
+### Fixed
+- **DES hooks fail with missing PyYAML on pipx/pip installs** ([#1](https://github.com/nWave-ai/nWave/issues/1)):
+  Hook commands now use the installer's Python (with `$HOME` substitution for
+  portability) instead of bare `python3`. This ensures dependencies like PyYAML
+  and pydantic are available at hook runtime regardless of install method.
+- **Installation blocked by missing pipenv**: Removed `PipenvCheck` from
+  preflight — pipenv is a dev-only tool, not required for end users.
+- **Post-install verification tested wrong Python**: `verify()` now also checks
+  `import yaml` to catch missing dependencies at install time instead of runtime.
+- Fixed broken Claude Code link in README ([#2](https://github.com/nWave-ai/nWave/pull/2) — thanks @sagatowski)
+
+### Changed
+- Hook portability test updated: accepts any non-project-venv Python path
+  (system, pipx, pip venv) instead of requiring only `python3` or `$HOME`-based
+
+## [1.1.0] - 2026-02-03
 
 ### Added
 - Plugin architecture for modular installation system
@@ -19,9 +36,9 @@ All notable changes to this project will be documented in this file.
 ### Migration
 - No breaking changes - existing installations work unchanged
 - Fresh installs include DES automatically
-- All file locations preserved from v1.5.x
+- All file locations preserved from v1.0.x
 - Backward compatibility guaranteed: plugins call existing installer methods
 
-## [1.5.15] - Previous
+## [1.0.0] - Previous
 
 See git history for earlier versions.
