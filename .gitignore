@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# nWave project-local runtime data
+.nwave/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Environment
+.env
+.venv/
