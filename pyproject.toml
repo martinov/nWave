@@ -2,17 +2,33 @@
 requires = ["hatchling>=1.21.0"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["nwave_ai"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"nWave/agents" = "nWave/agents"
+"nWave/data" = "nWave/data"
+"nWave/hooks" = "nWave/hooks"
+"nWave/scripts" = "nWave/scripts"
+"nWave/skills" = "nWave/skills"
+"nWave/tasks/nw" = "nWave/tasks/nw"
+"nWave/templates" = "nWave/templates"
+"nWave/framework-catalog.yaml" = "nWave/framework-catalog.yaml"
+"nWave/VERSION" = "nWave/VERSION"
+"nWave/README.md" = "nWave/README.md"
+"scripts" = "scripts"
+"src/des" = "src/des"
+
 [project]
 name = "nwave-ai"
-version = "1.1.20"
-description = "CLI installer for the nWave AI methodology framework"
+version = "1.1.22"
+description = "Modern CLI installer for nwave with rich terminal UI"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [
     { name = "Michele Brissoni", email = "michele.brissoni@brix.consulting" },
-    { name = "Alessandro Digioia", email = "alessandro.digioia@brix.consulting" },
-    { name = "nWave AI", email = "info@nwave.ai" }
+    { name = "Alessandro Digioia", email = "alessandro.digioia@brix.consulting" }
 ]
 keywords = [
     "cli",
@@ -45,7 +61,8 @@ dependencies = [
     "httpx>=0.27.0",
     "platformdirs>=4.2.0",
     "pyyaml>=6.0",
-    "packaging>=21.0"
+    "packaging>=21.0",
+    "tomli>=2.0.0; python_version < '3.11'"
 ]
 
 [project.optional-dependencies]
@@ -101,24 +118,6 @@ Issues = "https://github.com/nwave-ai/nwave/issues"
 [project.scripts]
 nwave-ai = "nwave_ai.cli:main"
 
-[tool.hatch.build.targets.wheel]
-packages = ["nwave_ai"]
-
-[tool.hatch.build.targets.wheel.force-include]
-"scripts" = "scripts"
-"nWave" = "nWave"
-"src/des" = "src/des"
-
-[tool.hatch.build.targets.sdist]
-include = [
-    "/pyproject.toml",
-    "/nwave_ai",
-    "/scripts",
-    "/nWave",
-    "/src/des",
-    "/README.md",
-    "/LICENSE"
-]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src", "."]
