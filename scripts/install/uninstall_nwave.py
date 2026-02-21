@@ -50,6 +50,7 @@ class NWaveUninstaller:
         backup_before_removal: bool = False,
         force: bool = False,
         dry_run: bool = False,
+        project_mode: bool = False,
     ):
         """
         Initialize uninstaller.
@@ -58,12 +59,17 @@ class NWaveUninstaller:
             backup_before_removal: Create backup before uninstalling
             force: Skip confirmation prompts
             dry_run: Show what would be done without executing
+            project_mode: If True, uninstall from ./.claude/ (per-project) instead of ~/.claude/ (global)
         """
         self.backup_before_removal = backup_before_removal
         self.force = force
         self.dry_run = dry_run
+        self.project_mode = project_mode
 
-        self.claude_config_dir = PathUtils.get_claude_config_dir()
+        if project_mode:
+            self.claude_config_dir = Path.cwd() / ".claude"
+        else:
+            self.claude_config_dir = PathUtils.get_claude_config_dir()
         log_file = self.claude_config_dir / "nwave-uninstall.log"
         self.logger = Logger(log_file if not dry_run else None)
         self.backup_manager = BackupManager(self.logger, "uninstall")
@@ -439,23 +445,25 @@ def show_help():
     B, N = _ANSI_BLUE, _ANSI_NC
     help_text = f"""
 {B}DESCRIPTION:{N}
-    Completely removes the nWave ATDD agent framework from your global Claude config directory.
-    This removes all specialized agents, commands, configuration files, logs, and backups.
+    Removes the nWave ATDD agent framework. By default removes from the
+    global Claude config directory (~/.claude/). Use --project to remove
+    from the current project's .claude/ directory.
 
 {B}USAGE:{N}
     python uninstall_nwave.py [OPTIONS]
 
 {B}OPTIONS:{N}
+    --project        Uninstall from ./.claude/ (per-project)
     --backup         Create backup before removal (recommended)
     --force          Skip confirmation prompts
     --dry-run        Show what would be removed without making any changes
     --help           Show this help message
 
 {B}EXAMPLES:{N}
-    python uninstall_nwave.py              # Interactive uninstall with confirmation
+    python uninstall_nwave.py              # Uninstall global installation
+    python uninstall_nwave.py --project    # Uninstall per-project installation
     python uninstall_nwave.py --dry-run    # Show what would be removed
     python uninstall_nwave.py --backup     # Create backup before removal
-    python uninstall_nwave.py --force      # Uninstall without confirmation prompts
 
 {B}WHAT GETS REMOVED:{N}
     - All nWave agents in agents/nw/ directory
@@ -476,6 +484,11 @@ def main():
         description="Uninstall nWave framework", add_help=False
     )
     parser.add_argument(
+        "--project",
+        action="store_true",
+        help="Uninstall from ./.claude/ (per-project)",
+    )
+    parser.add_argument(
         "--backup", action="store_true", help="Create backup before removal"
     )
     parser.add_argument(
@@ -493,7 +506,10 @@ def main():
         return 0
 
     uninstaller = NWaveUninstaller(
-        backup_before_removal=args.backup, force=args.force, dry_run=args.dry_run
+        backup_before_removal=args.backup,
+        force=args.force,
+        dry_run=args.dry_run,
+        project_mode=args.project,
     )
 
     # Show title panel at startup

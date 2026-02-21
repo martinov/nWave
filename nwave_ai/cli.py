@@ -52,12 +52,17 @@ def _print_usage() -> int:
     print("  version     Show nwave-ai version")
     print()
     print("Install options:")
+    print("  --project       Install to ./.claude/ (per-project, committed to git)")
     print("  --dry-run       Preview without making changes")
     print("  --backup-only   Create backup only")
     print("  --restore       Restore from backup")
     print()
-    print("Example:")
-    print("  nwave-ai install")
+    print("Uninstall options:")
+    print("  --project       Uninstall from ./.claude/ (per-project)")
+    print()
+    print("Examples:")
+    print("  nwave-ai install              # Global install to ~/.claude/")
+    print("  nwave-ai install --project    # Per-project install to ./.claude/")
     return 0
 
 

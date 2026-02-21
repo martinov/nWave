@@ -41,6 +41,7 @@ class InstallContext:
     installation_verifier: Any = None  # InstallationVerifier instance
     rich_logger: Any = None  # RichLogger instance
     dry_run: bool = False
+    install_mode: str = "global"  # "global" or "project"
     metadata: dict[str, Any] = field(default_factory=dict)
 
 

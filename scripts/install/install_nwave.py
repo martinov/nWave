@@ -115,12 +115,24 @@ _TAGLINES = [
 class NWaveInstaller:
     """nWave framework installer."""
 
-    def __init__(self, dry_run: bool = False):
-        """Initialize installer."""
+    def __init__(self, dry_run: bool = False, project_mode: bool = False):
+        """Initialize installer.
+
+        Args:
+            dry_run: If True, show what would be done without executing.
+            project_mode: If True, install to ./.claude/ (per-project) instead of ~/.claude/ (global).
+        """
         self.dry_run = dry_run
+        self.project_mode = project_mode
+        self.install_mode = "project" if project_mode else "global"
         self.script_dir = Path(__file__).parent
         self.project_root = PathUtils.get_project_root(self.script_dir)
-        self.claude_config_dir = PathUtils.get_claude_config_dir()
+
+        if project_mode:
+            self.claude_config_dir = Path.cwd() / ".claude"
+        else:
+            self.claude_config_dir = PathUtils.get_claude_config_dir()
+
         # Auto-detect dist/ if available (built by build_dist.py)
         dist_dir = self.project_root / "dist"
         if (dist_dir / "MANIFEST.json").exists():
@@ -261,6 +273,7 @@ class NWaveInstaller:
             project_root=self.project_root,
             framework_source=self.framework_source,
             dry_run=self.dry_run,
+            install_mode=self.install_mode,
         )
 
         self.logger.info("  📑 Installing Context...")
@@ -368,6 +381,7 @@ class NWaveInstaller:
             logger=self.logger,
             project_root=self.project_root,
             framework_source=self.framework_source,
+            install_mode=self.install_mode,
         )
         plugin_results = plugin_registry.verify_all(plugin_context)
         plugin_failures = {
@@ -540,10 +554,11 @@ def show_title_panel(logger: Logger, dry_run: bool = False) -> None:
     logger.print_styled("")
 
 
-def show_installation_summary(logger: Logger) -> None:
+def show_installation_summary(logger: Logger, project_mode: bool = False) -> None:
     """Display installation summary panel at end of successful install."""
+    mode_label = "per-project" if project_mode else "global"
     logger.info("")
-    logger.info(f"  🎉 nWave v{__version__} installed and healthy!")
+    logger.info(f"  🎉 nWave v{__version__} installed and healthy! ({mode_label})")
     logger.info("")
     logger.info("  📖 Quick start")
     commands = [
@@ -557,9 +572,17 @@ def show_installation_summary(logger: Logger) -> None:
     for cmd, desc in commands:
         logger.info(f"    {cmd:<16} {desc}")
     logger.info("")
-    logger.info(
-        "  💡 Open Claude Code in any project directory and type a /nw: command."
-    )
+    if project_mode:
+        logger.info(
+            "  💡 nWave is installed in this project's .claude/ directory."
+        )
+        logger.info(
+            "  💡 Commit .claude/ to share nWave with your team."
+        )
+    else:
+        logger.info(
+            "  💡 Open Claude Code in any project directory and type a /nw: command."
+        )
     logger.info("  📚 Docs: https://github.com/nWave-ai/nWave")
 
 
@@ -577,21 +600,24 @@ def show_help():
 
     help_text = f"""
 {B}DESCRIPTION:{N}
-    Installs the nWave methodology framework to your global Claude config directory.
-    This makes all specialized agents and commands available across all projects.
+    Installs the nWave methodology framework. By default installs globally
+    to ~/.claude/ (available across all projects). Use --project to install
+    to ./.claude/ in the current directory (per-project, committed to git).
 
 {B}USAGE:{N}
     python install_nwave.py [OPTIONS]
 
 {B}OPTIONS:{N}
+    --project         Install to ./.claude/ (per-project, committed to git)
     --backup-only     Create backup of existing nWave installation without installing
     --restore         Restore from the most recent backup
     --dry-run         Show what would be installed without making any changes
     --help            Show this help message
 
 {B}EXAMPLES:{N}
-    python install_nwave.py                    # Install nWave framework
-    python install_nwave.py --dry-run          # Show what would be installed
+    python install_nwave.py                    # Global install to ~/.claude/
+    python install_nwave.py --project          # Per-project install to ./.claude/
+    python install_nwave.py --project --dry-run  # Preview per-project install
     python install_nwave.py --backup-only      # Create backup only
     python install_nwave.py --restore          # Restore from latest backup
 
@@ -604,9 +630,8 @@ def show_help():
     - 7-phase TDD enforcement with schema versioning
 
 {B}INSTALLATION LOCATION:{N}
-    ~/.claude/agents/nw/    # nWave agent specifications
-    ~/.claude/commands/nw/  # nWave command integrations
-    ~/.claude/templates/    # TDD cycle schema templates
+    Global (default):     ~/.claude/agents/nw/, ~/.claude/commands/nw/, etc.
+    Per-project:          ./.claude/agents/nw/, ./.claude/commands/nw/, etc.
 
 For more information: https://github.com/nWave-ai/nWave
 """
@@ -617,6 +642,11 @@ def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
         description="Install nWave framework", add_help=False
+    )
+    parser.add_argument(
+        "--project",
+        action="store_true",
+        help="Install to ./.claude/ (per-project, committed to git)",
     )
     parser.add_argument("--backup-only", action="store_true", help="Create backup only")
     parser.add_argument("--restore", action="store_true", help="Restore from backup")
@@ -631,7 +661,7 @@ def main():
         show_help()
         return 0
 
-    installer = NWaveInstaller(dry_run=args.dry_run)
+    installer = NWaveInstaller(dry_run=args.dry_run, project_mode=args.project)
 
     # Show title panel at startup
     show_title_panel(installer.logger, dry_run=args.dry_run)
@@ -692,7 +722,7 @@ def main():
 
     if installer.validate_installation():
         installer.logger.info("")
-        show_installation_summary(installer.logger)
+        show_installation_summary(installer.logger, project_mode=args.project)
 
         return 0
     else:

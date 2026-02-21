@@ -432,20 +432,24 @@ class DESPlugin(InstallationPlugin):
     def _generate_hook_command(self, context: InstallContext, action: str) -> str:
         """Generate hook command with portable paths for cross-machine use.
 
-        Uses $HOME shell variable instead of absolute paths so that
-        settings.json works when synced across machines (via ~/.claude).
-        Uses the installer's Python (with $HOME substitution) to ensure
-        dependencies like PyYAML are available at hook runtime.
+        For global install: uses $HOME shell variable so settings.json works
+        when synced across machines (via ~/.claude).
+        For project install: uses relative .claude/ path since settings.json
+        is committed to git and hooks run with CWD = project root.
 
         Args:
-            context: InstallContext with claude_dir
+            context: InstallContext with claude_dir and install_mode
             action: Hook action (pre-task, subagent-stop, post-tool-use)
 
         Returns:
-            Complete command string with $HOME-based paths
+            Complete command string with portable paths
         """
-        lib_path = "$HOME/.claude/lib/python"
-        python_path = self._resolve_python_path()
+        if context.install_mode == "project":
+            lib_path = ".claude/lib/python"
+            python_path = "python3"
+        else:
+            lib_path = "$HOME/.claude/lib/python"
+            python_path = self._resolve_python_path()
         return self.HOOK_COMMAND_TEMPLATE.format(
             lib_path=lib_path,
             python_path=python_path,
@@ -545,9 +549,12 @@ class DESPlugin(InstallationPlugin):
 
             # Generate Write/Edit guard hooks with shell fast-path
             # test -f exits in ~1ms when no deliver session exists
-            # Uses $HOME for portability across machines
-            lib_path = "$HOME/.claude/lib/python"
-            python_path = self._resolve_python_path()
+            if context.install_mode == "project":
+                lib_path = ".claude/lib/python"
+                python_path = "python3"
+            else:
+                lib_path = "$HOME/.claude/lib/python"
+                python_path = self._resolve_python_path()
             write_guard_command = (
                 f"test -f .nwave/des/deliver-session.json || exit 0; "
                 f"PYTHONPATH={lib_path} {python_path} -m "
