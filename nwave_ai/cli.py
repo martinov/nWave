@@ -57,12 +57,12 @@ def _print_usage() -> int:
     print("  --backup-only   Create backup only")
     print("  --restore       Restore from backup")
     print()
-    print("Uninstall options:")
-    print("  --project       Uninstall from ./.claude/ (per-project)")
-    print()
     print("Examples:")
     print("  nwave-ai install              # Global install to ~/.claude/")
     print("  nwave-ai install --project    # Per-project install to ./.claude/")
+    print()
+    print("Uninstall options:")
+    print("  --project       Uninstall from ./.claude/ (per-project)")
     return 0
 
 
