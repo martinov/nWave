@@ -40,6 +40,30 @@
 
 - [review-criteria](../../../nWave/skills/documentarist-reviewer/review-criteria.md) — Critique dimensions, severity framework, verdict decision matrix, and review output format for documentation assessment reviews
 
+## [nw-functional-software-crafter](../agents/nw-functional-software-crafter.md)
+
+- [fp-algebra-driven-design](../../../nWave/skills/functional-software-crafter/fp-algebra-driven-design.md) — Algebraic thinking for API design. Discover the right API before implementing by specifying rules (equations) that operations must satisfy.
+- [fp-clojure](../../../nWave/skills/functional-software-crafter/fp-clojure.md) — - Best for: data-centric domains, REPL-driven exploration, rapid prototyping, systems where data shapes evolve frequently
+- [fp-domain-modeling](../../../nWave/skills/functional-software-crafter/fp-domain-modeling.md) — Domain modeling with types. Making illegal states unrepresentable, workflows as pipelines, error handling at the type level.
+- [fp-fsharp](../../../nWave/skills/functional-software-crafter/fp-fsharp.md) — - Best for: domain modeling on .NET, DDD, railway-oriented programming, pipeline-first design, finance
+- [fp-haskell](../../../nWave/skills/functional-software-crafter/fp-haskell.md) — - Best for: correctness-critical systems, compiler-enforced purity, maximum type safety, financial systems
+- [fp-hexagonal-architecture](../../../nWave/skills/functional-software-crafter/fp-hexagonal-architecture.md) — Ports and adapters in functional programming. How to structure applications with a pure core and side-effect shell.
+- [fp-kotlin](../../../nWave/skills/functional-software-crafter/fp-kotlin.md) — - Best for: gentlest FP onboarding for Java teams, Android, coroutines, pragmatic FP with great IDE support
+- [fp-principles](../../../nWave/skills/functional-software-crafter/fp-principles.md) — Core functional programming thinking patterns. Language-agnostic.
+- [fp-scala](../../../nWave/skills/functional-software-crafter/fp-scala.md) — - Best for: JVM with full FP power, large-scale systems, data engineering, richest effect ecosystem
+- [fp-usable-design](../../../nWave/skills/functional-software-crafter/fp-usable-design.md) — Making functional code usable. The developer is the user of your design. Apply usability thinking to code organization, naming, and architecture.
+- [pbt-dotnet](../../../nWave/skills/functional-software-crafter/pbt-dotnet.md) — | Framework | Language | Shrinking | Stateful | Parallel | Choose When |
+- [pbt-erlang-elixir](../../../nWave/skills/functional-software-crafter/pbt-erlang-elixir.md) — | Framework | Language | Stateful | Parallel | Choose When |
+- [pbt-fundamentals](../../../nWave/skills/functional-software-crafter/pbt-fundamentals.md) — Core property-based testing knowledge, language-agnostic. Load language-specific skills for framework syntax.
+- [pbt-go](../../../nWave/skills/functional-software-crafter/pbt-go.md) — | Framework | Shrinking | Stateful | API Style | Choose When |
+- [pbt-haskell](../../../nWave/skills/functional-software-crafter/pbt-haskell.md) — | Framework | Shrinking | Stateful | Choose When |
+- [pbt-jvm](../../../nWave/skills/functional-software-crafter/pbt-jvm.md) — | Framework | Language | Shrinking | Stateful | Choose When |
+- [pbt-python](../../../nWave/skills/functional-software-crafter/pbt-python.md) — **Hypothesis** is the only serious choice for Python PBT. No competitive alternatives exist.
+- [pbt-rust](../../../nWave/skills/functional-software-crafter/pbt-rust.md) — | Framework | Shrinking | Stateful | Choose When |
+- [pbt-stateful](../../../nWave/skills/functional-software-crafter/pbt-stateful.md) — Stateful property-based testing for systems with mutable state. Language-agnostic concepts; load language skills for framework syntax.
+- [pbt-typescript](../../../nWave/skills/functional-software-crafter/pbt-typescript.md) — **fast-check** is the dominant PBT framework for TypeScript/JavaScript. No serious competitors.
+- [tlaplus-verification](../../../nWave/skills/functional-software-crafter/tlaplus-verification.md) — When and how to use TLA+ for design verification. Complements PBT (which verifies implementation).
+
 ## [nw-platform-architect](../agents/nw-platform-architect.md)
 
 - [cicd-and-deployment](../../../nWave/skills/platform-architect/cicd-and-deployment.md) — CI/CD pipeline design methodology, deployment strategies, GitHub Actions patterns, and branch/release strategies. Load when designing pipelines or deployment workflows.
@@ -71,11 +95,20 @@
 - [bdd-requirements](../../../nWave/skills/product-owner/bdd-requirements.md) — BDD requirements discovery methodology - Example Mapping, Three Amigos, conversational patterns, Given-When-Then translation, and collaborative specification
 - [design-methodology](../../../nWave/skills/product-owner/design-methodology.md) — Apple LeanUX++ design workflow, journey schema, emotional arc patterns, and CLI UX patterns. Load when transitioning from discovery to visualization or when designing journey artifacts.
 - [discovery-methodology](../../../nWave/skills/product-owner/discovery-methodology.md) — Question-first approach to understanding user journeys. Load when starting a new journey design or when the discovery phase needs deepening.
+- [jtbd-bdd-integration](../../../nWave/skills/product-owner/jtbd-bdd-integration.md) — Translating JTBD analysis to BDD scenarios - job story to Given-When-Then patterns, forces-based test discovery, job-map-based test discovery, and property-shaped criteria
+- [jtbd-core](../../../nWave/skills/product-owner/jtbd-core.md) — Core JTBD theory and job story format - job dimensions, job story template, job stories vs user stories, 8-step universal job map, outcome statements, and forces of progress
+- [jtbd-interviews](../../../nWave/skills/product-owner/jtbd-interviews.md) — JTBD interview techniques - Switch interview methodology, timeline reconstruction, Four Forces extraction, functional/emotional/social job discovery, anti-patterns, and question banks
+- [jtbd-opportunity-scoring](../../../nWave/skills/product-owner/jtbd-opportunity-scoring.md) — JTBD opportunity scoring and prioritization - outcome statement format, opportunity algorithm, scoring interpretation, feature prioritization, and opportunity matrix template
 - [jtbd-workflow-selection](../../../nWave/skills/product-owner/jtbd-workflow-selection.md) — JTBD workflow classification and routing - ODI two-phase framework, five job types with workflow sequences, baseline type selection, workflow anti-patterns, and common recipes
 - [leanux-methodology](../../../nWave/skills/product-owner/leanux-methodology.md) — LeanUX backlog management methodology - user story template, story sizing, story states, task types, Definition of Ready/Done, anti-pattern detection and remediation
 - [persona-jtbd-analysis](../../../nWave/skills/product-owner/persona-jtbd-analysis.md) — Structured persona creation and JTBD analysis methodology - persona templates, ODI job step tables, pain point mapping, success metric quantification, and multi-persona segmentation
 - [review-dimensions](../../../nWave/skills/product-owner/review-dimensions.md) — Requirements quality critique dimensions for peer review - confirmation bias detection, completeness validation, clarity checks, testability assessment, and priority validation
 - [shared-artifact-tracking](../../../nWave/skills/product-owner/shared-artifact-tracking.md) — Shared artifact registry, common artifact patterns, and integration validation. Load when tracking data that flows across journey steps or validating horizontal coherence.
+- [ux-desktop-patterns](../../../nWave/skills/product-owner/ux-desktop-patterns.md) — Desktop application UI patterns for product owners. Load when designing native or cross-platform desktop applications, writing desktop-specific acceptance criteria, or evaluating panel layouts and keyboard workflows.
+- [ux-emotional-design](../../../nWave/skills/product-owner/ux-emotional-design.md) — Emotional design and delight patterns for product owners. Load when designing onboarding flows, empty states, first-run experiences, or evaluating the emotional quality of an interface.
+- [ux-principles](../../../nWave/skills/product-owner/ux-principles.md) — Core UX principles for product owners. Load when evaluating interface designs, writing acceptance criteria with UX requirements, or reviewing wireframes and mockups.
+- [ux-tui-patterns](../../../nWave/skills/product-owner/ux-tui-patterns.md) — Terminal UI and CLI design patterns for product owners. Load when designing command-line tools, interactive terminal applications, or writing CLI-specific acceptance criteria.
+- [ux-web-patterns](../../../nWave/skills/product-owner/ux-web-patterns.md) — Web UI design patterns for product owners. Load when designing web application interfaces, writing web-specific acceptance criteria, or evaluating responsive designs.
 
 ## [nw-product-owner-reviewer](../agents/nw-product-owner-reviewer.md)
 
@@ -114,8 +147,8 @@
 
 - [architecture-patterns](../../../nWave/skills/solution-architect/architecture-patterns.md) — Comprehensive architecture patterns, methodologies, quality frameworks, and evaluation methods for solution architects. Load when designing system architecture or selecting patterns.
 - [critique-dimensions](../../../nWave/skills/solution-architect/critique-dimensions.md) — Architecture quality critique dimensions for peer review. Load when invoking solution-architect-reviewer or performing self-review of architecture documents.
-- [residuality-theory](../../../nWave/skills/solution-architect/residuality-theory.md) — Residuality Theory methodology for designing architectures that survive unknown stresses. Load when designing high-uncertainty, mission-critical, or complex socio-technical systems.
 - [roadmap-design](../../../nWave/skills/solution-architect/roadmap-design.md) — Roadmap concision rules, step decomposition efficiency, AC abstraction guidelines, and step-to-scenario mapping. Load when creating implementation roadmaps.
+- [stress-analysis](../../../nWave/skills/solution-architect/stress-analysis.md) — Advanced architecture stress analysis methodology for designing systems that survive unknown stresses. Load when --residuality flag is used or when designing high-uncertainty, mission-critical systems.
 
 ## [nw-solution-architect-reviewer](../agents/nw-solution-architect-reviewer.md)
 

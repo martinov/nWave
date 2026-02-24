@@ -1,11 +1,11 @@
 ---
-name: residuality-theory
-description: Residuality Theory methodology for designing architectures that survive unknown stresses. Load when designing high-uncertainty, mission-critical, or complex socio-technical systems.
+name: stress-analysis
+description: Advanced architecture stress analysis methodology for designing systems that survive unknown stresses. Load when --residuality flag is used or when designing high-uncertainty, mission-critical systems.
 ---
 
-# Residuality Theory
+# Advanced Architecture Stress Analysis
 
-Complexity science-based approach to designing architectures that survive unknown future stresses. Source: Barry M. O'Reilly (Former Microsoft Chief Architect, PhD Complexity Science).
+Complexity science-based approach to designing architectures that survive unknown future stresses. Based on residuality theory by Barry M. O'Reilly (Former Microsoft Chief Architect, PhD Complexity Science).
 
 Core paradigm: "Architectures should be trained, not designed."
 
@@ -25,7 +25,7 @@ Brainstorm extreme and diverse stressors. Goal is discovery, not risk assessment
 ### 2. Residues
 Design elements surviving after system breakdown under stress. Ask: "What's left of our architecture when [stressor] hits?"
 
-Example -- e-commerce under payment outage: residue is browsing, cart, wishlist. Lost: checkout, payment. Residuality-informed design: allow "reserve order, pay later" to preserve more functionality.
+Example -- e-commerce under payment outage: residue is browsing, cart, wishlist. Lost: checkout, payment. Stress-informed design: allow "reserve order, pay later" to preserve more functionality.
 
 ### 3. Attractors
 States complex systems naturally tend toward under stress. Often differ from designed intent. Discovered through stress testing, not predicted from requirements.
@@ -80,10 +80,10 @@ Select stressor, walk system behavior step-by-step with team, identify attractor
 
 - **DDD**: Stressor analysis deepens domain understanding; stress Event Storming reveals richer bounded context boundaries
 - **Microservices**: Incidence matrix validates service boundaries (low shared stressor impact = good boundaries)
-- **Event-Driven**: Async communication naturally reduces coupling (Residuality goal)
+- **Event-Driven**: Async communication naturally reduces coupling
 - **Chaos Engineering**: Stressor brainstorming feeds chaos experiment design
 - **ADRs**: Include stressor analysis, attractors discovered, resilience rationale
 
 ## Differentiation from Risk Management
 
-Traditional risk management predicts and prevents specific failures. Residuality Theory designs for survival and reconfiguration against any stress. Question shifts from "What risks should we prepare for?" to "What happens when ANY stress hits?"
+Traditional risk management predicts and prevents specific failures. This methodology designs for survival and reconfiguration against any stress. Question shifts from "What risks should we prepare for?" to "What happens when ANY stress hits?"
