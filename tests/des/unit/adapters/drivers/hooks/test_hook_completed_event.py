@@ -44,13 +44,12 @@ def _make_capturing_writer(events: list[AuditEvent]):
 
 
 def _build_pre_tool_use_stdin() -> str:
-    """Valid Task input that passes max_turns validation (allow path)."""
+    """Valid Agent input (allow path — non-DES task passes through)."""
     return json.dumps(
         {
-            "tool_name": "Task",
+            "tool_name": "Agent",
             "tool_input": {
                 "prompt": "Do something",
-                "max_turns": 15,
                 "subagent_type": "code",
             },
         }
@@ -72,7 +71,7 @@ def _build_subagent_stop_stdin() -> str:
 
 def _build_post_tool_use_stdin() -> str:
     """PostToolUse input (always allow)."""
-    return json.dumps({"tool_name": "Task", "tool_input": {"prompt": "done"}})
+    return json.dumps({"tool_name": "Agent", "tool_input": {"prompt": "done"}})
 
 
 def _build_pre_write_stdin() -> str:
@@ -83,10 +82,10 @@ def _build_pre_write_stdin() -> str:
 
 
 def _build_pre_tool_use_block_stdin() -> str:
-    """Task input missing max_turns (triggers block from MaxTurnsPolicy)."""
+    """Agent input with DES marker but missing mandatory sections (triggers block)."""
     return json.dumps(
         {
-            "tool_name": "Task",
+            "tool_name": "Agent",
             "tool_input": {
                 "prompt": "<!-- DES-VALIDATION : required -->\nDo something",
                 "subagent_type": "code",

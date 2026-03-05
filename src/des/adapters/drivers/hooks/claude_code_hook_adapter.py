@@ -55,7 +55,6 @@ from des.application.validator import TemplateValidator
 from des.domain.des_enforcement_policy import DesEnforcementPolicy
 from des.domain.des_marker_parser import DesMarkerParser
 from des.domain.marker_completeness_policy import MarkerCompletenessPolicy
-from des.domain.max_turns_policy import MaxTurnsPolicy
 from des.domain.session_guard_policy import SessionGuardPolicy
 from des.domain.step_completion_validator import StepCompletionValidator
 from des.domain.tdd_schema import get_tdd_schema
@@ -88,7 +87,6 @@ def create_pre_tool_use_service() -> PreToolUseService:
     audit_writer = _create_audit_writer()
 
     return PreToolUseService(
-        max_turns_policy=MaxTurnsPolicy(),
         marker_parser=DesMarkerParser(),
         prompt_validator=TemplateValidator(),
         audit_writer=audit_writer,
@@ -556,22 +554,19 @@ def handle_pre_tool_use() -> int:
                 "pre_tool_use",
                 {
                     "subagent_type": tool_input.get("subagent_type"),
-                    "has_max_turns": tool_input.get("max_turns") is not None,
                 },
                 hook_id=hook_id,
             )
 
             # Extract protocol fields
-            # Claude Code sends: {"tool_name": "Task", "tool_input": {...}, ...}
+            # Claude Code sends: {"tool_name": "Agent", "tool_input": {...}, ...}
             prompt = tool_input.get("prompt", "")
-            max_turns = tool_input.get("max_turns")
 
             # Delegate to application service
             service = create_pre_tool_use_service()
             decision = service.validate(
                 PreToolUseInput(
                     prompt=prompt,
-                    max_turns=max_turns,
                     subagent_type=tool_input.get("subagent_type"),
                 ),
                 hook_id=hook_id,

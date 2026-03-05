@@ -127,18 +127,17 @@ Picked once, persists across sessions. Every `/nw:deliver`, `/nw:design`, `/nw:r
 
 ## Understanding DES Messages
 
-DES is nWave's quality enforcement layer — it monitors every agent Task invocation during feature delivery to prevent unbounded execution, enforce TDD discipline, and protect accidental edits. Most DES messages are normal enforcement, not errors. They appear when agents skip required safety checks or when your code contains patterns that look like step execution.
+DES is nWave's quality enforcement layer — it monitors every Agent tool invocation during feature delivery to enforce TDD discipline and protect accidental edits. Most DES messages are normal enforcement, not errors. They appear when agents skip required safety checks or when your code contains patterns that look like step execution.
 
 DES also runs automatic housekeeping at every session start: it removes audit logs beyond the retention window, cleans up signal files left by crashed sessions, and rotates the skill-loading log when it grows too large. This happens silently in the background and never blocks your session.
 
 | Message | What It Means | What To Do |
 |---------|---------------|-----------|
-| **MISSING_MAX_TURNS** | Task invocation forgot to set `max_turns` parameter. | Add `max_turns=30` (or appropriate value) to the Task call. Recommended: 15 (quick), 25 (background), 30 (standard), 35 (research). |
-| **DES_MARKERS_MISSING** | Task prompt mentions a step ID (01-01 pattern) but lacks DES markers. | Either: add DES markers for step execution, OR add `<!-- DES-ENFORCEMENT : exempt -->` comment if it's not actually step work. |
+| **DES_MARKERS_MISSING** | Agent prompt mentions a step ID (01-01 pattern) but lacks DES markers. | Either: add DES markers for step execution, OR add `<!-- DES-ENFORCEMENT : exempt -->` comment if it's not actually step work. |
 | **Source write blocked** | You tried to edit a file during active `/nw:deliver` outside a DES task. | Edit requests must go through the active deliver session. If you need to make changes, finalize the current session first. |
 | **TDD phase incomplete** | Sub-agent returned without finishing all required TDD phases. | Re-dispatch the same agent to complete missing phases (typically COMMIT or refactoring steps). |
 | **nWave update available** | SessionStart detected a newer version available. | Optional. Run `pipx upgrade nwave-ai && nwave-ai install` when ready to upgrade, or dismiss and continue working. |
-| **False positive blocks** | Your prompt accidentally matches step-ID pattern (e.g., dates like "2026-02-09"). | Add `<!-- DES-ENFORCEMENT : exempt -->` comment to exempt the Task from step-ID enforcement. |
+| **False positive blocks** | Your prompt accidentally matches step-ID pattern (e.g., dates like "2026-02-09"). | Add `<!-- DES-ENFORCEMENT : exempt -->` comment to exempt the agent call from step-ID enforcement. |
 
 These messages protect code quality but never prevent your work — they guide you toward the safe path.
 

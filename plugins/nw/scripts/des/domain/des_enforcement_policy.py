@@ -1,7 +1,7 @@
 """DES Enforcement Policy - step-id based enforcement rule.
 
-Pure domain policy following MaxTurnsPolicy pattern.
-Every Task prompt containing a step-id pattern (\\d{2}-\\d{2}) without DES
+Pure domain policy following PolicyResult pattern.
+Every Agent prompt containing a step-id pattern (\\d{2}-\\d{2}) without DES
 markers gets blocked. This closes the bypass where the orchestrator delegates
 via Task but forgets DES markers.
 

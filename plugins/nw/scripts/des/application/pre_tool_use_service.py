@@ -1,6 +1,6 @@
-"""PreToolUseService - application service for Task tool invocation validation.
+"""PreToolUseService - application service for Agent tool invocation validation.
 
-Orchestrates domain logic (MaxTurnsPolicy, DesMarkerParser) and driven ports
+Orchestrates domain logic (DesMarkerParser, MarkerCompletenessPolicy) and driven ports
 (ValidatorPort, AuditLogWriter, TimeProvider) to produce allow/block decisions.
 
 This service implements the PreToolUsePort driver port interface.
@@ -22,33 +22,29 @@ if TYPE_CHECKING:
     from des.domain.des_enforcement_policy import DesEnforcementPolicy
     from des.domain.des_marker_parser import DesMarkerParser
     from des.domain.marker_completeness_policy import MarkerCompletenessPolicy
-    from des.domain.max_turns_policy import MaxTurnsPolicy
     from des.ports.driven_ports.time_provider_port import TimeProvider
     from des.ports.driver_ports.validator_port import ValidatorPort
 
 
 class PreToolUseService(PreToolUsePort):
-    """Validates Task tool invocations before execution.
+    """Validates Agent tool invocations before execution.
 
     Flow:
       1. Parse DES markers via DesMarkerParser
       2. Block step-id tasks without DES markers via DesEnforcementPolicy
          - If enforced: log HOOK_PRE_TOOL_USE_BLOCKED, return block
       3. If not DES task: log HOOK_PRE_TOOL_USE_ALLOWED, return allow immediately
-         (no max_turns check, no prompt validation — non-DES tasks pass through)
-      4. Validate max_turns via MaxTurnsPolicy (DES tasks only)
-         - If invalid: log HOOK_PRE_TOOL_USE_BLOCKED, return block
-      5. Validate marker completeness via MarkerCompletenessPolicy
+         (no prompt validation — non-DES tasks pass through)
+      4. Validate marker completeness via MarkerCompletenessPolicy
          - If invalid: log HOOK_PRE_TOOL_USE_BLOCKED, return block
          - If orchestrator mode: log HOOK_PRE_TOOL_USE_ALLOWED, return allow
-      6. Validate prompt structure via ValidatorPort
+      5. Validate prompt structure via ValidatorPort
          - If invalid: log HOOK_PRE_TOOL_USE_BLOCKED, return block
          - If valid: log HOOK_PRE_TOOL_USE_ALLOWED, return allow
     """
 
     def __init__(
         self,
-        max_turns_policy: MaxTurnsPolicy,
         marker_parser: DesMarkerParser,
         prompt_validator: ValidatorPort,
         audit_writer: AuditLogWriter,
@@ -56,7 +52,6 @@ class PreToolUseService(PreToolUsePort):
         enforcement_policy: DesEnforcementPolicy | None = None,
         completeness_policy: MarkerCompletenessPolicy | None = None,
     ) -> None:
-        self._max_turns_policy = max_turns_policy
         self._marker_parser = marker_parser
         self._prompt_validator = prompt_validator
         self._audit_writer = audit_writer
@@ -100,17 +95,7 @@ class PreToolUseService(PreToolUsePort):
             self._log_allowed(context="non_des_task", hook_id=hook_id)
             return HookDecision.allow()
 
-        # Step 3: Validate max_turns (DES tasks only)
-        policy_result = self._max_turns_policy.validate(input_data.max_turns)
-        if not policy_result.is_valid:
-            self._log_blocked(
-                policy_result.reason or "MISSING_MAX_TURNS", hook_id=hook_id
-            )
-            return HookDecision.block(
-                reason=policy_result.reason or "MISSING_MAX_TURNS"
-            )
-
-        # Step 4: Validate marker completeness
+        # Step 3: Validate marker completeness
         if self._completeness_policy:
             completeness = self._completeness_policy.validate(markers)
             if not completeness.is_valid:

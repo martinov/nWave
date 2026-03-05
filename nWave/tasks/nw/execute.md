@@ -26,7 +26,7 @@ Dispatch a single roadmap step to an agent. Orchestrator extracts step context f
 
 Before dispatching the agent, read rigor config from `.nwave/des-config.json` (key: `rigor`). If absent, use standard defaults.
 
-- **`agent_model`**: Pass as `model` parameter to Task tool. If `"inherit"`, omit `model` (inherits from session).
+- **`agent_model`**: Pass as `model` parameter to Agent tool. If `"inherit"`, omit `model` (inherits from session).
 - **`tdd_phases`**: If `["RED_UNIT", "GREEN"]` (lean), modify the TDD_PHASES section in the DES template to only include those 2 phases. Remove PREPARE/RED_ACCEPTANCE/COMMIT instructions.
 - **`refactor_pass`**: If `false`, skip COMMIT phase refactoring instructions.
 
@@ -36,7 +36,7 @@ Before dispatching the agent, read rigor config from `.nwave/des-config.json` (k
 2. Read rigor profile from `.nwave/des-config.json` (default: standard)
 3. Validate roadmap and execution-log exist
 4. Grep roadmap for `step_id: "{step-id}"` with ~50 lines context
-5. Extract step fields and invoke Task tool with DES template below, applying rigor model and phases
+5. Extract step fields and invoke Agent tool with DES template below, applying rigor model and phases
 
 ## Agent Invocation
 
@@ -128,15 +128,7 @@ If GREEN complete (all tests pass), MUST commit before returning — even at tur
 
 **Configuration:**
 - subagent_type: extracted agent name
-- max_turns by step complexity:
-
-| Step Type | Typical Tool Calls | Recommended max_turns |
-|-----------|-------------------|----------------------|
-| Hotfix (1 file) | 10-12 | 25 |
-| Standard TDD (2-3 files) | 25-30 | 45 |
-| Complex (4+ files, new module) | 35-45 | 65 |
-
-Default: 45. Heuristic: `20 + (files_to_modify count * 8)`, capped at 65.
+- Turn limits are defined in each agent's `maxTurns` frontmatter field (not as a tool parameter)
 
 ## Error Handling
 
@@ -155,7 +147,7 @@ When subagent times out:
 | RED_UNIT with partial GREEN | Resume | Preserves implementation progress |
 | PREPARE or RED_ACCEPTANCE | Restart | Little context worth replaying |
 
-Resume costs ~50% more tokens/call due to context replay (measured: 3.7K vs 2.5K tokens/call). For <5 remaining turns, resume is efficient. For 15+ turns, restart with higher max_turns is cheaper.
+Resume costs ~50% more tokens/call due to context replay (measured: 3.7K vs 2.5K tokens/call). For <5 remaining turns, resume is efficient. For 15+ turns, restart is cheaper.
 
 ## Examples
 
@@ -172,7 +164,7 @@ Resume costs ~50% more tokens/call due to context replay (measured: 3.7K vs 2.5K
 
 ## Success Criteria
 
-- [ ] Agent invoked via Task tool (dispatcher does not execute the work)
+- [ ] Agent invoked via Agent tool (dispatcher does not execute the work)
 - [ ] Step context extracted from roadmap and passed in prompt
 - [ ] Agent appended phase events to execution-log.json
 - [ ] Agent did not load roadmap.json

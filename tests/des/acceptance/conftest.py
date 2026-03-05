@@ -383,10 +383,9 @@ Turn budget: 50 turns
 Exit on: completion or blocking issue
 """
     return {
-        "tool": "Task",
+        "tool": "Agent",
         "tool_input": {
             "prompt": valid_prompt,
-            "max_turns": 30,  # Required per CLAUDE.md
         },
     }
 
@@ -404,10 +403,9 @@ def invalid_task_json():
 This prompt is missing most mandatory sections and should be blocked.
 """
     return {
-        "tool": "Task",
+        "tool": "Agent",
         "tool_input": {
             "prompt": invalid_prompt,
-            "max_turns": 30,  # Has max_turns but prompt is invalid
         },
     }
 

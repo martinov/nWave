@@ -19,7 +19,7 @@ class DESHookInstaller:
     # Format: {"matcher": "...", "hooks": [{"type": "command", "command": "..."}]}
     # Note: Commands run from project root with PYTHONPATH set for module imports
     DES_PRETOOLUSE_HOOK = {
-        "matcher": "Task",
+        "matcher": "Agent",
         "hooks": [
             {
                 "type": "command",
@@ -38,7 +38,7 @@ class DESHookInstaller:
     }
 
     DES_POSTTOOLUSE_HOOK = {
-        "matcher": "Task",
+        "matcher": "Agent",
         "hooks": [
             {
                 "type": "command",

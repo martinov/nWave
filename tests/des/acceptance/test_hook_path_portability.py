@@ -265,7 +265,7 @@ class TestHookInstallIdempotency:
         GIVEN DES hooks are installed once
         WHEN hooks are installed a second time
         THEN no duplicate hooks exist
-        AND all 3 PreToolUse hooks present (Task, Write, Edit)
+        AND all 3 PreToolUse hooks present (Agent, Write, Edit)
         """
         plugin = DESPlugin()
 
@@ -279,7 +279,7 @@ class TestHookInstallIdempotency:
         # Exactly 3 PreToolUse hooks
         pre_hooks = config["hooks"]["PreToolUse"]
         matchers = [h.get("matcher") for h in pre_hooks]
-        assert matchers.count("Task") == 1, f"Duplicate Task hooks: {matchers}"
+        assert matchers.count("Agent") == 1, f"Duplicate Agent hooks: {matchers}"
         assert matchers.count("Write") == 1, f"Duplicate Write hooks: {matchers}"
         assert matchers.count("Edit") == 1, f"Duplicate Edit hooks: {matchers}"
 

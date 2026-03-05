@@ -2,7 +2,6 @@
 
 Tests for:
 - PhaseEvent + PhaseEventParser (phase_event.py)
-- MaxTurnsPolicy + PolicyResult (max_turns_policy.py)
 - DesMarkerParser + DesMarkers (des_marker_parser.py)
 - StepCompletionValidator + CompletionResult (step_completion_validator.py)
 
@@ -12,7 +11,6 @@ All domain classes are pure (no I/O), so tests are fast and deterministic.
 import pytest
 
 from des.domain.des_marker_parser import DesMarkerParser, DesMarkers
-from des.domain.max_turns_policy import MaxTurnsPolicy, PolicyResult
 from des.domain.phase_event import PhaseEvent, PhaseEventParser
 from des.domain.step_completion_validator import (
     CompletionResult,
@@ -149,52 +147,6 @@ class TestPhaseEventParser:
         )
         with pytest.raises(AttributeError):
             event.status = "SKIPPED"  # type: ignore[misc]
-
-
-# ===========================================================================
-# MaxTurnsPolicy tests
-# ===========================================================================
-
-
-class TestMaxTurnsPolicy:
-    """Tests for MaxTurnsPolicy.validate()."""
-
-    @pytest.mark.parametrize("value", [10, 30, 50, 100])
-    def test_validate_accepts_valid_range(self, value: int):
-        policy = MaxTurnsPolicy()
-        result = policy.validate(value)
-        assert result.is_valid is True
-        assert result.reason is None
-
-    def test_validate_rejects_none(self):
-        policy = MaxTurnsPolicy()
-        result = policy.validate(None)
-        assert result.is_valid is False
-        assert "MISSING_MAX_TURNS" in result.reason
-
-    @pytest.mark.parametrize("value", [0, 1, 9, 101, 200, -1])
-    def test_validate_rejects_out_of_range(self, value: int):
-        policy = MaxTurnsPolicy()
-        result = policy.validate(value)
-        assert result.is_valid is False
-        assert "INVALID_MAX_TURNS" in result.reason
-        assert str(value) in result.reason
-
-    def test_validate_rejects_non_integer(self):
-        policy = MaxTurnsPolicy()
-        result = policy.validate("thirty")  # type: ignore[arg-type]
-        assert result.is_valid is False
-        assert "INVALID_MAX_TURNS" in result.reason
-
-    def test_validate_rejects_float(self):
-        policy = MaxTurnsPolicy()
-        result = policy.validate(30.5)  # type: ignore[arg-type]
-        assert result.is_valid is False
-
-    def test_policy_result_is_frozen(self):
-        result = PolicyResult(is_valid=True)
-        with pytest.raises(AttributeError):
-            result.is_valid = False  # type: ignore[misc]
 
 
 # ===========================================================================

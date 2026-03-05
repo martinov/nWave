@@ -267,27 +267,22 @@ class TestHookAdapterFunctionality:
     def test_pre_tool_use_reads_tool_input_from_top_level(self):
         """Regression: PreToolUse must read tool_input at top level, not nested under tool.input.
 
-        Claude Code sends: {"tool_name": "Task", "tool_input": {"max_turns": 30, ...}}
-        NOT: {"tool": {"input": {"max_turns": 30, ...}}}
-
-        Bug (fixed 2026-02-06): handle_pre_tool_use() read hook_input["tool"]["input"]
-        which always returned {} because Claude Code puts tool_input at the top level.
-        This caused MISSING_MAX_TURNS for ALL Task invocations even with max_turns set.
+        Claude Code sends: {"tool_name": "Agent", "tool_input": {...}}
+        NOT: {"tool": {"input": {...}}}
         """
         import sys
         from io import StringIO
 
         from des.adapters.drivers.hooks import claude_code_hook_adapter
 
-        # Claude Code protocol: tool_input at top level
+        # Claude Code protocol: tool_input at top level (non-DES = passthrough)
         test_input = json.dumps(
             {
                 "session_id": "test-session",
                 "hook_event_name": "PreToolUse",
-                "tool_name": "Task",
+                "tool_name": "Agent",
                 "tool_input": {
                     "prompt": "Find all Python files",
-                    "max_turns": 30,
                     "subagent_type": "Explore",
                 },
             }
@@ -303,7 +298,7 @@ class TestHookAdapterFunctionality:
 
             output = json.loads(captured.getvalue())
             assert exit_code == 0, (
-                f"Expected allow (exit 0) for valid tool_input with max_turns=30, "
+                f"Expected allow (exit 0) for non-DES task, "
                 f"got exit {exit_code}: {output}"
             )
             assert output["decision"] == "allow"
@@ -311,11 +306,11 @@ class TestHookAdapterFunctionality:
             sys.stdin = original_stdin
             sys.stdout = original_stdout
 
-    def test_pre_tool_use_rejects_missing_max_turns(self):
-        """PreToolUse must block DES tasks when max_turns is absent.
+    def test_pre_tool_use_blocks_incomplete_des_prompt(self):
+        """PreToolUse must block DES tasks when mandatory sections are missing.
 
-        Non-DES tasks bypass max_turns validation (nwave-ai/nwave#9),
-        so this test uses a DES-marked prompt to verify the policy.
+        DES-marked prompts without all 9 mandatory sections are blocked
+        by template validation.
         """
         import sys
         from io import StringIO
@@ -324,7 +319,7 @@ class TestHookAdapterFunctionality:
 
         test_input = json.dumps(
             {
-                "tool_name": "Task",
+                "tool_name": "Agent",
                 "tool_input": {
                     "prompt": (
                         "<!-- DES-VALIDATION : required -->\n"
@@ -347,11 +342,11 @@ class TestHookAdapterFunctionality:
 
             output = json.loads(captured.getvalue())
             assert exit_code == 2, (
-                f"Expected block (exit 2) for missing max_turns, "
+                f"Expected block (exit 2) for incomplete DES prompt, "
                 f"got exit {exit_code}: {output}"
             )
             assert output["decision"] == "block"
-            assert "MISSING_MAX_TURNS" in output["reason"]
+            assert "MISSING" in output["reason"]
         finally:
             sys.stdin = original_stdin
             sys.stdout = original_stdout

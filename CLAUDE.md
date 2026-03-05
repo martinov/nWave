@@ -84,7 +84,7 @@ Claude Code Hooks (pre-tool-use, subagent-stop, post-tool-use)
         ▼
 ┌─ Application Layer ───────────────────────────────────────┐
 │  DESOrchestrator       — prompt rendering, phase execution │
-│  PreToolUseService     — validates before Task invocation  │
+│  PreToolUseService     — validates before Agent invocation │
 │  SubagentStopService   — validates after sub-agent returns │
 │  TemplateValidator     — checks 9 mandatory sections       │
 │  StaleExecutionDetector — detects abandoned phases         │

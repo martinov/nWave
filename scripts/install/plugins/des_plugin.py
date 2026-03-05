@@ -523,6 +523,7 @@ class DESPlugin(InstallationPlugin):
             )
             has_write_guard = _has_matcher(config["hooks"]["PreToolUse"], "Write")
             has_edit_guard = _has_matcher(config["hooks"]["PreToolUse"], "Edit")
+            has_agent_matcher = _has_matcher(config["hooks"]["PreToolUse"], "Agent")
 
             if (
                 has_correct_pretask
@@ -532,6 +533,7 @@ class DESPlugin(InstallationPlugin):
                 and has_correct_subagent_start
                 and has_write_guard
                 and has_edit_guard
+                and has_agent_matcher
             ):
                 context.logger.info("  ✅ DES hooks up-to-date")
                 return PluginResult(
@@ -552,14 +554,14 @@ class DESPlugin(InstallationPlugin):
             # Generate hooks with Claude Code v2 nested format
             # Format: {"matcher": "...", "hooks": [{"type": "command", "command": "..."}]}
             pretooluse_hook = {
-                "matcher": "Task",
+                "matcher": "Agent",
                 "hooks": [{"type": "command", "command": new_pretask_command}],
             }
             subagent_stop_hook = {
                 "hooks": [{"type": "command", "command": new_stop_command}],
             }
             posttooluse_hook = {
-                "matcher": "Task",
+                "matcher": "Agent",
                 "hooks": [{"type": "command", "command": new_post_command}],
             }
 
@@ -809,8 +811,8 @@ class DESPlugin(InstallationPlugin):
         """Check if a hook entry is a DES hook.
 
         Supports both old flat format and new nested format:
-        - Old flat: {"matcher": "Task", "command": "...claude_code_hook_adapter..."}
-        - New nested: {"matcher": "Task", "hooks": [{"type": "command", "command": "...claude_code_hook_adapter..."}]}
+        - Old flat: {"matcher": "Task|Agent", "command": "...claude_code_hook_adapter..."}
+        - New nested: {"matcher": "Agent", "hooks": [{"type": "command", "command": "...claude_code_hook_adapter..."}]}
 
         Args:
             hook_entry: Hook entry dictionary from settings JSON
