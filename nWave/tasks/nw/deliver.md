@@ -49,6 +49,31 @@ Task(
 )
 ```
 
+## Prior Wave Consultation
+
+Before beginning DELIVER work, read targeted prior wave artifacts. DISTILL is the major synthesis point — its acceptance tests encode all prior wave decisions into executable specifications.
+
+1. **DISCOVER** (skip): Synthesized into DISCUSS, then into DISTILL acceptance tests.
+2. **DISCUSS** (skip): Synthesized into DISTILL acceptance tests. If needed during implementation, read specific files on demand.
+3. **DESIGN** (structural context): Read from `docs/feature/{feature-id}/design/`:
+   - `architecture-design.md` — component structure and C4 diagrams guide implementation
+   - `component-boundaries.md` — dependency-inversion boundaries
+   - `wave-decisions.md` — paradigm, tech stack, upstream changes
+4. **DEVOPS** (skip): Infrastructure setup is independent of implementation. Read `wave-decisions.md` only if test environment issues arise.
+5. **DISTILL** (primary input): Read all files in `docs/feature/{feature-id}/distill/` — test scenarios, walking skeleton, acceptance review are the authoritative specification for implementation.
+
+Additionally, check for `upstream-changes.md` and `upstream-issues.md` in DESIGN and DISTILL directories. If unresolved issues exist, flag them to the user before starting implementation. Do not implement against contradictory specifications.
+
+**On-demand escalation**: If during implementation a crafter encounters ambiguity not resolved by DISTILL tests or DESIGN architecture, the orchestrator reads the specific prior wave file referenced in wave-decisions.md — never re-reads entire directories.
+
+## Document Update (Back-Propagation)
+
+When DELIVER implementation reveals gaps or contradictions in prior waves:
+1. Document findings in `docs/feature/{feature-id}/deliver/upstream-issues.md`
+2. Reference the original prior-wave document and describe the issue
+3. If implementation requires deviating from architecture or requirements, document the deviation and rationale
+4. Resolve with user before continuing past the affected step
+
 ## Orchestration Flow
 
 ```
@@ -56,6 +81,9 @@ INPUT: "{feature-description}"
   |
   0. Read rigor profile from .nwave/des-config.json (default: standard)
      Store: agent_model|reviewer_model|tdd_phases|review_enabled|double_review|mutation_enabled|refactor_pass
+  |
+  0.5. Prior Wave Consultation (see section above)
+     Read DISTILL (all) + DESIGN (architecture + boundaries + wave-decisions)|flag contradictions|resolve before proceeding
   |
   1. Parse input|derive feature-id (kebab-case)|create docs/feature/{feature-id}/deliver/
      a. Create execution-log.json if missing via CLI:

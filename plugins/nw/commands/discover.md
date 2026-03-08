@@ -22,6 +22,32 @@ Scout establishes product-market fit through rigorous customer development using
 
 None (DISCOVER is the first wave).
 
+## Wave Decisions Summary
+
+Before completing DISCOVER, produce `docs/feature/{feature-id}/discover/wave-decisions.md`:
+
+```markdown
+# DISCOVER Decisions — {feature-id}
+
+## Key Decisions
+- [D1] {decision}: {rationale} (see: {source-file})
+
+## Constraints Established
+- {constraint from evidence}
+
+## Validated Assumptions
+- {assumption validated by evidence, with confidence level}
+
+## Invalidated Assumptions
+- {assumption disproved, with evidence reference}
+```
+
+This summary enables downstream waves to quickly assess DISCOVER outcomes without reading all artifacts.
+
+## Document Update (Back-Propagation)
+
+Not applicable (DISCOVER is the first wave — no prior documents to update).
+
 ## Agent Invocation
 
 @nw-product-discoverer
@@ -65,4 +91,5 @@ docs/feature/{feature-id}/discover/
   solution-testing.md
   lean-canvas.md
   interview-log.md
+  wave-decisions.md
 ```

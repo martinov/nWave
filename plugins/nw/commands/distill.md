@@ -41,11 +41,36 @@ Create E2E acceptance tests from requirements|architecture|infrastructure design
 1. Yes -- include CI/CD validation, deployment smoke tests
 2. No -- functional acceptance tests only
 
-## Context Files Required
+## Prior Wave Consultation
 
-- docs/feature/{feature-id}/discuss/requirements.md | user-stories.md
-- docs/feature/{feature-id}/design/architecture-design.md | component-boundaries.md | technology-stack.md
-- docs/feature/{feature-id}/devops/* (infrastructure design from DEVOPS)
+Before beginning DISTILL work, read targeted prior wave artifacts:
+
+1. **DISCOVER** (skip): DISCUSS already synthesized DISCOVER evidence into requirements and acceptance criteria.
+2. **DISCUSS** (primary input): Read from `docs/feature/{feature-id}/discuss/`:
+   - `acceptance-criteria.md` — primary input for test creation
+   - `story-map.md` — drives walking skeleton priority and release slicing
+   - `user-stories.md` — story-to-test traceability
+   - `wave-decisions.md` — quick check for upstream changes
+3. **DESIGN** (structural context): Read from `docs/feature/{feature-id}/design/`:
+   - `architecture-design.md` — port boundaries define test scope
+   - `component-boundaries.md` — determines which components tests exercise
+   - `wave-decisions.md` — check for upstream changes from DISCUSS
+4. **DEVOPS** (test environment): Read from `docs/feature/{feature-id}/devops/`:
+   - `platform-architecture.md` — test environment setup
+   - `ci-cd-pipeline.md` — test execution context
+   - `wave-decisions.md` — check for infrastructure constraints affecting tests
+
+DISTILL is the major synthesis point. Its job is to translate all prior wave knowledge into executable acceptance tests. The acceptance criteria from DISCUSS + architecture from DESIGN + infra from DEVOPS are sufficient. Raw DISCOVER artifacts are not needed — they were already synthesized into DISCUSS requirements.
+
+After reading, check whether any acceptance test assumptions contradict prior wave decisions. Use `wave-decisions.md` files to detect upstream changes. Example: DISCUSS acceptance criteria reference a "notification email" but DESIGN's wave-decisions.md notes email was removed in favor of in-app notifications — tests must reflect the DESIGN decision.
+
+## Document Update (Back-Propagation)
+
+When DISTILL work reveals gaps or contradictions in prior waves:
+1. Document findings in `docs/feature/{feature-id}/distill/upstream-issues.md`
+2. Reference the original prior-wave document and describe the gap
+3. If acceptance criteria from DISCUSS are untestable as written, note the specific criteria and why
+4. Resolve with user before writing tests against ambiguous or contradictory requirements
 
 ## Rigor Profile Integration
 
@@ -91,6 +116,32 @@ Quinn creates Given-When-Then acceptance tests from requirements and architectur
 **Handoff To**: nw-software-crafter (DELIVER wave)
 **Deliverables**: Feature files|step definitions|test-scenarios.md|walking-skeleton.md
 
+## Wave Decisions Summary
+
+Before completing DISTILL, produce `docs/feature/{feature-id}/distill/wave-decisions.md`:
+
+```markdown
+# DISTILL Decisions — {feature-id}
+
+## Key Decisions
+- [D1] {decision}: {rationale} (see: {source-file})
+
+## Test Coverage Summary
+- Total scenarios: {N}
+- Walking skeleton scenarios: {N}
+- Milestone features: {list}
+- Test framework: {framework}
+- Integration approach: {approach}
+
+## Constraints Established
+- {test boundary constraint}
+
+## Upstream Issues
+- {any gaps found in prior wave artifacts}
+```
+
+DISTILL is the major synthesis point. DELIVER reads DISTILL output as its authoritative specification — the acceptance tests encode all prior wave decisions into executable form.
+
 ## Expected Outputs
 
 ```
@@ -106,6 +157,7 @@ docs/feature/{feature-id}/distill/
   test-scenarios.md
   walking-skeleton.md
   acceptance-review.md
+  wave-decisions.md
 ```
 
 Bug fix regression tests:

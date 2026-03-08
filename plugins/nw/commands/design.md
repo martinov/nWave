@@ -11,14 +11,30 @@ argument-hint: "[component-name] - Optional: --residuality --paradigm=[auto|oop|
 
 Execute DESIGN wave through discovery-driven architecture design. Morgan asks about business drivers and constraints first, then recommends architecture that fits. Analyzes existing codebase, evaluates open-source alternatives, produces C4 diagrams (Mermaid) as mandatory output.
 
-## Context Files Required
+## Prior Wave Consultation
 
-- docs/feature/{feature-id}/discuss/jtbd-job-stories.md — Job stories from DISCUSS
-- docs/feature/{feature-id}/discuss/jtbd-four-forces.md — Four Forces analysis from DISCUSS
-- docs/feature/{feature-id}/discuss/jtbd-opportunity-scores.md — Opportunity scores (if multiple jobs)
-- docs/feature/{feature-id}/discuss/journey-{name}-visual.md — UX journey map from DISCUSS
-- docs/feature/{feature-id}/discuss/user-stories.md — User stories from DISCUSS
-- docs/feature/{feature-id}/discuss/requirements.md — Requirements from DISCUSS
+Before beginning DESIGN work, read targeted prior wave artifacts:
+
+1. **DISCOVER** (synthesis check only): Read `docs/feature/{feature-id}/discover/wave-decisions.md` — if any decision is unclear or relevant to architecture, read the referenced source file
+2. **DISCUSS** (primary input): Read these key artifacts from `docs/feature/{feature-id}/discuss/`:
+   - `wave-decisions.md` — decision summary
+   - `requirements.md` — functional requirements
+   - `acceptance-criteria.md` — testable criteria driving architecture
+   - `user-stories.md` — scope of what to build
+   - `story-map.md` — walking skeleton and release slicing
+   - `outcome-kpis.md` — quality attributes informing architecture
+
+DISCUSS already synthesizes DISCOVER evidence into structured requirements. DESIGN does not need raw DISCOVER artifacts (problem-validation, interview-log, etc.) unless wave-decisions.md flags something architecturally significant.
+
+After reading, check whether any DESIGN decisions would contradict DISCUSS requirements. Flag contradictions and resolve with user before proceeding. Example: DISCUSS requires "real-time updates" but DESIGN chooses batch processing — this must be resolved.
+
+## Document Update (Back-Propagation)
+
+When DESIGN decisions change assumptions from prior waves:
+1. Document the change in a `## Changed Assumptions` section at the end of the affected DESIGN artifact
+2. Reference the original prior-wave document and quote the original assumption
+3. State the new assumption and the rationale for the change
+4. If architecture constraints require changes to user stories or acceptance criteria, note them in `docs/feature/{feature-id}/design/upstream-changes.md` for the product owner to review
 
 ## Discovery Flow
 
@@ -83,7 +99,7 @@ Before dispatching the architect agent, read rigor config from `.nwave/des-confi
 
 Execute \*design-architecture for {feature-id}.
 
-Context files: see Context Files Required above.
+Context files: see Prior Wave Consultation above.
 
 **Configuration:**
 - model: rigor.agent_model (omit if "inherit")
@@ -113,6 +129,33 @@ Context files: see Context Files Required above.
 **Handoff To**: nw-platform-architect (DEVOPS wave)
 **Deliverables**: See Morgan's handoff package specification in agent file
 
+## Wave Decisions Summary
+
+Before completing DESIGN, produce `docs/feature/{feature-id}/design/wave-decisions.md`:
+
+```markdown
+# DESIGN Decisions — {feature-id}
+
+## Key Decisions
+- [D1] {decision}: {rationale} (see: {source-file})
+
+## Architecture Summary
+- Pattern: {e.g., modular monolith with ports-and-adapters}
+- Paradigm: {OOP|FP}
+- Key components: {list top-level components}
+
+## Technology Stack
+- {language/framework}: {rationale}
+
+## Constraints Established
+- {architectural constraint}
+
+## Upstream Changes
+- {any DISCUSS assumptions changed, with rationale}
+```
+
+This summary enables DEVOPS and DISTILL to quickly assess architecture decisions without reading all DESIGN files.
+
 ## Expected Outputs
 
 ```
@@ -121,6 +164,7 @@ docs/feature/{feature-id}/design/
   technology-stack.md
   component-boundaries.md
   data-models.md
+  wave-decisions.md
 docs/adrs/
   ADR-NNN-*.md
 CLAUDE.md (project root)   (optional: ## Development Paradigm section)

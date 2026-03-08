@@ -33,6 +33,38 @@ Agents and commands go to `~/.claude/`.
 
 Full setup details: **[Installation Guide](https://github.com/nWave-ai/nWave/blob/main/docs/guides/installation-guide.md)**
 
+### OpenCode Support (Alternative IDE)
+
+nWave also works with [OpenCode](https://github.com/opencode-dev/opencode), an open-source IDE for AI pair programming. Installation requires a few extra steps to configure OpenCode's environment.
+
+**Install prerequisites:**
+```bash
+npm install -g opencode-ai
+pipx install nwave-ai
+```
+
+**Configure OpenCode:**
+```bash
+mkdir -p ~/.config/opencode
+echo '{"model": "openai/gpt-4o-mini"}' > ~/.config/opencode/opencode.json
+```
+
+**Set your OpenAI API key:**
+```bash
+export OPENAI_API_KEY=your-key-here
+```
+
+**Install nWave into OpenCode:**
+```bash
+nwave-ai install
+```
+
+**Compatibility notes:**
+- ~67% of nWave features work natively on OpenCode via compatibility paths
+- DES hooks integrate via OpenCode's `tool.execute.before` mechanism
+- Some advanced subagent coordination may differ from Claude Code — use the core `/nw:discuss`, `/nw:design`, `/nw:distill`, `/nw:deliver` commands for best results
+- For full feature parity and support, Claude Code remains the primary environment
+
 ### Which method?
 
 | Scenario | Use | Why |

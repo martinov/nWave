@@ -44,13 +44,24 @@ For greenfield projects (no src/ code, no docs/feature/ history), Luna proposes 
 1. Yes -- recommended when user motivations are unclear or multiple jobs compete
 2. No -- skip JTBD, proceed directly to journey design (default)
 
-## Context Files Required
+## Prior Wave Consultation
 
-- docs/project-brief.md | docs/stakeholders.yaml | docs/architecture/constraints.md
+Before beginning DISCUSS work, read prior wave artifacts and project context:
 
-## Previous Artifacts (Wave Handoff)
+1. **Project context**: `docs/project-brief.md` | `docs/stakeholders.yaml` | `docs/architecture/constraints.md`
+2. **DISCOVER artifacts**: Read all files in `docs/feature/{feature-id}/discover/`
 
-- docs/feature/{feature-id}/discover/problem-validation.md | opportunity-tree.md | lean-canvas.md — From DISCOVER
+DISCUSS is the direct successor to DISCOVER — reading all DISCOVER artifacts is appropriate since DISCUSS must synthesize raw evidence into structured requirements.
+
+After reading, check whether any DISCUSS decisions would contradict DISCOVER evidence. Flag contradictions and resolve with user before proceeding. Example: DISCOVER found "users don't want automation" but DISCUSS story assumes "automated workflow" — this must be resolved.
+
+## Document Update (Back-Propagation)
+
+When DISCUSS decisions change assumptions established in DISCOVER:
+1. Document the change in a `## Changed Assumptions` section at the end of the affected DISCUSS artifact
+2. Reference the original DISCOVER document and quote the original assumption
+3. State the new assumption and the rationale for the change
+4. Do NOT modify DISCOVER documents directly — they represent historical evidence
 
 ## Agent Invocation
 
@@ -59,7 +70,7 @@ For greenfield projects (no src/ code, no docs/feature/ history), Luna proposes 
 IF Decision 4 = Yes: Execute *jtbd-analysis for {feature-id}, then *journey informed by JTBD artifacts, then *story-map, then *gather-requirements with outcome KPIs.
 IF Decision 4 = No (default): Execute *journey for {feature-id}, then *story-map, then *gather-requirements with outcome KPIs.
 
-Context files: see Context Files Required and Previous Artifacts above.
+Context files: see Prior Wave Consultation above + project context files.
 
 **Configuration:**
 - format: visual | yaml | gherkin | all (default: all)
@@ -154,6 +165,30 @@ Luna crafts LeanUX stories informed by JTBD + journey artifacts. Every story tra
 **Handoff To**: nw-solution-architect (DESIGN wave) + nw-platform-architect (DEVOPS wave, KPIs only)
 **Deliverables**: Journey artifacts + story map + requirements + outcome KPIs | JTBD artifacts (when selected)
 
+## Wave Decisions Summary
+
+Before completing DISCUSS, produce `docs/feature/{feature-id}/discuss/wave-decisions.md`:
+
+```markdown
+# DISCUSS Decisions — {feature-id}
+
+## Key Decisions
+- [D1] {decision}: {rationale} (see: {source-file})
+
+## Requirements Summary
+- Primary jobs/user needs: {1-3 sentence summary}
+- Walking skeleton scope: {if applicable}
+- Feature type: {user-facing|backend|infrastructure|cross-cutting}
+
+## Constraints Established
+- {constraint from requirements analysis}
+
+## Upstream Changes
+- {any DISCOVER assumptions changed, with rationale}
+```
+
+This summary enables DESIGN to quickly assess DISCUSS outcomes. DESIGN reads this plus key artifacts (requirements.md, acceptance-criteria.md, story-map.md, outcome-kpis.md) rather than all DISCUSS files.
+
 ## Expected Outputs
 
 ```
@@ -172,6 +207,7 @@ docs/feature/{feature-id}/discuss/
   acceptance-criteria.md
   dor-checklist.md
   outcome-kpis.md
+  wave-decisions.md
 ```
 
 ## Examples

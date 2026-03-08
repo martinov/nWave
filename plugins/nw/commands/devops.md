@@ -116,17 +116,25 @@ After selection, Apex asks permission to write to project CLAUDE.md under `## Mu
 
 Default if not chosen: **per-feature**.
 
-## Context Files Required
+## Prior Wave Consultation
 
-- docs/feature/{feature-id}/design/architecture-design.md
-- docs/feature/{feature-id}/design/technology-stack.md
-- docs/feature/{feature-id}/design/component-boundaries.md
-- docs/feature/{feature-id}/discuss/outcome-kpis.md (from DISCUSS wave)
+Before beginning DEVOPS work, read targeted prior wave artifacts:
 
-## Previous Artifacts (Wave Handoff)
+1. **DISCOVER** (skip): DESIGN already synthesizes DISCOVER+DISCUSS into architecture. Not needed for infrastructure design.
+2. **DISCUSS** (KPIs only): Read `docs/feature/{feature-id}/discuss/outcome-kpis.md` — drives observability and instrumentation design
+3. **DESIGN** (primary input): Read all files in `docs/feature/{feature-id}/design/` — architecture drives infrastructure decisions
 
-- docs/feature/{feature-id}/design/* — Complete architecture from DESIGN
-- docs/feature/{feature-id}/discuss/outcome-kpis.md — Outcome KPIs from DISCUSS (defines what to measure, baselines, targets)
+DESIGN is the direct predecessor and synthesis point — its architecture decisions, component boundaries, and tech stack are the primary input for infrastructure design. Reading DISCOVER or full DISCUSS would duplicate what DESIGN already encoded.
+
+After reading, check whether any DEVOPS decisions would contradict DESIGN architecture. Flag contradictions and resolve with user before proceeding. Example: DESIGN specifies "single-region deployment" but DEVOPS discovers latency requirements from outcome-kpis.md that demand multi-region — this must be resolved.
+
+## Document Update (Back-Propagation)
+
+When DEVOPS decisions change assumptions from prior waves:
+1. Document the change in a `## Changed Assumptions` section at the end of the affected DEVOPS artifact
+2. Reference the original prior-wave document and quote the original assumption
+3. State the new assumption and the rationale for the change
+4. If infrastructure constraints require architecture changes, note them in `docs/feature/{feature-id}/devops/upstream-changes.md` for the architect to review
 
 ## Agent Invocation
 
@@ -134,7 +142,7 @@ Default if not chosen: **per-feature**.
 
 Execute platform readiness and infrastructure design for {feature-id}.
 
-Context files: see Context Files Required above.
+Context files: see Prior Wave Consultation above.
 
 **Configuration:**
 - deployment_target: {Decision 1} | container_orchestration: {Decision 2}
@@ -183,6 +191,29 @@ User selects: cloud-native, Kubernetes, GitHub Actions, no existing infra, OpenT
 ```
 User selects: hybrid, Docker Compose, GitLab CI (existing), existing CI/CD only, Datadog, rolling, GitFlow. Apex extends existing pipelines with branch-specific stages for develop, release, and hotfix branches.
 
+## Wave Decisions Summary
+
+Before completing DEVOPS, produce `docs/feature/{feature-id}/devops/wave-decisions.md`:
+
+```markdown
+# DEVOPS Decisions — {feature-id}
+
+## Key Decisions
+- [D1] {decision}: {rationale} (see: {source-file})
+
+## Infrastructure Summary
+- Deployment: {target + strategy}
+- CI/CD: {platform + branching strategy}
+- Observability: {stack}
+- Mutation testing: {strategy}
+
+## Constraints Established
+- {infrastructure constraint}
+
+## Upstream Changes
+- {any DESIGN assumptions changed, with rationale}
+```
+
 ## Expected Outputs
 
 ```
@@ -195,4 +226,5 @@ docs/feature/{feature-id}/devops/
   branching-strategy.md
   continuous-learning.md           (if applicable)
   kpi-instrumentation.md           (if outcome-kpis.md exists)
+  wave-decisions.md
 ```
