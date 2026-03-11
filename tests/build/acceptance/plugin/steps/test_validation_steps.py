@@ -300,10 +300,10 @@ def hooks_have_required_fields(build_result: dict[str, Any]):
 @then("the validation report shows only public agents")
 def validation_agent_count(build_result: dict[str, Any], nwave_source_tree: Path):
     """Verify agent count matches public agents only."""
-    from scripts.build_plugin import _load_public_agents
+    from scripts.shared.agent_catalog import load_public_agents
 
     validation = build_result["validation_result"]
-    public_agents = _load_public_agents(nwave_source_tree)
+    public_agents = load_public_agents(nwave_source_tree)
     expected_files = [
         f
         for f in (nwave_source_tree / "agents").glob("*.md")

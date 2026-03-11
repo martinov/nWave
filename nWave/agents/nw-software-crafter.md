@@ -28,7 +28,7 @@ In subagent mode (Agent tool invocation with 'execute'/'TASK BOUNDARY'), skip gr
 
 ## Core Principles
 
-These 11 principles diverge from defaults -- they define your specific methodology:
+These 12 principles diverge from defaults -- they define your specific methodology:
 
 1. Outside-In TDD with ATDD double-loop and production integration
 2. 5-phase TDD cycle: PREPARE > RED_ACCEPTANCE > RED_UNIT > GREEN > COMMIT (review/refactoring at deliver level)
@@ -41,6 +41,7 @@ These 11 principles diverge from defaults -- they define your specific methodolo
 9. Classical TDD inside hexagon, Mockist TDD at boundaries
 10. Token economy: concise, no unsolicited docs, no unnecessary files
 11. Open source first: prefer OSS, never add proprietary without approval
+12. Object Calisthenics in the hexagonal core: apply the 9 design constraints (Jeff Bay) in domain and application layers during GREEN and COMMIT phases. Full rules and relaxation policy in quality-framework skill.
 
 ## 5 Test Design Mandates
 

@@ -41,55 +41,11 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from scripts.shared import hook_definitions as shared_hooks  # noqa: E402
-
-
-# ---------------------------------------------------------------------------
-# Public/Private Agent Filtering
-# ---------------------------------------------------------------------------
-
-
-def _load_public_agents(nwave_dir: Path) -> set[str]:
-    """Load public agent names from framework-catalog.yaml.
-
-    Returns a set of agent names where ``public`` is not ``false``.
-    If the catalog cannot be loaded, returns an empty set (include all).
-    """
-    catalog_path = nwave_dir / "framework-catalog.yaml"
-    if not catalog_path.exists():
-        return set()
-
-    try:
-        import yaml
-
-        with catalog_path.open(encoding="utf-8") as fh:
-            catalog = yaml.safe_load(fh)
-
-        return {
-            name
-            for name, info in catalog.get("agents", {}).items()
-            if info.get("public") is not False
-        }
-    except Exception:
-        return set()
-
-
-def _is_public_agent(agent_file_name: str, public_agents: set[str]) -> bool:
-    """Check if an agent file belongs to a public agent."""
-    if not public_agents:
-        return True  # no catalog loaded = include all
-    agent_name = agent_file_name.removeprefix("nw-").removesuffix(".md")
-    base_name = agent_name.removesuffix("-reviewer")
-    return agent_name in public_agents or base_name in public_agents
-
-
-def _is_public_skill(skill_dir_name: str, public_agents: set[str]) -> bool:
-    """Check if a skill directory belongs to a public agent."""
-    if not public_agents:
-        return True  # no catalog loaded = include all
-    if skill_dir_name == "common":
-        return True
-    base_name = skill_dir_name.removesuffix("-reviewer")
-    return skill_dir_name in public_agents or base_name in public_agents
+from scripts.shared.agent_catalog import (  # noqa: E402
+    is_public_agent,
+    is_public_skill,
+    load_public_agents,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -335,7 +291,7 @@ def copy_agents(
     count = 0
     skipped = 0
     for md_file in sorted(source_dir.glob("nw-*.md")):
-        if _is_public_agent(md_file.name, agents):
+        if is_public_agent(md_file.name, agents):
             shutil.copy2(md_file, dest_dir / md_file.name)
             count += 1
         else:
@@ -451,7 +407,7 @@ def copy_skills(
     skipped = 0
     for skill_group in sorted(source_dir.iterdir()):
         if skill_group.is_dir():
-            if _is_public_skill(skill_group.name, agents):
+            if is_public_skill(skill_group.name, agents):
                 shutil.copytree(
                     skill_group, dest_dir / skill_group.name, dirs_exist_ok=True
                 )
@@ -857,7 +813,7 @@ def build(config: BuildConfig, *, version_override: str | None = None) -> BuildR
         )
 
     # Step 4: Load public agent list for filtering
-    public_agents = _load_public_agents(config.nwave_dir)
+    public_agents = load_public_agents(config.nwave_dir)
 
     # Step 5: Execute copy pipeline (agents, commands, skills)
     steps: list[StepResult] = []

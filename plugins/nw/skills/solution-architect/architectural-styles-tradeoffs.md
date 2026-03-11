@@ -148,8 +148,10 @@ Architecture rules are only real if they are enforced. Key rules by style:
 |----------|------|----------|
 | Java/Kotlin | ArchUnit | Fluent API unit tests, predefined architecture rules |
 | TypeScript/JS | ArchUnitTS | File-based dependency rules, Jest/Vitest integration |
+| TypeScript/JS | dependency-cruiser | Comprehensive dependency analysis, JSON/dot/HTML reports, .dependency-cruiser.js config, widely adopted |
 | Python | import-linter | Config-based contracts (forbidden, layers, independence) |
 | Python | PyTestArch | pytest-based architecture tests |
+| Python | pytest-archon | pytest-native architecture tests, modern alternative to import-linter, decorator-based rules |
 | .NET | NetArchTest | NUnit/xUnit architecture rules |
 | Go | go-arch-lint | YAML-based dependency rules |
 
@@ -183,3 +185,29 @@ Run `lint-imports` in CI as first-stage fast check (analyzes imports, no I/O).
 | Anemic domain model | Layered | Entities are data bags, logic in services | Move behavior into entities/value objects |
 | Big ball of mud | Modular Monolith | Module boundaries violated, cross-imports | Add architecture tests, enforce with CI |
 | Pass-through layers | Clean | Layers that add no value, just forward calls | Remove unnecessary layers; keep only those adding behavior |
+
+## Annotating for Software Crafter
+
+When the architecture document specifies an architectural style, include an enforcement annotation so the software-crafter knows which tooling to set up during DELIVER.
+
+### What to Include in the Design Document
+
+1. **Style chosen** and the key structural rules that apply (from the Enforceable Structural Rules section above)
+2. **Recommended enforcement tool** appropriate for the project's language (from the Architecture Enforcement Tooling table)
+3. **Specific rules to enforce** expressed as constraints the tool can verify
+
+### Annotation Format
+
+```markdown
+## Architecture Enforcement
+
+Style: [Hexagonal | Modular Monolith | Vertical Slice | ...]
+Language: [Python | Java | TypeScript | ...]
+Tool: [tool name from table above]
+
+Rules to enforce:
+- [Rule 1 from Enforceable Structural Rules, e.g., "Domain has zero imports from adapters/infra"]
+- [Rule 2, e.g., "No cross-module database access"]
+```
+
+This annotation flows through acceptance-designer to software-crafter, who implements the architecture tests during the GREEN phase alongside the first component that establishes the structural boundary.

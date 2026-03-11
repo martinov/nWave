@@ -24,6 +24,18 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
+# Ensure project root is in sys.path when invoked as standalone script
+_project_root = str(Path(__file__).resolve().parent.parent)
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+
+from scripts.shared.agent_catalog import (  # noqa: E402
+    is_public_agent,
+    is_public_skill,
+    load_public_agents,
+)
+
+
 REQUIRED_DIRS = [
     "agents/nw",
     "commands/nw",
@@ -64,23 +76,6 @@ def _get_version(project_root: Path) -> str:
         return m.group(1) if m else "0.0.0"
 
 
-def _load_public_agents(nwave_dir: Path) -> set[str]:
-    """Read framework-catalog.yaml and return set of public agent names."""
-    catalog_path = nwave_dir / "framework-catalog.yaml"
-    if not catalog_path.exists():
-        return set()  # no catalog = include everything (backward compat)
-    try:
-        import yaml
-
-        with open(catalog_path, encoding="utf-8") as f:
-            catalog = yaml.safe_load(f)
-        agents = catalog.get("agents", {})
-        return {name for name, info in agents.items() if info.get("public", True)}
-    except ImportError:
-        # PyYAML not available — fall back to include all
-        return set()
-
-
 class DistBuilder:
     """Assembles dist/ from source directories."""
 
@@ -89,7 +84,7 @@ class DistBuilder:
         self.dist_dir = self.project_root / "dist"
         self.nwave_dir = self.project_root / "nWave"
         self.version = _get_version(self.project_root)
-        self.public_agents = _load_public_agents(self.nwave_dir)
+        self.public_agents = load_public_agents(self.nwave_dir)
 
     def _log(self, message: str, level: str = "INFO"):
         print(f"[{level}] {message}")
@@ -118,17 +113,6 @@ class DistBuilder:
 
         self._log("Cleaned dist/")
 
-    def _is_public_agent(self, agent_file_name: str) -> bool:
-        """Check if an agent file belongs to a public agent."""
-        if not self.public_agents:
-            return True  # no catalog loaded = include all
-        # nw-software-crafter.md → software-crafter
-        # nw-software-crafter-reviewer.md → software-crafter-reviewer
-        agent_name = agent_file_name.removeprefix("nw-").removesuffix(".md")
-        # Reviewers inherit public status from their base agent
-        base_name = agent_name.removesuffix("-reviewer")
-        return agent_name in self.public_agents or base_name in self.public_agents
-
     def build_agents(self) -> int:
         """nWave/agents/nw-*.md → dist/agents/nw/ (public agents only)."""
         src = self.nwave_dir / "agents"
@@ -138,7 +122,7 @@ class DistBuilder:
         count = 0
         skipped = 0
         for md_file in src.glob("nw-*.md"):
-            if self._is_public_agent(md_file.name):
+            if is_public_agent(md_file.name, self.public_agents):
                 shutil.copy2(md_file, dst / md_file.name)
                 count += 1
             else:
@@ -179,17 +163,6 @@ class DistBuilder:
         self._log(f"Templates: {count} files")
         return count
 
-    def _is_public_skill(self, skill_dir_name: str) -> bool:
-        """Check if a skill directory belongs to a public agent."""
-        if not self.public_agents:
-            return True  # no catalog loaded = include all
-        # Skill dirs: "software-crafter", "software-crafter-reviewer", "common"
-        # "common" is always included (shared skills)
-        if skill_dir_name == "common":
-            return True
-        base_name = skill_dir_name.removesuffix("-reviewer")
-        return skill_dir_name in self.public_agents or base_name in self.public_agents
-
     def build_skills(self) -> int:
         """nWave/skills/*/ → dist/skills/nw/*/ (public agent skills only)."""
         src = self.nwave_dir / "skills"
@@ -200,7 +173,7 @@ class DistBuilder:
         skipped = 0
         for skill_dir in src.iterdir():
             if skill_dir.is_dir():
-                if self._is_public_skill(skill_dir.name):
+                if is_public_skill(skill_dir.name, self.public_agents):
                     shutil.copytree(skill_dir, dst / skill_dir.name, dirs_exist_ok=True)
                     count += 1
                 else:

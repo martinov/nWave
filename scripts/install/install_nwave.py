@@ -44,6 +44,7 @@ try:
     from scripts.install.plugins.templates_plugin import TemplatesPlugin
     from scripts.install.plugins.utilities_plugin import UtilitiesPlugin
     from scripts.install.preflight_checker import PreflightChecker
+    from scripts.shared.agent_catalog import is_public_agent, load_public_agents
 except ImportError:
     # Fallback for standalone execution from scripts/install directory
     from context_detector import detect_target_platforms
@@ -67,6 +68,7 @@ except ImportError:
     from plugins.templates_plugin import TemplatesPlugin
     from plugins.utilities_plugin import UtilitiesPlugin
     from preflight_checker import PreflightChecker
+    from shared.agent_catalog import is_public_agent, load_public_agents
 
 # ANSI color codes for --help output (only consumer)
 _ANSI_BLUE = "\033[0;34m"
@@ -420,6 +422,7 @@ class NWaveInstaller:
         all_synced = True
 
         # Agents: dist/agents/nw/ or nWave/agents/
+        # Only public agents are installed, so only count public source files
         dist_agents = self.framework_source / "agents" / "nw"
         if dist_agents.exists():
             agents_source = dist_agents
@@ -427,7 +430,12 @@ class NWaveInstaller:
             agents_source = self.project_root / "nWave" / "agents"
         agents_target = self.claude_config_dir / "agents" / "nw"
         if agents_source.exists():
-            agent_source_files = sorted(agents_source.glob("nw-*.md"))
+            public_agents = load_public_agents(self.project_root / "nWave")
+            agent_source_files = sorted(
+                f
+                for f in agents_source.glob("nw-*.md")
+                if is_public_agent(f.name, public_agents)
+            )
             agent_matched = sum(
                 1 for f in agent_source_files if (agents_target / f.name).exists()
             )

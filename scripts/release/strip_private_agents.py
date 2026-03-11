@@ -72,11 +72,99 @@ def _strip_catalog(catalog_path: Path, private_agents: set[str]) -> int:
     return count
 
 
+def _strip_reference_docs(target_dir: Path, private_agents: set[str]) -> list[str]:
+    """Remove generated reference docs for private agents.
+
+    Deletes individual agent doc files and scrubs index files
+    (``docs/reference/agents/index.md``, ``docs/reference/skills/index.md``).
+    """
+    removed: list[str] = []
+    ref_agents_dir = target_dir / "docs" / "reference" / "agents"
+    ref_skills_index = target_dir / "docs" / "reference" / "skills" / "index.md"
+
+    # Build set of all names to match (agent + reviewer variants)
+    private_names: set[str] = set()
+    for name in private_agents:
+        private_names.add(name)
+        private_names.add(f"{name}-reviewer")
+
+    # Delete individual agent reference files
+    if ref_agents_dir.exists():
+        for name in sorted(private_names):
+            doc_file = ref_agents_dir / f"nw-{name}.md"
+            if doc_file.exists():
+                doc_file.unlink()
+                removed.append(str(doc_file.relative_to(target_dir)))
+
+        # Scrub agent index: remove lines referencing private agents
+        agent_index = ref_agents_dir / "index.md"
+        if agent_index.exists():
+            _scrub_index_file(agent_index, private_names)
+            removed.append(f"scrubbed {agent_index.relative_to(target_dir)}")
+
+    # Scrub skills index: remove sections for private agents
+    if ref_skills_index.exists():
+        _scrub_index_file(ref_skills_index, private_names)
+        removed.append(f"scrubbed {ref_skills_index.relative_to(target_dir)}")
+
+    # Scrub public reviewer docs that link to private skill paths
+    if ref_agents_dir.exists():
+        for reviewer_doc in sorted(ref_agents_dir.glob("nw-*-reviewer.md")):
+            _scrub_private_links(reviewer_doc, private_names)
+
+    return removed
+
+
+def _scrub_index_file(index_path: Path, private_names: set[str]) -> None:
+    """Remove lines from an index file that reference private agents."""
+    content = index_path.read_text(encoding="utf-8")
+    lines = content.splitlines(keepends=True)
+    filtered: list[str] = []
+    skip_section = False
+
+    for line in lines:
+        # Detect markdown section headers for private agents (skills index)
+        stripped = line.strip()
+        if stripped.startswith("##") and any(
+            f"nw-{name}" in stripped for name in private_names
+        ):
+            skip_section = True
+            continue
+
+        # End section skip on next header
+        if skip_section and stripped.startswith("##"):
+            skip_section = False
+
+        if skip_section:
+            continue
+
+        # Filter table rows and list items referencing private agents
+        if any(f"nw-{name}" in line or f"/{name}" in line for name in private_names):
+            continue
+
+        filtered.append(line)
+
+    index_path.write_text("".join(filtered), encoding="utf-8")
+
+
+def _scrub_private_links(doc_path: Path, private_names: set[str]) -> None:
+    """Remove lines containing links to private skill directories."""
+    content = doc_path.read_text(encoding="utf-8")
+    lines = content.splitlines(keepends=True)
+    filtered = [
+        line
+        for line in lines
+        if not any(f"skills/{name}/" in line for name in private_names)
+    ]
+    if len(filtered) != len(lines):
+        doc_path.write_text("".join(filtered), encoding="utf-8")
+
+
 def strip(target_dir: Path) -> dict[str, list[str]]:
     """Remove private agent files and skill dirs from *target_dir*.
 
-    Returns a dict with ``agents``, ``skills``, and ``catalog`` keys
-    listing removed paths (relative to *target_dir*).
+    Returns a dict with ``agents``, ``skills``, ``docs``, and ``catalog``
+    keys listing removed paths (relative to *target_dir*).
     """
     catalog_path = target_dir / "nWave" / "framework-catalog.yaml"
     if not catalog_path.exists():
@@ -86,9 +174,14 @@ def strip(target_dir: Path) -> dict[str, list[str]]:
     private_agents = _load_private_agents(catalog_path)
     if not private_agents:
         print("No private agents found — nothing to strip.")
-        return {"agents": [], "skills": [], "catalog": []}
+        return {"agents": [], "skills": [], "docs": [], "catalog": []}
 
-    removed: dict[str, list[str]] = {"agents": [], "skills": [], "catalog": []}
+    removed: dict[str, list[str]] = {
+        "agents": [],
+        "skills": [],
+        "docs": [],
+        "catalog": [],
+    }
 
     agents_dir = target_dir / "nWave" / "agents"
     skills_dir = target_dir / "nWave" / "skills"
@@ -118,6 +211,9 @@ def strip(target_dir: Path) -> dict[str, list[str]]:
             shutil.rmtree(reviewer_skill)
             removed["skills"].append(str(reviewer_skill.relative_to(target_dir)))
 
+    # Strip reference documentation
+    removed["docs"] = _strip_reference_docs(target_dir, private_agents)
+
     # Strip catalog entries
     catalog_count = _strip_catalog(catalog_path, private_agents)
     if catalog_count:
@@ -126,7 +222,12 @@ def strip(target_dir: Path) -> dict[str, list[str]]:
         )
 
     # Summary
-    total = len(removed["agents"]) + len(removed["skills"]) + catalog_count
+    total = (
+        len(removed["agents"])
+        + len(removed["skills"])
+        + len(removed["docs"])
+        + catalog_count
+    )
     print(f"Stripped {total} private items:")
     for category, paths in removed.items():
         for p in paths:

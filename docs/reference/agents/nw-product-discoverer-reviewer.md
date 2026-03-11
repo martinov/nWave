@@ -9,7 +9,6 @@ Use as peer reviewer for product-discoverer outputs -- validates evidence qualit
 
 ## Skills
 
-- [review-criteria](../../../nWave/skills/business-reviewer/review-criteria.md) — Review criteria, ethical boundaries, compliance checklists, and numerical benchmarks for business artifact review
 - [review-criteria](../../../nWave/skills/data-engineer-reviewer/review-criteria.md) — Evaluation criteria and scoring for data engineering artifact reviews
 - [review-criteria](../../../nWave/skills/documentarist-reviewer/review-criteria.md) — Critique dimensions, severity framework, verdict decision matrix, and review output format for documentation assessment reviews
 - [review-criteria](../../../nWave/skills/platform-architect-reviewer/review-criteria.md) — Quality dimensions and review checklist for devop reviews

@@ -21,16 +21,6 @@
 - [critique-dimensions](../../../nWave/skills/agent-builder-reviewer/critique-dimensions.md) — Review dimensions for validating agent quality - template compliance, safety, testing, and priority validation
 - [review-workflow](../../../nWave/skills/agent-builder-reviewer/review-workflow.md) — Detailed review process, v2 validation checklist, and scoring methodology for agent definition reviews
 
-## [nw-business-discoverer](../agents/nw-business-discoverer.md)
-
-- [icp-design](../../../nWave/skills/business-discoverer/icp-design.md) — Ideal Customer Profile schema, signal catalog, scoring methodology, and Go-to-Market phase design for small teams
-- [lean-canvas-methodology](../../../nWave/skills/business-discoverer/lean-canvas-methodology.md) — Lean Canvas and Value Proposition Canvas generation methodology with assumption mapping, pivot triggers, and anti-patterns
-- [pricing-frameworks](../../../nWave/skills/business-discoverer/pricing-frameworks.md) — Hybrid margin-safe pricing (Base Floor + Value Capture + Success Fee), Good/Better/Best tiering, Cialdini anchoring, Ackerman deal structuring, unit economics, consulting-specific models
-
-## [nw-business-reviewer](../agents/nw-business-reviewer.md)
-
-- [review-criteria](../../../nWave/skills/business-reviewer/review-criteria.md) — Review criteria, ethical boundaries, compliance checklists, and numerical benchmarks for business artifact review
-
 ## Shared Skills
 
 - [wizard-shared-rules](../../../nWave/skills/common/wizard-shared-rules.md) — Shared rules for feature ID derivation and wave detection used by /nw:new, /nw:continue, and /nw:fast-forward wizards
@@ -45,12 +35,6 @@
 ## [nw-data-engineer-reviewer](../agents/nw-data-engineer-reviewer.md)
 
 - [review-criteria](../../../nWave/skills/data-engineer-reviewer/review-criteria.md) — Evaluation criteria and scoring for data engineering artifact reviews
-
-## [nw-deal-closer](../agents/nw-deal-closer.md)
-
-- [fisher-ury-preparation](../../../nWave/skills/deal-closer/fisher-ury-preparation.md) — Principled negotiation structural analysis from Getting to Yes — BATNA, ZOPA estimation, interests mapping, option generation, objective criteria
-- [proposal-structure](../../../nWave/skills/deal-closer/proposal-structure.md) — B2B proposal generation templates, ROI calculator structures, and deal packaging patterns for training, consulting, and enterprise support
-- [voss-negotiation](../../../nWave/skills/deal-closer/voss-negotiation.md) — Tactical empathy and conversational tactics from Never Split the Difference — Ackerman sequences, accusation audits, calibrated questions, labeling, mirroring, Black Swan discovery
 
 ## [nw-documentarist](../agents/nw-documentarist.md)
 
@@ -85,12 +69,6 @@
 - [pbt-stateful](../../../nWave/skills/functional-software-crafter/pbt-stateful.md) — Stateful property-based testing patterns, model-based testing, and anti-patterns
 - [pbt-typescript](../../../nWave/skills/functional-software-crafter/pbt-typescript.md) — TypeScript/JavaScript property-based testing with fast-check framework and arbitraries
 - [tlaplus-verification](../../../nWave/skills/functional-software-crafter/tlaplus-verification.md) — TLA+ formal verification for design correctness and PBT pipeline integration
-
-## [nw-outreach-writer](../agents/nw-outreach-writer.md)
-
-- [cialdini-outreach](../../../nWave/skills/outreach-writer/cialdini-outreach.md) — Cialdini's 7 influence principles applied to B2B outreach with ethical guardrails and compliance boundaries
-- [copywriting-frameworks](../../../nWave/skills/outreach-writer/copywriting-frameworks.md) — PAS, BAB, and AIDA copywriting frameworks for B2B outreach with decision tree for framework selection
-- [sequence-design](../../../nWave/skills/outreach-writer/sequence-design.md) — Multi-channel outreach sequence design — 12-touch 22-day framework with tiered personalization and signal-based triggers
 
 ## [nw-platform-architect](../agents/nw-platform-architect.md)
 
@@ -200,32 +178,3 @@
 
 - [review-criteria](../../../nWave/skills/troubleshooter-reviewer/review-criteria.md) — Review dimensions and scoring for root cause analysis quality assessment
 
-## [nw-tutorialist](../agents/nw-tutorialist.md)
-
-- [ai-workflow-tutorials](../../../nWave/skills/tutorialist/ai-workflow-tutorials.md) — AI workflow tutorial patterns — non-deterministic output handling, outcome-based verification, and agent workflow step design
-- [cognitive-load-management](../../../nWave/skills/tutorialist/cognitive-load-management.md) — Cognitive Load Theory (Sweller) applied to tutorial design — intrinsic/extraneous/germane load management, concept budgeting, and progressive disclosure
-- [copy-paste-quality](../../../nWave/skills/tutorialist/copy-paste-quality.md) — Copy-paste quality standards — self-contained snippet validation, environment assumptions, expected output contracts, and test script generation
-- [tutorial-structure](../../../nWave/skills/tutorialist/tutorial-structure.md) — Tutorial structure blueprint — section ordering, step templates, and progressive disclosure patterns for evidence-based tutorial design
-
-## [nw-ux-designer](../agents/nw-ux-designer.md)
-
-- [css-implementation-recipes](../../../nWave/skills/ux-designer/css-implementation-recipes.md) — Concrete CSS code snippets for futuristic UI patterns -- glassmorphism, neon glows, HUD elements, data grids, holographic effects
-- [futuristic-color-typography](../../../nWave/skills/ux-designer/futuristic-color-typography.md) — Color palettes, font pairing, and visual treatments for sci-fi aesthetics -- concrete values with rationale
-- [interaction-choreography](../../../nWave/skills/ux-designer/interaction-choreography.md) — Animation principles, timing, easing curves, and choreography sequences for futuristic interfaces -- motion as communication
-- [sci-fi-design-patterns](../../../nWave/skills/ux-designer/sci-fi-design-patterns.md) — Catalog of UI patterns from games, anime, and films with analysis of why they work -- structural principles extractable to real interfaces
-- [usability-engineering](../../../nWave/skills/ux-designer/usability-engineering.md) — Cognitive science principles applied to futuristic interface design -- Fitts, Hick, Miller, cognitive load theory, and Nielsen heuristics
-
-## [nw-workshopper](../agents/nw-workshopper.md)
-
-- [assessment-kirkpatrick](../../../nWave/skills/workshopper/assessment-kirkpatrick.md) — Kirkpatrick New World Model applied to workshop design — assessment checkpoints, behavioral commitment instruments, rubric design, and Level 3 required drivers
-- [backward-design-ubd](../../../nWave/skills/workshopper/backward-design-ubd.md) — Backward design using UbD (Understanding by Design) — how to apply the 3-stage framework to every workshop, write transfer goals, design essential questions, and identify/fix coverage-trap designs
-- [cognitive-load-theory](../../../nWave/skills/workshopper/cognitive-load-theory.md) — Evidence-based framework for calibrating information density, detecting cognitive overload, recommending scaffolding, and adapting content sequencing by audience expertise level in technical IT workshops
-- [curriculum-series-design](../../../nWave/skills/workshopper/curriculum-series-design.md) — Arc-level curriculum design for multi-session workshop series — spiral curriculum, Bloom's progression across 6- and 12-session arcs, session opening/closing rituals, between-session transfer with spaced/interleaved practice, LARS assignment templates, and series-level capstone assessment models
-- [gamification-mda-wow-aha](../../../nWave/skills/workshopper/gamification-mda-wow-aha.md) — Pedagogical gamification design using MDA framework, flow theory, Bartle audience analysis, WOW moment and AHA moment engineering for professional workshops
-- [it-specific-pedagogy](../../../nWave/skills/workshopper/it-specific-pedagogy.md) — IT-specific learning formats — coding katas, coding dojos, mob/ensemble programming, TDD workshops, architecture katas, refactoring katas — with facilitation rules, format selection logic, group size constraints, and activity sequencing for technical skill development
-- [liberating-structures-facilitation](../../../nWave/skills/workshopper/liberating-structures-facilitation.md) — Practitioner guide for selecting and specifying Liberating Structures, World Café, and Open Space Technology based on group size and learning intent
-- [neuroscience-learning](../../../nWave/skills/workshopper/neuroscience-learning.md) — Evidence-based neuroscience findings applied to workshop design — primacy/recency effects, retrieval practice, spaced/interleaved practice, emotional arousal encoding, and attention-fatigue management
-- [online-facilitation-miro-boards](../../../nWave/skills/workshopper/online-facilitation-miro-boards.md) — Evidence-based methodology for designing online workshop sessions with correct duration/energy management, Miro board architecture, modality selection criteria, and complete artifact templates
-- [pedagogy-bloom-andragogy](../../../nWave/skills/workshopper/pedagogy-bloom-andragogy.md) — Evidence-based methodology for designing adult professional workshops — Bloom's Revised Taxonomy levels with action verbs and time calibration, Knowles' andragogical principles, behavioral change frameworks, and transfer-optimized outcome writing
-- [psychological-safety](../../../nWave/skills/workshopper/psychological-safety.md) — Psychological safety in professional workshop contexts — detecting threats, building safety through design, adapting gamification, and facilitating debrief without breaking vulnerability
-- [tbr-methodology](../../../nWave/skills/workshopper/tbr-methodology.md) — Train from the Back of the Room (TBR) practitioner reference for the nw-workshopper agent. Covers the 4C framework, time allocation formulas, 20% talk time rule, Six Trumps, series design with spacing, Bloom's spiral, and assessment checkpoints.

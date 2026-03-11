@@ -66,3 +66,39 @@ For commit message formats, load the collaboration-and-handoffs skill.
 Track: cyclomatic complexity (reduction) | maintainability index (improvement) | technical debt ratio (reduction) | test coverage (maintenance) | test effectiveness (75-80% mutation kill rate at Phase 2.25) | code smells (systematic elimination across 22 types).
 
 For mutation testing integration, load the property-based-testing skill.
+
+## Object Calisthenics (Application + Domain Layers)
+
+9 design constraints for clean OOP code in the hexagonal core (Jeff Bay,
+ThoughtWorks Anthology). Apply during GREEN and COMMIT phases.
+
+### Rules
+
+| # | Rule | Rationale | Layer |
+|---|------|-----------|-------|
+| 1 | One indentation level per method | Forces decomposition | Domain, Application |
+| 2 | No `else` keyword | Guard clauses, early returns | Domain, Application |
+| 3 | Wrap all primitives and strings | Value objects | Domain |
+| 4 | First-class collections | Domain collection types | Domain |
+| 5 | One dot per line | Law of Demeter | Domain, Application |
+| 6 | No abbreviations | Intention-revealing names | All |
+| 7 | Small entities (<50 LOC classes, <10 LOC methods) | SRP | Domain, Application |
+| 8 | Max 2 instance variables per class | Promotes decomposition | Domain |
+| 9 | No getters/setters | Tell, don't ask | Domain, Application |
+
+### Rule 9 Relaxation Policy
+
+Getters are acceptable in these cases:
+- DTOs/response objects at port boundaries (serialization needs)
+- CQRS read models (query-optimized projections)
+- Value objects with computed properties (e.g., Money.amount)
+- Framework requirements (ORM mapping, serialization)
+
+Rule 9 applies strictly to domain entities and application services.
+Behavior through commands, not data access.
+
+### Scope
+
+- Applies to: Domain layer, Application layer (inside the hexagon)
+- Does NOT apply to: Adapters, infrastructure, DTOs, configuration
+- Enforcement phase: GREEN (writing new code) + COMMIT (refactoring)

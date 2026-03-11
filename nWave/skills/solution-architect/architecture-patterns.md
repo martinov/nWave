@@ -124,3 +124,39 @@ OSS criteria: last commit <6 months | regular releases | quick issue resolution 
 License preference: MIT > Apache 2.0 > BSD > MPL 2.0 > LGPL (caution) > GPL (careful) > AGPL (extreme caution). Proprietary forbidden without explicit request.
 
 Document per selection: name/version, license, GitHub URL/stats, maintenance assessment, alternatives considered.
+
+## Contract Testing for External Integrations
+
+External integrations (web APIs, third-party services, webhooks, OAuth providers) are the highest-risk boundary in any system. Breaking changes in external APIs cause production failures that unit and integration tests cannot catch.
+
+**Consumer-driven contracts** verify that the provider's API still satisfies the consumer's expectations. The consumer defines the contract; the provider verifies against it. Breaking changes are detected at build time, not in production.
+
+### When to Recommend
+
+Annotate for contract testing when the design includes:
+- Third-party REST/GraphQL APIs (payment, email, analytics, auth providers)
+- Webhooks from external services (Stripe events, GitHub webhooks)
+- OAuth/OIDC providers (token exchange, userinfo endpoints)
+- Internal APIs consumed across team boundaries (same org, different team)
+
+### Tool Recommendations by Language
+
+| Language | Tool | Notes |
+|----------|------|-------|
+| Polyglot (any) | Pact | Consumer-driven, widest language support, Pact Broker for contract sharing |
+| JVM (Java/Kotlin) | Spring Cloud Contract | Groovy/YAML DSL, generates stubs for consumers, tight Spring integration |
+| .NET | PactNet | Pact implementation for .NET, NuGet package |
+| Python | pact-python | Pact implementation for Python, pytest integration |
+| JavaScript/TS | Pact-JS | Pact implementation for Node.js, Jest/Vitest compatible |
+
+### Handoff Annotation Format
+
+When external integrations are detected, include in the handoff to platform-architect:
+
+```
+External Integrations Requiring Contract Tests:
+- [Service Name] ([API type]): [what the system consumes]
+  Recommended: consumer-driven contracts via [tool] in CI acceptance stage
+```
+
+This enables platform-architect to include contract test execution in the CI/CD pipeline design.

@@ -17,6 +17,18 @@ from pathlib import Path
 from typing import TypedDict
 
 
+# Ensure project root is in sys.path when invoked as standalone script
+_project_root = str(Path(__file__).resolve().parent.parent)
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+
+from scripts.shared.agent_catalog import (  # noqa: E402
+    is_public_agent,
+    is_public_skill,
+    load_public_agents,
+)
+
+
 class DocgenError(Exception):
     """Raised for any data integrity issue — malformed YAML, missing fields, broken refs."""
 
@@ -105,12 +117,30 @@ def require_fields(data: dict, fields: list[str], path: Path) -> None:
 # ---------------------------------------------------------------------------
 # Stage 1: Scan
 # ---------------------------------------------------------------------------
-def scan(root: Path) -> dict[str, list[Path]]:
-    """Discover artifact files grouped by type."""
+def scan(root: Path, *, public_only: bool = False) -> dict[str, list[Path]]:
+    """Discover artifact files grouped by type.
+
+    When *public_only* is True, private agents and their skills are excluded
+    using the same shared catalog logic as the build and install pipelines.
+    """
     nwave = root / "nWave"
+
+    public_agents: set[str] = set()
+    if public_only:
+        public_agents = load_public_agents(nwave)
+
     agents = sorted((nwave / "agents").glob("*.md"))
+    if public_agents:
+        agents = [a for a in agents if is_public_agent(a.name, public_agents)]
+
     commands = sorted((nwave / "tasks" / "nw").glob("*.md"))
-    skills = sorted((nwave / "skills").rglob("*.md"))
+
+    skills_dir = nwave / "skills"
+    skill_dirs = sorted(d for d in skills_dir.iterdir() if d.is_dir())
+    if public_agents:
+        skill_dirs = [d for d in skill_dirs if is_public_skill(d.name, public_agents)]
+    skills = sorted(md for d in skill_dirs for md in d.rglob("*.md"))
+
     templates = sorted(
         p for p in (nwave / "templates").glob("*.yaml") if not p.name.startswith(".")
     )
@@ -563,9 +593,11 @@ def check_links(root: Path, dirs: list[str]) -> list[str]:
 # ---------------------------------------------------------------------------
 # Pipeline
 # ---------------------------------------------------------------------------
-def run_pipeline(root: Path, output_dir: Path) -> dict[str, str]:
+def run_pipeline(
+    root: Path, output_dir: Path, *, public_only: bool = False
+) -> dict[str, str]:
     """Execute full pipeline: scan → extract → enrich → render. Returns pages."""
-    paths = scan(root)
+    paths = scan(root, public_only=public_only)
     data = extract_all(paths)
     data = enrich(data)
     return render(data)
@@ -594,13 +626,18 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Validate markdown links in README and docs/ (exit 1 if broken)",
     )
+    parser.add_argument(
+        "--public-only",
+        action="store_true",
+        help="Exclude private agents and their skills from generated docs",
+    )
     args = parser.parse_args(argv)
 
     root = Path(__file__).resolve().parent.parent
     output_dir = args.output_dir or root / "docs" / "reference"
 
     try:
-        pages = run_pipeline(root, output_dir)
+        pages = run_pipeline(root, output_dir, public_only=args.public_only)
     except DocgenError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 1

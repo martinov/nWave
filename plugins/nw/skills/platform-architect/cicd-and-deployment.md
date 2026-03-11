@@ -5,6 +5,32 @@ description: CI/CD pipeline design methodology, deployment strategies, GitHub Ac
 
 # CI/CD Pipeline Design and Deployment Strategies
 
+## Local Quality Gates
+
+Catch issues at the developer's machine before they reach CI. Local gates mirror the remote commit stage for fast feedback (seconds vs minutes).
+
+### Gate Taxonomy
+
+| Gate | Trigger | Checks | Tools |
+|------|---------|--------|-------|
+| Pre-commit | `git commit` | Formatting, linting, unit tests, secrets scan | pre-commit, husky, lefthook |
+| Pre-push | `git push` | Integration tests, acceptance tests, coverage threshold | pre-commit (push stage), git hooks |
+| Local CI | Manual | Full pipeline locally | act (GitHub Actions), gitlab-runner exec |
+
+### Design Principles
+
+- **Mirror, not duplicate**: local gates run the same checks as the remote commit stage, not additional ones. Keeps developer experience consistent with CI.
+- **Fast by default**: pre-commit gates target < 30 seconds. Move slow checks (integration, acceptance) to pre-push.
+- **Escapable with audit trail**: allow `--no-verify` for emergencies but log skips. CI remains the authoritative gate.
+- **Framework selection**: prefer `pre-commit` (Python ecosystem) or `lefthook` (polyglot, fast parallel execution) over raw git hooks. Husky for JS/TS-heavy projects.
+
+### Hook Stage Assignment
+
+```
+pre-commit (< 30s):     formatting | linting | unit tests (fast subset) | secrets scan
+pre-push   (< 5 min):   full unit suite | integration tests | coverage check | type checking
+```
+
 ## Pipeline Stages
 
 ### Commit Stage (target: < 10 minutes)
@@ -22,6 +48,37 @@ Quality gates: performance within SLO thresholds | load test pass (expected traf
 ### Production Stage
 Progressive deployment (canary/blue-green) | Health checks and smoke tests | SLO monitoring during rollout | Automatic rollback on degradation.
 Quality gates: health checks pass | SLOs maintained | no error rate increase | latency within bounds.
+
+## Quality Gate Classification
+
+Every quality gate has a category (where it runs), a type (what happens on failure), and a scope (what it protects).
+
+### Gate Taxonomy
+
+| Category | Stage | Type | Examples |
+|----------|-------|------|----------|
+| Local | Pre-commit, pre-push | Blocking (developer) | Format, lint, unit tests, secrets scan |
+| PR | Pull request | Blocking (merge) | Status checks, review approvals, coverage diff |
+| CI | Commit stage | Blocking (pipeline) | Build, unit tests, SAST, coverage threshold |
+| CI | Acceptance stage | Blocking (pipeline) | Integration, acceptance, contract tests, DAST |
+| Deploy | Environment promotion | Blocking (approval) | Manual approval, change advisory board |
+| Deploy | Canary/progressive | Automatic (rollback) | Error rate, latency, SLO breach |
+| Production | Post-deploy | Advisory (monitoring) | Smoke tests, SLO monitoring window, business metrics |
+
+### Gate Types
+
+- **Blocking**: pipeline halts on failure. Merge/deploy/promotion is prevented until resolved.
+- **Automatic (rollback)**: no human intervention -- system rolls back on threshold breach. Requires pre-defined thresholds and rollback automation.
+- **Advisory**: failure is reported but does not block. Used for post-deploy monitoring where rollback is a separate decision.
+
+### Design Checklist
+
+When designing quality gates for a pipeline, verify:
+1. Every remote CI gate has a local equivalent (pre-commit or pre-push)
+2. PR gates include both automated checks (status checks) and human review (approvals)
+3. Deployment gates distinguish blocking (promotion) from automatic (canary rollback)
+4. Post-deploy gates have clear escalation paths (advisory -> manual rollback decision)
+5. Gate thresholds are documented and versioned (not hardcoded in pipeline YAML)
 
 ## GitHub Actions Patterns
 

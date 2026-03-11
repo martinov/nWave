@@ -168,7 +168,9 @@ class TestDESConfigRigorDefaults:
 
         from des.adapters.driven.config.des_config import DESConfig
 
-        cfg = DESConfig(config_path=config_file)
+        # Isolate from real ~/.nwave/global-config.json
+        nonexistent_global = tmp_path / "no-global-config.json"
+        cfg = DESConfig(config_path=config_file, global_config_path=nonexistent_global)
 
         assert cfg.rigor_profile == "standard"
         assert cfg.rigor_agent_model == "sonnet"
@@ -191,7 +193,9 @@ class TestDESConfigRigorDefaults:
 
         from des.adapters.driven.config.des_config import DESConfig
 
-        cfg = DESConfig(config_path=config_file)
+        # Isolate from real ~/.nwave/global-config.json
+        nonexistent_global = tmp_path / "no-global-config.json"
+        cfg = DESConfig(config_path=config_file, global_config_path=nonexistent_global)
 
         assert cfg.rigor_profile == "standard"
         assert cfg.rigor_agent_model == "sonnet"

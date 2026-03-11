@@ -22,6 +22,7 @@ from scripts.install.plugins.opencode_common import (
     parse_frontmatter,
     render_frontmatter,
 )
+from scripts.shared.agent_catalog import is_public_agent, load_public_agents
 
 
 _MANIFEST_FILENAME = ".nwave-agents-manifest.json"
@@ -200,6 +201,8 @@ class OpenCodeAgentsPlugin(InstallationPlugin):
             target_dir = _opencode_agents_dir()
             target_dir.mkdir(parents=True, exist_ok=True)
 
+            public_agents = load_public_agents(context.project_root / "nWave")
+
             agent_files = sorted(agents_source.glob("nw-*.md"))
             if not agent_files:
                 context.logger.info("  \u23ed\ufe0f No agent files found, skipping")
@@ -213,6 +216,8 @@ class OpenCodeAgentsPlugin(InstallationPlugin):
             installed_files = []
 
             for source_file in agent_files:
+                if not is_public_agent(source_file.name, public_agents):
+                    continue
                 agent_name = source_file.stem
                 content = source_file.read_text()
 

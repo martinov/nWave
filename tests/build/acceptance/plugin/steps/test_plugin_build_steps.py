@@ -226,12 +226,12 @@ def plugin_has_only_public_agents(
     build_result: dict[str, Any], nwave_source_tree: Path
 ):
     """Verify only public agents are present (private agents excluded)."""
-    from scripts.build_plugin import _load_public_agents
+    from scripts.shared.agent_catalog import load_public_agents
 
     plugin_dir = build_result["plugin_dir"]
     agents_dir = plugin_dir / "agents"
     agent_files = list(agents_dir.glob("*.md"))
-    public_agents = _load_public_agents(nwave_source_tree)
+    public_agents = load_public_agents(nwave_source_tree)
     # Each public agent may have a reviewer variant — count expected files
     expected_files = [
         f
@@ -373,16 +373,16 @@ def plugin_has_all_skills(
     nwave_source_tree: Path,
 ):
     """Verify all public skills are present (private skills excluded)."""
-    from scripts.build_plugin import _is_public_skill, _load_public_agents
+    from scripts.shared.agent_catalog import is_public_skill, load_public_agents
 
     plugin_dir = build_result["plugin_dir"]
     source_dir = build_config["nwave_dir"] / "skills"
-    public_agents = _load_public_agents(nwave_source_tree)
+    public_agents = load_public_agents(nwave_source_tree)
     # Count only source skills belonging to public agents
     public_source_skills = [
         f
         for f in source_dir.rglob("*.md")
-        if _is_public_skill(f.parent.name, public_agents)
+        if is_public_skill(f.parent.name, public_agents)
     ]
     plugin_skills = list((plugin_dir / "skills").rglob("*.md"))
     assert len(plugin_skills) >= len(public_source_skills), (
@@ -407,15 +407,15 @@ def skills_mirror_source_layout(
     nwave_source_tree: Path,
 ):
     """Verify skill directory structure matches public source."""
-    from scripts.build_plugin import _is_public_skill, _load_public_agents
+    from scripts.shared.agent_catalog import is_public_skill, load_public_agents
 
     plugin_dir = build_result["plugin_dir"]
     source_dir = build_config["nwave_dir"] / "skills"
-    public_agents = _load_public_agents(nwave_source_tree)
+    public_agents = load_public_agents(nwave_source_tree)
     source_dirs = {
         d.name
         for d in source_dir.iterdir()
-        if d.is_dir() and _is_public_skill(d.name, public_agents)
+        if d.is_dir() and is_public_skill(d.name, public_agents)
     }
     plugin_dirs = {d.name for d in (plugin_dir / "skills").iterdir() if d.is_dir()}
     assert source_dirs == plugin_dirs
@@ -428,15 +428,15 @@ def source_skills_present(
     nwave_source_tree: Path,
 ):
     """Verify all public source skill files exist in the plugin."""
-    from scripts.build_plugin import _is_public_skill, _load_public_agents
+    from scripts.shared.agent_catalog import is_public_skill, load_public_agents
 
     plugin_dir = build_result["plugin_dir"]
     source_dir = build_config["nwave_dir"] / "skills"
-    public_agents = _load_public_agents(nwave_source_tree)
+    public_agents = load_public_agents(nwave_source_tree)
     source_names = {
         f.name
         for f in source_dir.rglob("*.md")
-        if _is_public_skill(f.parent.name, public_agents)
+        if is_public_skill(f.parent.name, public_agents)
     }
     plugin_names = {f.name for f in (plugin_dir / "skills").rglob("*.md")}
     missing = source_names - plugin_names
@@ -536,13 +536,13 @@ def one_to_one_agent_mapping(
     nwave_source_tree: Path,
 ):
     """Property: bijective mapping between public source and plugin agents."""
-    from scripts.build_plugin import _is_public_agent, _load_public_agents
+    from scripts.shared.agent_catalog import is_public_agent, load_public_agents
 
-    public_agents = _load_public_agents(nwave_source_tree)
+    public_agents = load_public_agents(nwave_source_tree)
     source_agents = {
         f.name
         for f in (build_config["nwave_dir"] / "agents").glob("*.md")
-        if _is_public_agent(f.name, public_agents)
+        if is_public_agent(f.name, public_agents)
     }
     plugin_agents = {
         f.name for f in (build_result["plugin_dir"] / "agents").glob("*.md")
@@ -557,13 +557,13 @@ def no_extra_agents(
     nwave_source_tree: Path,
 ):
     """Property: no files added that are not in public source."""
-    from scripts.build_plugin import _is_public_agent, _load_public_agents
+    from scripts.shared.agent_catalog import is_public_agent, load_public_agents
 
-    public_agents = _load_public_agents(nwave_source_tree)
+    public_agents = load_public_agents(nwave_source_tree)
     source_agents = {
         f.name
         for f in (build_config["nwave_dir"] / "agents").glob("*.md")
-        if _is_public_agent(f.name, public_agents)
+        if is_public_agent(f.name, public_agents)
     }
     plugin_agents = {
         f.name for f in (build_result["plugin_dir"] / "agents").glob("*.md")

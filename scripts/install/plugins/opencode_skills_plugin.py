@@ -23,6 +23,7 @@ from scripts.install.plugins.base import (
     InstallContext,
     PluginResult,
 )
+from scripts.shared.agent_catalog import is_public_skill, load_public_agents
 
 
 _MANIFEST_FILENAME = ".nwave-manifest.json"
@@ -223,6 +224,10 @@ class OpenCodeSkillsPlugin(InstallationPlugin):
             target_dir.mkdir(parents=True, exist_ok=True)
 
             entries = _collect_skill_entries(skills_source)
+
+            public_agents = load_public_agents(context.project_root / "nWave")
+            entries = [e for e in entries if is_public_skill(e[0], public_agents)]
+
             duplicate_names = _detect_duplicate_names(entries)
 
             installed_names = []

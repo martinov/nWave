@@ -17,6 +17,7 @@ from scripts.install.plugins.base import (
     InstallContext,
     PluginResult,
 )
+from scripts.shared.agent_catalog import is_public_skill, load_public_agents
 
 
 _SKILL_GROUP_EMOJIS: dict[str, str] = {
@@ -95,12 +96,16 @@ class SkillsPlugin(InstallationPlugin):
                 shutil.rmtree(skills_target)
             skills_target.mkdir(parents=True, exist_ok=True)
 
+            public_agents = load_public_agents(context.project_root / "nWave")
+
             installed_files = []
             installed_count = 0
 
-            # Copy each skill group directory
+            # Copy each skill group directory (public only)
             for item in skills_source.iterdir():
                 if not item.is_dir():
+                    continue
+                if not is_public_skill(item.name, public_agents):
                     continue
 
                 target_dir = skills_target / item.name
