@@ -4,7 +4,7 @@ AI agents that guide you from idea to working code — with you in control at ev
 
 nWave runs inside [Claude Code](https://claude.com/product/claude-code). You describe what to build. Specialized agents handle requirements, architecture, test design, and implementation. You review and approve at each stage.
 
-## BREAKING CHANGE: Command Format (v2.8.0)
+## BREAKING CHANGE: Command Format (v3.0.0)
 
 **Starting with v2.8.0, all slash commands use hyphen format instead of colons.**
 
