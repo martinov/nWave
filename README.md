@@ -8,7 +8,7 @@ nWave runs inside [Claude Code](https://claude.com/product/claude-code). You des
 
 **Starting with v2.8.0, all slash commands use hyphen format instead of colons.**
 
-| Before (v2.7.x) | After (v2.8.0+) |
+| Before (v2.7.x) | After (v3.0.0+) |
 |---|---|
 | `/nw:deliver` | `/nw-deliver` |
 | `/nw:design` | `/nw-design` |
