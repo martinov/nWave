@@ -15,11 +15,11 @@ If you upgrade from an earlier version, run the installer again to clean up old 
 
 | Scenario | Use | Why |
 |----------|-----|-----|
-| First time | CLI | Stable, full-featured |
-| Team rollout | CLI | Same command everywhere |
-| Early adopter | Plugin | Zero dependencies, instant (beta) |
-| Contributing | CLI | Dev scripts, internals access |
-| Already on CLI | Either | Both coexist safely |
+| First time | **CLI** | Full-featured, recommended |
+| Team rollout | **CLI** | Same command format everywhere |
+| Contributing | **CLI** | Dev scripts, internals access |
+
+> **Why not Plugin?** The plugin marketplace install is currently missing DES enforcement, attribution hooks, and rigor profiles. It also uses a different command format (`/nw:deliver` vs `/nw-deliver`) due to Claude Code's plugin namespace system. We recommend CLI install for the full nWave experience. See [issue #31](https://github.com/nWave-ai/nWave/issues/31) for details.
 
 ## CLI Installer (Recommended)
 
@@ -62,7 +62,9 @@ Then close and reopen Claude Code. The nWave agents and slash commands will appe
 | `nwave-ai install --restore` | Restore from recent backup |
 | `nwave-ai version` | Show installed version |
 
-## Plugin (Beta Preview)
+## Plugin (Beta Preview — Not Feature-Complete)
+
+> **Warning**: The plugin install is missing DES enforcement, attribution hooks, rigor profiles, and uses a different command format (`/nw:deliver` instead of `/nw-deliver`). Use CLI install above for the full experience.
 
 The plugin method installs nWave directly from the Claude Code marketplace. No Python or pipx required.
 
@@ -75,7 +77,7 @@ From Claude Code, run:
 
 Restart Claude Code and type `/nw-` to see all available commands.
 
-> The plugin method is in beta preview. It provides the same agents and commands as the CLI installer. If you encounter issues, switch to the CLI method above.
+> **The plugin method is in beta preview and NOT feature-complete.** It provides agents and skills but NOT DES enforcement, attribution, or rigor profiles. Commands use `/nw:deliver` format (not `/nw-deliver`). For the full experience, use the CLI method above.
 
 ## What Gets Installed
 
