@@ -1,5 +1,5 @@
 name: nWave
-version: 3.1.1
+version: 3.2.0
 description: "Comprehensive DISCOVER\u2192DISCUSS\u2192DESIGN\u2192DEVOPS\u2192DISTILL\u2192\
   DELIVER methodology with visual architecture lifecycle management"
 author: nWave Team
@@ -84,13 +84,6 @@ agents:
     collaboration_mode: QUALITY_GUARDIAN
     public: true
     description: DIVIO-compliant documentation quality assurance
-  visual-architect:
-    wave: CROSS_WAVE
-    priority: 1
-    role: visual_architecture
-    collaboration_scope: ALL_WAVES
-    public: true
-    description: Architecture diagrams and visual documentation
   data-engineer:
     wave: CROSS_WAVE
     priority: 2
@@ -103,18 +96,72 @@ agents:
     role: agent_development
     public: true
     description: Create and validate new specialized agents
-  illustrator:
+  acceptance-designer-reviewer:
     wave: CROSS_WAVE
     priority: 2
-    role: visual_design
+    role: acceptance_test_review
     public: true
-    description: Create 2D diagrams and visual artifacts
+    description: Reviews acceptance test scenarios for coverage and quality
+  agent-builder-reviewer:
+    wave: CROSS_WAVE
+    priority: 2
+    role: agent_design_review
+    public: true
+    description: Reviews agent specifications for compliance and quality
+  data-engineer-reviewer:
+    wave: CROSS_WAVE
+    priority: 2
+    role: data_architecture_review
+    public: true
+    description: Reviews data architecture and pipeline designs
+  documentarist-reviewer:
+    wave: CROSS_WAVE
+    priority: 2
+    role: documentation_review
+    public: true
+    description: Reviews documentation quality against DIVIO principles
+  platform-architect-reviewer:
+    wave: CROSS_WAVE
+    priority: 2
+    role: platform_review
+    public: true
+    description: Reviews platform design, CI/CD, and deployment readiness
+  product-discoverer-reviewer:
+    wave: CROSS_WAVE
+    priority: 2
+    role: discovery_review
+    public: true
+    description: Reviews product discovery evidence and opportunity validation
   product-owner-reviewer:
     wave: CROSS_WAVE
     priority: 2
     public: true
     role: requirements_and_ux_review
     description: Journey coherence, DoR validation, requirements quality review (Eclipse)
+  researcher-reviewer:
+    wave: CROSS_WAVE
+    priority: 2
+    role: research_review
+    public: true
+    description: Reviews research quality, evidence strength, and source verification
+  software-crafter-reviewer:
+    wave: CROSS_WAVE
+    priority: 2
+    role: implementation_review
+    public: true
+    description: Reviews code quality, TDD compliance, and testing theater detection
+  solution-architect-reviewer:
+    wave: CROSS_WAVE
+    priority: 2
+    role: architecture_review
+    public: true
+    description: Reviews architecture designs, patterns, and quality attributes
+  troubleshooter-reviewer:
+    wave: CROSS_WAVE
+    priority: 2
+    role: investigation_review
+    public: true
+    description: Reviews root cause analyses and failure mode investigations
 commands:
   discover:
     description: Conducts evidence-based product discovery through customer interviews
@@ -153,7 +200,6 @@ commands:
     argument_hint: '[component-name] - Optional: --residuality --paradigm=[auto|oop|fp]'
     agents:
     - solution-architect
-    - visual-architect
     wave: DESIGN
     outputs:
     - architecture_document
@@ -234,7 +280,6 @@ commands:
       --visualization=[tree|graph]'
     agents:
     - software-crafter
-    - visual-architect
     outputs:
     - refactoring_roadmap
     - dependency_diagrams
@@ -250,8 +295,7 @@ commands:
     description: Generates C4 architecture diagrams (context, container, component)
       in Mermaid or PlantUML. Use when creating or updating architecture visualizations.
     argument_hint: '[diagram-type] - Optional: --format=[mermaid|plantuml|c4] --level=[context|container|component]'
-    agents:
-    - visual-architect
+    agents: []
     outputs:
     - updated_diagrams
     - visual_architecture
@@ -262,6 +306,7 @@ commands:
       to microservices"'
     outputs:
     - roadmap_yaml
+    agents: []
   review:
     description: Dispatches an expert reviewer agent to critique workflow artifacts.
       Use when a roadmap, implementation, or step needs quality review before proceeding.
@@ -269,6 +314,7 @@ commands:
       task "roadmap.json"'
     outputs:
     - review_report
+    agents: []
   execute:
     description: Dispatches a single roadmap step to a specialized agent for TDD execution.
       Use when implementing a specific step from a roadmap.json plan.
@@ -276,6 +322,7 @@ commands:
       "auth-upgrade" "01-01"'
     outputs:
     - task_results
+    agents: []
   finalize:
     description: Archives a completed feature to docs/evolution/, migrates lasting
       artifacts to permanent directories, and cleans up the temporary workspace. Use
@@ -283,6 +330,7 @@ commands:
     argument_hint: '[agent] [feature-id] - Example: @platform-architect "auth-upgrade"'
     outputs:
     - evolution_document
+    agents: []
   new:
     description: Guided wizard to start a new feature. Asks what you want to build,
       recommends the right starting wave, and launches it.

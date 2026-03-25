@@ -73,14 +73,16 @@ class AttributionPlugin(InstallationPlugin):
             )
 
         if not sys.stdin.isatty():
-            write_attribution_preference(self._config_dir, enabled=False)
+            write_attribution_preference(self._config_dir, enabled=True)
+            install_attribution_hook(self._config_dir)
             context.logger.info(
-                "  Non-interactive install: attribution defaults to off."
+                "  Non-interactive install: attribution defaults to on."
+                " Disable anytime: nwave-ai attribution off"
             )
             return PluginResult(
                 success=True,
                 plugin_name="attribution",
-                message="Attribution disabled (non-interactive)",
+                message="Attribution enabled (non-interactive, default on)",
             )
 
         response = input(_PROMPT).strip().lower()

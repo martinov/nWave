@@ -4,6 +4,7 @@
 **Platform**: macOS or Linux (Windows: use WSL)
 **Prerequisites**: Python 3.10+, Claude Code with nWave installed
 **Dependencies**: None beyond pytest. Pure Python.
+**Important**: Create your project in a permanent directory (not `/tmp`). Later tutorials build on this project's artifacts.
 
 ---
 
@@ -140,7 +141,7 @@ The delivery runs through several phases. Here's what you'll see and what it mea
 ● nw-solution-architect(Fill roadmap skeleton)
   ⎿  Done (3 tool uses · 9.8k tokens · 25s)
 ```
-The `@solution-architect` reads your tests and creates a step-by-step plan. You'll see it create `docs/feature/*/roadmap.yaml`, then a reviewer validates it.
+The `@solution-architect` reads your tests and creates a step-by-step plan. You'll see it create `docs/feature/*/roadmap.json`, then a reviewer validates it.
 
 **Phase 2 — TDD Execution** (~5 minutes)
 ```

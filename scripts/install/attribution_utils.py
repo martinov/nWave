@@ -88,45 +88,59 @@ def _resolve_python_path() -> str:
 
 
 def _resolve_hooks_dir() -> Path:
-    """Resolve git global hooks directory.
+    """Resolve effective git hooks directory.
 
-    Checks core.hooksPath first. If not set, uses ~/.nwave/hooks/.
+    Priority: unscoped (effective) > global-only > .git/hooks/ (git default).
+    Unscoped returns whichever scope is active (local shadows global).
+
+    Never returns ~/.nwave/hooks/ as default -- that would require setting
+    global core.hooksPath which shadows pre-commit hooks in .git/hooks/.
     """
+    # Try unscoped first -- returns effective value (local > global)
+    for git_args in (
+        ["git", "config", "core.hooksPath"],
+        ["git", "config", "--global", "core.hooksPath"],
+    ):
+        try:
+            result = subprocess.run(
+                git_args,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                hooks_path = result.stdout.strip()
+                # Expand ~ and $HOME
+                hooks_path = os.path.expandvars(str(Path(hooks_path).expanduser()))
+                return Path(hooks_path)
+        except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+            pass
+
+    # No hooksPath configured -- use git default: <repo-root>/.git/hooks/
     try:
         result = subprocess.run(
-            ["git", "config", "--global", "core.hooksPath"],
+            ["git", "rev-parse", "--show-toplevel"],
             capture_output=True,
             text=True,
             timeout=5,
         )
         if result.returncode == 0 and result.stdout.strip():
-            hooks_path = result.stdout.strip()
-            # Expand ~ and $HOME
-            hooks_path = os.path.expandvars(str(Path(hooks_path).expanduser()))
-            return Path(hooks_path)
+            return Path(result.stdout.strip()) / ".git" / "hooks"
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         pass
 
-    return Path.home() / ".nwave" / "hooks"
+    # Last resort: .git/hooks/ relative to cwd
+    return Path(".git") / "hooks"
 
 
 def _set_hooks_path(hooks_dir: Path) -> None:
-    """Set git global core.hooksPath if not already set."""
-    try:
-        result = subprocess.run(
-            ["git", "config", "--global", "core.hooksPath"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        if result.returncode != 0 or not result.stdout.strip():
-            subprocess.run(
-                ["git", "config", "--global", "core.hooksPath", str(hooks_dir)],
-                capture_output=True,
-                timeout=5,
-            )
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
-        pass
+    """No-op: retained for API compatibility only.
+
+    Previously set git global core.hooksPath, which SHADOWED pre-commit
+    hooks in .git/hooks/. Now the hook shim is installed directly into
+    the effective hooks directory (resolved by _resolve_hooks_dir),
+    so no global override is needed.
+    """
 
 
 def _read_shim_template() -> str:
@@ -163,11 +177,14 @@ def _read_shim_template() -> str:
 def install_attribution_hook(config_dir: Path | None = None) -> Path:
     """Install prepare-commit-msg hook for attribution trailer.
 
-    1. Resolve hooks directory from git config
+    1. Resolve hooks directory from git config (or .git/hooks/ default)
     2. Copy hook script to ~/.nwave/hooks/
     3. If existing prepare-commit-msg, rename to .nwave-original
     4. Render and write shell shim as prepare-commit-msg
     5. Make executable
+
+    Never sets global core.hooksPath -- the shim is installed directly
+    into the effective hooks directory to avoid shadowing pre-commit.
 
     Args:
         config_dir: Override for ~/.nwave/ (testing).
@@ -223,9 +240,6 @@ def install_attribution_hook(config_dir: Path | None = None) -> Path:
     shim_path.chmod(
         shim_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH
     )
-
-    # Set core.hooksPath if needed
-    _set_hooks_path(hooks_dir)
 
     # Record hooks_dir in config for deterministic uninstall
     config = read_global_config(config_dir)

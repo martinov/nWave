@@ -15,12 +15,89 @@ Behaviors tested:
 6. Plugin error -> never blocks core installation (exception-safe)
 """
 
+import hashlib
 import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+from scripts.install.attribution_utils import install_attribution_hook
 from scripts.install.plugins.attribution_plugin import AttributionPlugin
 from scripts.install.plugins.base import InstallContext
+
+
+# ---------------------------------------------------------------------------
+# Guard fixture: snapshot .git/hooks/ before module, verify unchanged after.
+# This is the safety net -- if the isolation fixture below is ever removed or
+# bypassed, this guard will catch corruption of real git hooks.
+# ---------------------------------------------------------------------------
+def _snapshot_hooks_dir(hooks_dir: Path) -> dict[str, str]:
+    """Return {relative_path: sha256_hex} for every file in hooks_dir."""
+    if not hooks_dir.is_dir():
+        return {}
+    snapshot = {}
+    for entry in sorted(hooks_dir.iterdir()):
+        if entry.is_file():
+            content_hash = hashlib.sha256(entry.read_bytes()).hexdigest()
+            snapshot[entry.name] = content_hash
+    return snapshot
+
+
+def _diff_snapshots(before: dict[str, str], after: dict[str, str]) -> str:
+    """Produce a human-readable diff between two snapshots."""
+    lines = []
+    all_keys = sorted(set(before) | set(after))
+    for key in all_keys:
+        if key not in before:
+            lines.append(f"  CREATED: {key}")
+        elif key not in after:
+            lines.append(f"  DELETED: {key}")
+        elif before[key] != after[key]:
+            lines.append(f"  MODIFIED: {key}")
+    return "\n".join(lines)
+
+
+@pytest.fixture(autouse=True, scope="module")
+def guard_git_hooks():
+    """Assert .git/hooks/ is never modified by tests in this module.
+
+    Snapshots file names and SHA-256 hashes before the module runs,
+    then verifies the directory is byte-identical after all tests complete.
+    Failure means a test escaped isolation and corrupted real git hooks.
+    """
+    hooks_dir = Path(".git/hooks")
+    before = _snapshot_hooks_dir(hooks_dir)
+    yield
+    after = _snapshot_hooks_dir(hooks_dir)
+    assert before == after, (
+        "Tests corrupted .git/hooks/ directory!\n"
+        "Differences detected:\n"
+        f"{_diff_snapshots(before, after)}\n\n"
+        "This means the _isolate_hook_installation fixture failed to "
+        "prevent real hook file modifications. Fix the isolation fixture."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Isolation fixture: mock install_attribution_hook in the attribution_plugin
+# module to prevent tests from writing to the real .git/hooks/ directory.
+# The plugin tests validate consent flow, not hook installation (tested
+# separately in TestAttributionHookInstallation with subprocess mocks).
+# ---------------------------------------------------------------------------
+@pytest.fixture(autouse=True)
+def _isolate_hook_installation(tmp_path: Path):
+    """Prevent plugin.install() from calling real install_attribution_hook.
+
+    The real function resolves hooks dir from the process's git config,
+    which points to the project's .git/hooks/ -- corrupting it with a
+    tmp_path-based hook script path that becomes invalid after the test.
+    """
+    with patch(
+        "scripts.install.plugins.attribution_plugin.install_attribution_hook",
+        return_value=tmp_path / ".nwave" / "hooks" / "prepare-commit-msg",
+    ) as mock_hook:
+        yield mock_hook
 
 
 def _make_context(tmp_path: Path) -> InstallContext:
@@ -85,8 +162,8 @@ class TestAttributionPluginInstall:
         config = _read_global_config(nwave_dir)
         assert config["attribution"]["enabled"] is False
 
-    def test_non_interactive_defaults_off(self, tmp_path: Path) -> None:
-        """No TTY -> attribution defaults to off, no prompt issued."""
+    def test_non_interactive_defaults_on(self, tmp_path: Path) -> None:
+        """No TTY -> attribution defaults to on, no prompt issued."""
         context = _make_context(tmp_path)
         nwave_dir = tmp_path / ".nwave"
         plugin = AttributionPlugin(config_dir=nwave_dir)
@@ -100,7 +177,7 @@ class TestAttributionPluginInstall:
 
         assert result.success is True
         config = _read_global_config(nwave_dir)
-        assert config["attribution"]["enabled"] is False
+        assert config["attribution"]["enabled"] is True
         mock_input.assert_not_called()
 
     def test_existing_preference_skips_prompt(self, tmp_path: Path) -> None:
@@ -305,3 +382,127 @@ class TestAttributionUpgradePreservation:
         assert config["attribution"]["enabled"] is True
         # Rigor key preserved
         assert config["rigor"]["level"] == "standard"
+
+
+class TestAttributionHookInstallation:
+    """Regression tests for hook installation with effective core.hooksPath.
+
+    AC #3: Given a git repo with local core.hooksPath=.git/hooks,
+           when install_attribution_hook() runs,
+           then the hook is installed in .git/hooks/ (not ~/.nwave/hooks/).
+
+    AC #4: Given a git repo with NO core.hooksPath,
+           when install_attribution_hook() runs,
+           then the hook is installed in .git/hooks/ (git default)
+           and global core.hooksPath is NEVER set.
+
+    AC #5: install_attribution_hook() NEVER sets global core.hooksPath.
+    """
+
+    def test_local_hooks_path_takes_precedence(self, tmp_path: Path) -> None:
+        """Repo with local core.hooksPath -> hook installed in local hooks dir."""
+        # Setup: a git repo with local core.hooksPath
+        repo_dir = tmp_path / "repo"
+        repo_dir.mkdir()
+        local_hooks = repo_dir / ".git" / "hooks"
+        local_hooks.mkdir(parents=True)
+
+        nwave_dir = tmp_path / ".nwave"
+
+        # Mock subprocess.run to simulate:
+        #   unscoped `git config core.hooksPath` -> local_hooks (effective)
+        #   `git config --global core.hooksPath` -> ~/.nwave/hooks/ (shadowed)
+        def mock_subprocess_run(cmd, **kwargs):
+            from subprocess import CompletedProcess
+
+            cmd_str = " ".join(cmd)
+            if cmd_str == "git config core.hooksPath":
+                return CompletedProcess(cmd, 0, stdout=str(local_hooks) + "\n")
+            if "git config --global core.hooksPath" in cmd_str:
+                global_hooks = str(tmp_path / ".nwave" / "hooks")
+                return CompletedProcess(cmd, 0, stdout=global_hooks + "\n")
+            return CompletedProcess(cmd, 1, stdout="", stderr="")
+
+        with patch(
+            "scripts.install.attribution_utils.subprocess.run",
+            side_effect=mock_subprocess_run,
+        ):
+            result_path = install_attribution_hook(config_dir=nwave_dir)
+
+        # Hook shim must be in local_hooks, NOT in ~/.nwave/hooks/
+        assert result_path.parent == local_hooks
+        assert result_path.name == "prepare-commit-msg"
+        assert result_path.exists()
+
+    def test_no_hooks_path_installs_to_git_default(self, tmp_path: Path) -> None:
+        """No core.hooksPath configured -> hook in .git/hooks/ (git default).
+
+        This is the fix for the core.hooksPath shadowing bug: when no
+        hooksPath is configured, nWave must install to .git/hooks/ (where
+        git looks by default) instead of creating ~/.nwave/hooks/ and
+        overriding core.hooksPath globally (which shadows pre-commit).
+        """
+        nwave_dir = tmp_path / ".nwave"
+        git_hooks = tmp_path / ".git" / "hooks"
+        git_hooks.mkdir(parents=True)
+
+        # Mock subprocess.run: all git config core.hooksPath calls return not-set
+        # Mock git rev-parse --show-toplevel to return tmp_path (repo root)
+        def mock_subprocess_run(cmd, **kwargs):
+            from subprocess import CompletedProcess
+
+            cmd_str = " ".join(cmd)
+            if "core.hooksPath" in cmd_str:
+                return CompletedProcess(cmd, 1, stdout="", stderr="")
+            if "rev-parse --show-toplevel" in cmd_str:
+                return CompletedProcess(cmd, 0, stdout=str(tmp_path) + "\n")
+            return CompletedProcess(cmd, 1, stdout="", stderr="")
+
+        with patch(
+            "scripts.install.attribution_utils.subprocess.run",
+            side_effect=mock_subprocess_run,
+        ):
+            result_path = install_attribution_hook(config_dir=nwave_dir)
+
+        # Hook must be in .git/hooks/ (git default), NOT ~/.nwave/hooks/
+        assert result_path.parent == git_hooks
+        assert result_path.name == "prepare-commit-msg"
+        assert result_path.exists()
+
+    def test_install_never_sets_global_hooks_path(self, tmp_path: Path) -> None:
+        """install_attribution_hook() must NEVER call git config --global core.hooksPath.
+
+        Setting global core.hooksPath shadows pre-commit hooks in .git/hooks/.
+        This is the root cause of the attribution hook bug.
+        """
+        nwave_dir = tmp_path / ".nwave"
+        git_hooks = tmp_path / ".git" / "hooks"
+        git_hooks.mkdir(parents=True)
+
+        global_set_calls = []
+
+        def mock_subprocess_run(cmd, **kwargs):
+            from subprocess import CompletedProcess
+
+            cmd_str = " ".join(cmd)
+            # Detect any attempt to SET global core.hooksPath
+            # (5 args: git config --global core.hooksPath <value>)
+            if "--global" in cmd_str and "core.hooksPath" in cmd_str and len(cmd) == 5:
+                global_set_calls.append(cmd)
+                return CompletedProcess(cmd, 0, stdout="", stderr="")
+            if "core.hooksPath" in cmd_str:
+                return CompletedProcess(cmd, 1, stdout="", stderr="")
+            if "rev-parse --show-toplevel" in cmd_str:
+                return CompletedProcess(cmd, 0, stdout=str(tmp_path) + "\n")
+            return CompletedProcess(cmd, 1, stdout="", stderr="")
+
+        with patch(
+            "scripts.install.attribution_utils.subprocess.run",
+            side_effect=mock_subprocess_run,
+        ):
+            install_attribution_hook(config_dir=nwave_dir)
+
+        assert global_set_calls == [], (
+            f"install_attribution_hook() must NEVER set global core.hooksPath, "
+            f"but called: {global_set_calls}"
+        )

@@ -66,7 +66,7 @@ def _strip_catalog(catalog_path: Path, public_agents: set[str]) -> int:
     commands = catalog.get("commands", {})
     for cmd_name in list(commands):
         cmd = commands[cmd_name]
-        cmd_agents = cmd.get("agents", [])
+        cmd_agents = cmd.get("agents") or []
         non_public = [a for a in cmd_agents if a not in public_agents]
         if non_public:
             if len(non_public) == len(cmd_agents):

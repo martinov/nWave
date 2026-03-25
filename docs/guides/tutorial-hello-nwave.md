@@ -8,6 +8,7 @@ Build a working, tested feature from scratch using nWave. Three commands, five m
 **Prerequisites**:
 - nWave installed — `pipx install nwave-ai && nwave-ai install` (in your terminal, not Claude Code)
 - Claude Code open in an empty Python project with `pytest` available
+- Use a permanent directory (not `/tmp`) — later tutorials build on this project
 
 ---
 

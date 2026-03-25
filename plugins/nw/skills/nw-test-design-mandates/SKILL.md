@@ -1,13 +1,13 @@
 ---
 name: nw-test-design-mandates
-description: Three design mandates for acceptance tests - hexagonal boundary enforcement, business language abstraction, user journey completeness, and walking skeleton strategy
+description: Four design mandates for acceptance tests - hexagonal boundary enforcement, business language abstraction, user journey completeness, walking skeleton strategy, and pure function extraction
 user-invocable: false
 disable-model-invocation: true
 ---
 
 # Acceptance Test Design Mandates
 
-Three mandates enforced during peer review. All must pass before handoff to software-crafter.
+Four mandates enforced during peer review. All must pass before handoff to software-crafter.
 
 ## Mandate 1: Hexagonal Boundary Enforcement
 
@@ -130,11 +130,69 @@ Test specific business rules at driving port boundary | Test doubles for externa
 ### Recommended Ratio
 For typical feature with 20 scenarios: 2-3 walking skeletons (user value E2E) | 17-18 focused scenarios (boundary tests with test doubles). Walking skeletons prove users achieve goals. Focused scenarios run fast, cover breadth. Both use business language and invoke through entry points.
 
+## Mandate 4: Pure Function Extraction Before Fixtures
+
+BEFORE parametrizing any test fixture with environment variants:
+
+1. Identify ALL business logic in the code under test
+2. Extract every piece of business logic into a pure function:
+   - Pure function: takes inputs, returns outputs, no side effects
+   - Impure code: subprocess calls, file I/O, network, environment variables
+3. Test pure functions directly — no fixtures, no mocks, no environment setup needed
+4. Test impure code (subprocess, file I/O) through adapter interfaces:
+   - Define a port (interface) for each impure operation
+   - Create a test adapter (in-memory, fake) for each port
+   - Acceptance tests use real adapters; unit tests use fakes
+5. Parametrize fixtures ONLY for the thin adapter layer that connects to real environments
+
+**Rationale**: Parametrizing fixtures across environments is expensive. Pure functions need zero environment setup. Extract first, parametrize the minimum.
+
+### Violation Pattern
+
+```python
+# WRONG: parametrizing entire test across environments
+@pytest.fixture(params=["clean", "with-pre-commit", "with-stale-config"])
+def environment(request):
+    return setup_environment(request.param)
+
+def test_install_detects_conflicts(environment):
+    result = full_install_pipeline(environment)  # Impure: touches filesystem
+    assert result.conflicts == []
+```
+
+### Correct Pattern
+
+```python
+# Step 1: Extract pure logic
+def detect_conflicts(config: Config, existing: list[str]) -> list[Conflict]:
+    """Pure function — no I/O, no environment dependency."""
+    return [Conflict(k) for k in existing if k in config.keys]
+
+# Step 2: Test pure function directly (no fixture needed)
+def test_detect_conflicts_with_overlapping_keys():
+    conflicts = detect_conflicts(Config(keys=["a", "b"]), existing=["b", "c"])
+    assert conflicts == [Conflict("b")]
+
+# Step 3: Parametrize ONLY the adapter layer
+@pytest.fixture(params=["clean", "with-pre-commit"])
+def fs_adapter(request):
+    return create_real_fs_adapter(request.param)
+
+def test_adapter_reads_config_from_environment(fs_adapter):
+    config = fs_adapter.read_config()  # Only I/O is parametrized
+    assert config is not None
+```
+
+### Mandate Compliance (CM-D)
+
+- **CM-D**: Business logic extracted to pure functions. Impure code isolated behind adapters. Fixture parametrization applies only to adapter layer.
+
 ## Mandate Compliance Verification
 
-Handoff to software-crafter includes proof all three mandates pass:
+Handoff to software-crafter includes proof all four mandates pass:
 - **CM-A**: All test files import entry points (driving ports), zero internal component imports
 - **CM-B**: Gherkin uses business terms only, step methods delegate to services
 - **CM-C**: Scenarios validate complete user journeys with business value
+- **CM-D**: Business logic extracted to pure functions. Impure code isolated behind adapters. Fixture parametrization applies only to adapter layer.
 
-Evidence: import listings, grep for technical terms, walking skeleton identification, focused scenario count.
+Evidence: import listings, grep for technical terms, walking skeleton identification, focused scenario count, pure function extraction inventory (list of extracted functions + their adapter boundaries).

@@ -95,6 +95,51 @@ Before dispatching the acceptance designer, read rigor config from `.nwave/des-c
 
 - **`agent_model`**: Pass as `model` parameter to Task tool. If `"inherit"`, omit `model` (inherits from session).
 
+## Wave-Decision Reconciliation (Pre-DISTILL Gate)
+
+BEFORE writing any scenario, execute this reconciliation procedure:
+
+1. Read ALL wave-decisions.md files from prior waves:
+   - `docs/feature/{feature-id}/discuss/wave-decisions.md`
+   - `docs/feature/{feature-id}/design/wave-decisions.md`
+   - `docs/feature/{feature-id}/devops/wave-decisions.md`
+2. For EACH decision in DISCUSS, check whether DESIGN or DEVOPS contradicts it:
+   - DISCUSS says "email notifications" but DESIGN says "in-app only" = CONTRADICTION
+   - DISCUSS says "REST API" but DESIGN says "gRPC" = CONTRADICTION
+   - DISCUSS says "single-tenant" but DEVOPS says "multi-tenant" = CONTRADICTION
+3. If ANY contradiction is found:
+   a. List ALL contradictions with exact file paths and decision text
+   b. BLOCK scenario writing until the user resolves each contradiction
+   c. Return `{CLARIFICATION_NEEDED: true, questions: [{contradiction details}]}`
+4. If zero contradictions: log "Reconciliation passed — 0 contradictions" and proceed.
+
+Do NOT silently pick one side of a contradiction. Do NOT write scenarios against ambiguous specifications. The cost of blocking is minutes; the cost of implementing the wrong behavior is hours.
+
+## Graceful Degradation for Missing Upstream Artifacts
+
+When upstream wave artifacts are missing, apply these rules:
+
+**DEVOPS missing** (no `docs/feature/{feature-id}/devops/` directory):
+1. Log warning: "DEVOPS artifacts missing — using default environment matrix"
+2. Use default environment matrix for all environment-dependent scenarios:
+   - `clean` — fresh install, no prior state
+   - `with-pre-commit` — pre-commit hooks installed and active
+   - `with-stale-config` — outdated configuration from prior version
+3. Proceed with scenario writing. Do NOT block.
+
+**DISCUSS missing** (no `docs/feature/{feature-id}/discuss/` directory):
+1. Log warning: "DISCUSS artifacts missing — using DESIGN only"
+2. Derive acceptance criteria from DESIGN architecture documents
+3. Skip Dim 8 Check A (story-to-scenario traceability) — no stories to trace
+4. Proceed with scenario writing. Do NOT block.
+
+**DESIGN missing** (no `docs/feature/{feature-id}/design/` directory):
+1. Log warning: "DESIGN artifacts missing — driving ports unknown"
+2. Ask user to identify driving ports before writing any scenario
+3. BLOCK until driving ports are identified — without them, Mandate 1 (hexagonal boundary) is unverifiable
+
+Missing artifacts trigger warnings, not failures — EXCEPT when the missing artifact makes a design mandate unverifiable (DESIGN for Mandate 1). In that case, BLOCK.
+
 ## Agent Invocation
 
 @nw-acceptance-designer
@@ -109,6 +154,41 @@ Context files: see above.
 - test_framework: {Decision 2: specflow|cucumber|pytest-bdd}
 - integration_approach: {Decision 3} | infrastructure_testing: {Decision 4}
 - interactive: moderate | output_format: gherkin
+
+## Fast-Path for Small Features
+
+When the total scenario count is 3 or fewer:
+
+1. Skip triple DISTILL review cycle. Run ONE acceptance-designer review pass only.
+2. Run behavioral smoke test in the CURRENT environment (the one the developer is working in):
+   ```bash
+   pipenv run pytest tests/acceptance/{feature-id}/ -v --tb=short -x
+   ```
+   The first scenario MUST fail for a business logic reason (not import error, not missing fixture).
+3. Skip the full fixture matrix. Full environment matrix testing applies only when scenario count exceeds 3.
+4. All other gates remain in effect: mandate compliance (CM-A through CM-D), business language purity, hexagonal boundary enforcement.
+
+This fast-path reduces DISTILL overhead for trivial features without sacrificing the core quality gates.
+
+## Triple Review Gate (>3 scenarios)
+
+When the feature has MORE than 3 scenarios, run THREE parallel reviews on the FROZEN acceptance test artifact.
+
+All three reviewers use `rigor.reviewer_model` from `.nwave/des-config.json` (default: haiku). Pass as `model` parameter to each reviewer's Agent tool invocation. If `rigor.reviewer_model` is `"skip"`, skip the triple review entirely.
+
+1. Dispatch ALL THREE reviewers in parallel (Agent tool, 3 concurrent calls):
+   - `@nw-product-owner-reviewer`: "Verify story-to-scenario traceability. For EACH user story in DISCUSS, confirm at least one scenario covers it. Output: mapping table [story_id → scenario_name]. Flag unmapped stories as BLOCKER."
+   - `@nw-solution-architect-reviewer`: "Verify hexagonal boundary compliance. For EACH scenario, confirm Then steps assert observable outcomes through driving ports — not internal state. Flag Dim 7 violations."
+   - `@nw-platform-architect-reviewer`: "Verify environment coverage. For EACH target environment in DEVOPS inventory, confirm at least one walking skeleton includes that environment's preconditions. Flag uncovered environments as HIGH."
+
+2. AND-gate: ANY rejection from ANY reviewer BLOCKS the DISTILL handoff.
+   - Rejecting reviewer provides specific findings with file:line references
+   - Non-rejecting reviewers do NOT re-run after revision
+   - Only the rejecting reviewer re-reviews the revised artifact
+
+3. On ALL APPROVE: proceed to Success Criteria and handoff to DELIVER.
+
+4. On REJECTION: return acceptance test artifact to @nw-acceptance-designer with reviewer findings. Acceptance designer revises and re-submits to the rejecting reviewer(s) only.
 
 ## Success Criteria
 

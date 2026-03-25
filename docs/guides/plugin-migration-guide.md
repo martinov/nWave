@@ -38,7 +38,7 @@ Run a quick verification:
 Verify:
 - Agent discovery works (agents loaded from plugin)
 - DES enforcement active (hook responses visible)
-- Commands available (`/nw:` prefix works)
+- Commands available (`/nw-` prefix works)
 
 ## Step 3: Remove Custom Installer (Optional)
 

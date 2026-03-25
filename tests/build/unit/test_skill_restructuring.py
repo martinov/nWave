@@ -270,7 +270,7 @@ BULK_HASHES = {
     "nw-tbr-methodology": "40e44f3c469968c140bd7c107b536644",
     "nw-tdd-methodology": "c0d760295467de4bebeaee0346a72fa1",
     "nw-tdd-review-enforcement": "0181606c52a28160e0cbe67d773f7f3f",
-    "nw-test-design-mandates": "0da349ad1fde0ec71dd45f25ed68f9dc",
+    "nw-test-design-mandates": "aa32545c69f8fc8634cc7637a813e800",
     "nw-test-organization-conventions": "64778077de4b55a493e89cf0e06ce681",
     "nw-test-refactoring-catalog": "9dd4d17224b32058386f4413027253bd",
     "nw-tlaplus-verification": "39ba15e1845e237a9d2014c467aa56ff",

@@ -97,9 +97,16 @@ class TestIsPublicAgent:
         public_agents = {"software-crafter", "product-owner"}
         assert is_public_agent(filename, public_agents) is False
 
-    def test_reviewer_of_public_agent_returns_true(self):
-        public_agents = {"software-crafter"}
+    def test_reviewer_explicitly_in_catalog_returns_true(self):
+        public_agents = {"software-crafter", "software-crafter-reviewer"}
         assert is_public_agent("nw-software-crafter-reviewer.md", public_agents) is True
+
+    def test_reviewer_not_in_catalog_returns_false(self):
+        """Reviewer must be explicitly listed — no inheritance from base agent."""
+        public_agents = {"software-crafter"}
+        assert (
+            is_public_agent("nw-software-crafter-reviewer.md", public_agents) is False
+        )
 
     def test_reviewer_of_private_agent_returns_false(self):
         public_agents = {"software-crafter"}
@@ -151,9 +158,14 @@ class TestIsPublicSkill:
         public_agents = {"only-one-agent"}
         assert is_public_skill("nw-canary", public_agents) is True
 
-    def test_reviewer_skill_inherits_from_base(self):
-        public_agents = {"software-crafter"}
+    def test_reviewer_skill_explicitly_in_catalog(self):
+        public_agents = {"software-crafter", "software-crafter-reviewer"}
         assert is_public_skill("software-crafter-reviewer", public_agents) is True
+
+    def test_reviewer_skill_not_in_catalog_returns_false(self):
+        """Reviewer skill must be explicitly listed — no inheritance from base agent."""
+        public_agents = {"software-crafter"}
+        assert is_public_skill("software-crafter-reviewer", public_agents) is False
 
     def test_reviewer_of_private_skill_returns_false(self):
         public_agents = {"software-crafter"}

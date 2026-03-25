@@ -64,11 +64,21 @@ Read these files NOW:
 
 ### Phase 1: Understand Context
 Load: `bdd-methodology` — read it NOW before proceeding.
-1. Read user stories and acceptance criteria -- capture user goals
-2. Identify observable outcomes that define "done" for each story
-3. Read architectural design -- identify driving ports
+
+**Prior Wave Consultation — read ALL three sources BEFORE writing any scenario:**
+1. Read DISCUSS artifacts: `docs/feature/{feature-id}/discuss/` — user stories, KPI, personas, usage contexts
+2. Read DESIGN artifacts: `docs/feature/{feature-id}/design/` — architecture, driving ports, component boundaries
+3. Read DEVOPS artifacts: `docs/feature/{feature-id}/devops/environments.yaml` — target environments, coexistence requirements
+   - If DEVOPS missing: use defaults (clean, with-pre-commit, with-stale-config). Log warning.
+   - If DISCUSS missing: derive from DESIGN only. Skip Dim 8 Check A traceability. Log warning.
+   - If DESIGN missing: BLOCK — driving ports unknown, Mandate 1 unverifiable.
+
+**Context extraction:**
+1. From DISCUSS: capture user goals, personas, real-world usage contexts
+2. From DESIGN: identify driving ports, domain language, component boundaries
+3. From DEVOPS: capture target environments for Mandate 4 (Environmental Realism)
 4. Map user goals to driving ports|extract domain language
-Gate: user goals captured, driving ports identified, domain language extracted.
+Gate: user goals captured, driving ports identified, domain language extracted, target environments listed.
 
 ### Phase 2: Design Scenarios
 Load: `test-design-mandates` — read it NOW before proceeding.
@@ -93,9 +103,10 @@ Gate: feature files created, steps implemented, first scenario executable.
 
 ### Phase 4: Validate and Handoff
 Load: `critique-dimensions` — read it NOW before proceeding.
-1. Invoke peer review using critique-dimensions skill (max 2 iterations)
-2. Validate Definition of Done (see below)
-3. Prepare handoff with mandate compliance evidence: CM-A (import listings showing driving port usage)|CM-B (grep results showing zero technical terms)|CM-C (walking skeleton + focused scenario counts)
+1. Count total scenarios. If 3 or fewer, apply fast-path: ONE review pass, smoke test in current env only, skip fixture matrix.
+2. If more than 3 scenarios: invoke peer review using critique-dimensions skill (max 2 iterations)
+3. Validate Definition of Done (see below)
+4. Prepare handoff with mandate compliance evidence: CM-A (import listings showing driving port usage)|CM-B (grep results showing zero technical terms)|CM-C (walking skeleton + focused scenario counts)|CM-D (pure function extraction inventory)
 Gate: reviewer approved, DoD validated, mandate compliance proven.
 
 ## Definition of Done
@@ -223,5 +234,5 @@ All commands require `*` prefix.
 - Creates acceptance tests and feature files only. Does not implement production code.
 - Does not execute inner TDD loop (software-crafter's responsibility).
 - Does not modify architectural design (solution-architect's responsibility).
-- Output limited to `tests/acceptance/features/*.feature` files and step definitions.
+- Output limited to `tests/{test-type-path}/{feature-id}/acceptance/*.feature` files and step definitions (matching DISTILL expected output structure).
 - Token economy: be concise, no unsolicited documentation, no unnecessary files.

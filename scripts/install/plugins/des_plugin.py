@@ -494,26 +494,27 @@ class DESPlugin(InstallationPlugin):
                 _installer_command, guard_command_fn=_installer_guard_command
             )
 
-            # Check if hooks already exist with correct format
-            def _has_command(hooks_list, command):
+            # Check if hooks already exist with correct format.
+            # Both command AND matcher must match on the SAME entry to count
+            # as up-to-date (previously checked independently, which could
+            # yield false positives when entries were shuffled).
+            def _entry_matches(existing_entry, desired_entry):
+                """Check if an existing entry matches a desired entry exactly."""
+                # Compare matcher (None == absent)
+                if existing_entry.get("matcher") != desired_entry.get("matcher"):
+                    return False
+                # Compare command in nested hooks list
+                desired_cmd = desired_entry["hooks"][0]["command"]
                 return any(
-                    any(h2.get("command") == command for h2 in h.get("hooks", []))
-                    for h in hooks_list
+                    h.get("command") == desired_cmd
+                    for h in existing_entry.get("hooks", [])
                 )
-
-            def _has_matcher(hooks_list, matcher):
-                return any(h.get("matcher") == matcher for h in hooks_list)
 
             all_up_to_date = True
             for event, desired_entries in desired_hooks.items():
                 existing = config["hooks"].get(event, [])
-                for entry in desired_entries:
-                    cmd = entry["hooks"][0]["command"]
-                    if not _has_command(existing, cmd):
-                        all_up_to_date = False
-                        break
-                    matcher = entry.get("matcher")
-                    if matcher and not _has_matcher(existing, matcher):
+                for desired in desired_entries:
+                    if not any(_entry_matches(e, desired) for e in existing):
                         all_up_to_date = False
                         break
                 if not all_up_to_date:

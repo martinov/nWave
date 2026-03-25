@@ -1,6 +1,6 @@
 # Tutorial: Understanding the Delivery Pipeline
 
-**Time**: ~16 minutes (12 steps)
+**Time**: ~16 minutes hands-on (12 steps)
 **Platform**: macOS or Linux (Windows: use WSL)
 **Prerequisites**: [Tutorial 1](./tutorial-first-delivery.md) completed (or Tutorial 2). You should have seen `/nw-deliver` run at least once.
 **What this is**: A conceptual walkthrough, not a hands-on coding tutorial. You will explore artifacts that already exist in your completed project.
@@ -75,13 +75,13 @@ You will explore the important phases (roadmap, execute, review, mutation test) 
 The solution architect reads your tests and creates a step-by-step plan. Find it:
 
 ```bash
-ls docs/feature/*/roadmap.yaml
+ls docs/feature/*/roadmap.json
 ```
 
 You should see something like:
 
 ```
-docs/feature/image-to-ascii-art/roadmap.yaml
+docs/feature/image-to-ascii-art/roadmap.json
 ```
 
 > **If no `docs/feature/` directory exists**: Your project may have been cleaned up after finalization. That is normal -- the evolution document in `docs/evolution/` is the permanent record. Skip to Step 10 to read the git log instead.
@@ -89,7 +89,7 @@ docs/feature/image-to-ascii-art/roadmap.yaml
 Open the roadmap:
 
 ```bash
-cat docs/feature/*/roadmap.yaml
+cat docs/feature/*/roadmap.json
 ```
 
 You should see something like:

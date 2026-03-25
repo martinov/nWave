@@ -63,6 +63,7 @@ class CZRepo:
         repo._git("init", "-b", "main")
         repo._git("config", "user.email", "test@example.com")
         repo._git("config", "user.name", "Test")
+        repo._git("config", "core.hooksPath", "/dev/null")
 
         # Write CZ-configured pyproject.toml
         pyproject = tmp_path / "pyproject.toml"

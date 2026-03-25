@@ -147,10 +147,20 @@ def build_guard_command(python_cmd: str) -> str:
 def _is_des_command(command: str) -> bool:
     """Check if a command string belongs to DES.
 
-    Detects both Python-based hooks (claude_code_hook_adapter) and
-    shell-based hooks (# des-hook: marker prefix).
+    Detects:
+    - Python-based hooks via module name (claude_code_hook_adapter)
+    - Python-based hooks via module path (des.adapters.drivers.hooks)
+    - Shell-based hooks via marker prefix (# des-hook:)
+
+    Multiple markers provide defense-in-depth: if the adapter module is
+    renamed or the command format changes between versions, at least one
+    marker should still match, preventing duplicate hooks on upgrade.
     """
-    return "claude_code_hook_adapter" in command or "des-hook:" in command
+    return (
+        "claude_code_hook_adapter" in command
+        or "des-hook:" in command
+        or "des.adapters.drivers.hooks" in command
+    )
 
 
 def is_des_hook_entry(hook_entry: dict) -> bool:

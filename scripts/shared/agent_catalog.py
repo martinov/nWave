@@ -172,8 +172,8 @@ def is_public_agent(agent_file_name: str, public_agents: set[str]) -> bool:
     """Check whether an agent file belongs to a public agent.
 
     Strips the ``nw-`` prefix and ``.md`` suffix to derive the agent name.
-    Reviewer agents (``-reviewer`` suffix) inherit the public status of
-    their base agent.
+    The agent MUST be explicitly listed in public_agents to be distributed.
+    Agents on disk but not in the catalog are NOT distributed (fail-closed).
 
     When *public_agents* is empty (catalog not loaded), returns ``True``
     for every file (backward compatibility).
@@ -181,8 +181,7 @@ def is_public_agent(agent_file_name: str, public_agents: set[str]) -> bool:
     if not public_agents:
         return True
     agent_name = agent_file_name.removeprefix("nw-").removesuffix(".md")
-    base_name = agent_name.removesuffix("-reviewer")
-    return agent_name in public_agents or base_name in public_agents
+    return agent_name in public_agents
 
 
 def build_ownership_map(agents_dir: Path) -> dict[str, set[str]]:
@@ -340,8 +339,8 @@ def is_public_skill(
 
     The ``common`` directory is always considered public.
     Command-skills (user-invocable slash commands) are always public.
-    Reviewer skill directories inherit the public status of their base
-    agent.
+    Every agent (including reviewers) must be explicitly listed in the
+    catalog to be distributed — no implicit inheritance.
 
     When *ownership_map* is provided, uses it to look up the owning
     agent(s) for the skill. A skill is public if at least one of its
@@ -373,6 +372,5 @@ def is_public_skill(
             owning_agents = ownership_map[lookup_key]
             return any(agent in public_agents for agent in owning_agents)
 
-    # Fallback: old heuristic (directory name matches agent name)
-    base_name = skill_dir_name.removesuffix("-reviewer")
-    return skill_dir_name in public_agents or base_name in public_agents
+    # Fallback: skill must match a public agent name explicitly (no inheritance)
+    return skill_dir_name in public_agents

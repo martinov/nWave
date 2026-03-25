@@ -80,7 +80,7 @@ steps:
 - `acceptance_test_file`: Points to the feature acceptance test file
 - `description`: Explicitly states "Make test_X pass (RED → GREEN)"
 
-**Output Location**: `docs/feature/{project_id}/roadmap.yaml`
+**Output Location**: `docs/feature/{project_id}/roadmap.json`
 
 ## Step 4: Verify Step Files
 
@@ -159,7 +159,7 @@ After all steps complete successfully, finalize the wave (archival and reporting
 
 Before declaring DELIVER wave complete:
 
-- [ ] Roadmap created: `docs/feature/{project_id}/roadmap.yaml` exists
+- [ ] Roadmap created: `docs/feature/{project_id}/roadmap.json` exists
 - [ ] Step count matches: `num_steps == num_acceptance_scenarios`
 - [ ] Each step has `acceptance_test_scenario` field
 - [ ] All step files created: `docs/feature/{project_id}/steps/01-01.json` through `01-0N.json`

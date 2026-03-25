@@ -86,7 +86,7 @@ The architect takes 30-60 seconds. It reads your acceptance tests to know what "
 While the delivery runs (or after it completes), find the roadmap:
 
 ```bash
-cat docs/feature/bookmark-cli/roadmap.yaml
+cat docs/feature/bookmark-cli/roadmap.json
 ```
 
 You should see something like:
