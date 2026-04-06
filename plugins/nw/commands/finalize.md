@@ -74,9 +74,8 @@ These are process scaffolding — valuable during delivery, disposable after:
 | `deliver/.develop-progress.json` | Resume state — temporary |
 | `design/review-*.md` | Review findings captured in evolution doc |
 | `distill/acceptance-review.md` | Test review — tests themselves remain in `tests/` |
-| `discuss/dor-checklist.md` | Process gate, not lasting value |
-| `discuss/shared-artifacts-registry.md` | Process scaffolding |
-| `discuss/prioritization.md` | Superseded by roadmap execution |
+| `discuss/dor-validation.md` | Process gate, not lasting value |
+| `discuss/shared-artifacts-registry.md` | Process scaffolding (if exists) |
 | `*/wave-decisions.md` | Key decisions extracted into evolution doc |
 
 ### Phase C — Cleanup Workspace

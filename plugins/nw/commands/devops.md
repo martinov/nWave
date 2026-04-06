@@ -118,13 +118,15 @@ Default if not chosen: **per-feature**.
 
 ## Prior Wave Consultation
 
-Before beginning DEVOPS work, read targeted prior wave artifacts:
+Before beginning DEVOPS work, read SSOT and prior wave artifacts:
 
-1. **DISCOVER** (skip): DESIGN already synthesizes DISCOVER+DISCUSS into architecture. Not needed for infrastructure design.
+1. **SSOT** (if `docs/product/` exists):
+   - `docs/product/architecture/brief.md` — current architecture (driving ports, component topology)
+   - `docs/product/kpi-contracts.yaml` — existing KPI contracts (if any — extend, don't duplicate)
 2. **DISCUSS** (KPIs only): Read `docs/feature/{feature-id}/discuss/outcome-kpis.md` — drives observability and instrumentation design
-3. **DESIGN** (primary input): Read all files in `docs/feature/{feature-id}/design/` — architecture drives infrastructure decisions
+3. **DESIGN** (primary input): Read `docs/feature/{feature-id}/design/wave-decisions.md` + SSOT architecture — architecture drives infrastructure decisions
 
-DESIGN is the direct predecessor and synthesis point — its architecture decisions, component boundaries, and tech stack are the primary input for infrastructure design. Reading DISCOVER or full DISCUSS would duplicate what DESIGN already encoded.
+SSOT architecture is the primary input for infrastructure design. Feature-level `outcome-kpis.md` defines what to instrument for this specific feature.
 
 **READING ENFORCEMENT**: You MUST read every file listed in Prior Wave Consultation above using the Read tool before proceeding. After reading, output a confirmation checklist (`✓ {file}` for each read, `⊘ {file} (not found)` for missing). Do NOT skip files that exist — skipping causes infrastructure decisions disconnected from architecture.
 
@@ -216,8 +218,17 @@ Before completing DEVOPS, produce `docs/feature/{feature-id}/devops/wave-decisio
 - {any DESIGN assumptions changed, with rationale}
 ```
 
+## SSOT Update
+
+After producing feature-level artifacts, update the product-level SSOT:
+
+1. **KPI contracts**: Translate `outcome-kpis.md` (from DISCUSS) into machine-readable contracts in `docs/product/kpi-contracts.yaml`. Each contract needs: `id`, `feature`, `job`, `metric`, `baseline`, `target`, `threshold_alert`, `measurement_method`, `status`. Add changelog entry. If `kpi-contracts.yaml` does not exist, create it with `schema_version: 1`.
+
+If `docs/product/` does not exist, create it. This is SSOT bootstrap for KPI contracts.
+
 ## Expected Outputs
 
+### Feature delta (internal planning, not persisted in SSOT model)
 ```
 docs/feature/{feature-id}/devops/
   platform-architecture.md
@@ -226,7 +237,10 @@ docs/feature/{feature-id}/devops/
   monitoring-alerting.md
   infrastructure-integration.md    (if existing infra)
   branching-strategy.md
-  continuous-learning.md           (if applicable)
-  kpi-instrumentation.md           (if outcome-kpis.md exists)
   wave-decisions.md
+```
+
+### SSOT updates (in `docs/product/`)
+```
+  kpi-contracts.yaml               (created or updated + changelog entry)
 ```

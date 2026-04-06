@@ -1,25 +1,53 @@
 # nWave
 
-AI agents that guide you from idea to working code — with you in control at every step.
+AI agents that guide you from idea to working code — with human judgment at every gate.
 
-nWave runs inside [Claude Code](https://claude.com/product/claude-code). You describe what to build. Specialized agents handle requirements, architecture, test design, and implementation. You review and approve at each stage.
+nWave runs inside [Claude Code](https://claude.com/product/claude-code). It breaks feature delivery into seven waves (discover, diverge, discuss, design, devops, distill, deliver). Specialized agents produce artifacts at each wave. You review and approve before proceeding. The machine never runs unsupervised end-to-end.
 
-## BREAKING CHANGE: Command Format (v2.8.0)
+## What's New in v3.5
 
-**Starting with v2.8.0, all slash commands use hyphen format instead of colons.**
+**[Full changelog →](https://github.com/nwave-ai/nwave/tree/main/docs/guides/whats-new-v35.md)**
 
-| Before (v2.7.x) | After (v2.8.0+) |
-|---|---|
-| `/nw:deliver` | `/nw-deliver` |
-| `/nw:design` | `/nw-design` |
-| `/nw:discuss` | `/nw-discuss` |
-| `/nw:distill` | `/nw-distill` |
-| `/nw:discover` | `/nw-discover` |
-| *All other commands* | `/nw-{command}` |
+- **`/nw-buddy`** — Your AI concierge. Not sure where to start? Ask the buddy. It reads your project and gives contextual answers about methodology, commands, project state, and troubleshooting.
+- **DIVERGE wave** — Structured brainstorming before convergence. Explore design options with JTBD analysis, competitive research, and SCAMPER ideation before locking into a solution.
+- **Three DESIGN architects** — Routes to the right specialist for your need: system-level architecture (Titan), domain/DDD modeling (Hera), or application-level design (Morgan).
+- **SSOT document model** — Single source of truth for product documents. Build feature spec once, reuse across requirements, design, testing, and delivery — no document sprawl.
 
-**Why?** Commands migrated from Claude Code's dynamic `commands/` directory to the stable `skills/` system to prevent commands from disappearing during long sessions.
+For upgrading from v3.3 or earlier, see [Breaking Changes](#breaking-changes) below.
 
-**To upgrade**: Run `pipx upgrade nwave-ai && nwave-ai install` (CLI) or `/plugin marketplace update nwave-marketplace` (plugin). Old `/nw:` commands are automatically removed.
+## How It Works
+
+```text
+  machine        human         machine        human         machine
+    │              │              │              │              │
+    ▼              ▼              ▼              ▼              ▼
+  Agent ──→ Documentation ──→ Review ──→ Decision ──→ Agent ──→ ...
+ generates    artifacts      validates   approves    continues
+```
+
+Each wave produces artifacts that you review before the next wave begins. The machine never runs unsupervised end-to-end.
+
+The workflow has seven waves. Entry point depends on your context:
+
+| Wave | Command | Agent | Entry? |
+|------|---------|-------|--------|
+| DISCOVER | `/nw-discover` | product-discoverer | Greenfield: explore market and problem space |
+| DIVERGE | `/nw-diverge` | nw-diverger | Greenfield: structured brainstorming before converging |
+| DISCUSS | `/nw-discuss` | product-owner | All: write requirements and user journeys |
+| DESIGN | `/nw-design` | system-designer, ddd-architect, solution-architect | All: architecture and domain model |
+| DEVOPS | `/nw-devops` | platform-architect | All: infrastructure and deployment |
+| DISTILL | `/nw-distill` | acceptance-designer | All: acceptance tests (Given-When-Then) |
+| DELIVER | `/nw-deliver` | software-crafter | All: TDD implementation |
+
+**Wave routing**: Entry points vary by context:
+- **Greenfield project**: Start at DISCOVER or DIVERGE, proceed through all waves
+- **Brownfield feature**: Start at DIVERGE or DISCUSS, skip to DESIGN
+- **Bug fix**: Jump straight to DISTILL (write failing test) then DELIVER
+- **Refactoring**: Jump to DELIVER (green already, refactor inside existing tests)
+
+DISTILL → DELIVER is always the terminal pair. See the [Wave Routing Guide](https://github.com/nwave-ai/nwave/tree/main/docs/guides/wave-routing-and-entry-points.md) for the full decision matrix.
+
+40 agents total: 10 wave agents (including 3 DESIGN specialists), 1 concierge, 8 cross-wave specialists, 14 peer reviewers, 7 business agents. Full list: **[Commands Reference](https://github.com/nwave-ai/nwave/tree/main/docs/reference/commands/index.md)**
 
 ## Quick Start
 
@@ -27,20 +55,9 @@ nWave runs inside [Claude Code](https://claude.com/product/claude-code). You des
 
 - **Python 3.10+** — nWave's DES hooks use `match/case` statements and `X | Y` union type syntax introduced in Python 3.10. Verify with `python3 --version`.
 
-### Plugin (Recommended)
+### CLI Installer (Recommended)
 
-From Claude Code, run:
-
-```
-/plugin marketplace add nwave-ai/nwave
-/plugin install nw@nwave-marketplace
-```
-
-Restart Claude Code and type `/nw-` to see all available commands.
-
-### CLI Installer (Alternative)
-
-Install from PyPI — useful for contributing or environments without plugin support:
+Full feature support. Install from PyPI:
 
 ```bash
 pipx install nwave-ai
@@ -53,6 +70,17 @@ Agents and commands go to `~/.claude/`.
 > **Windows users**: Use WSL (Windows Subsystem for Linux). Install with: `wsl --install`
 
 Full setup details: **[Installation Guide](https://github.com/nWave-ai/nWave/blob/main/docs/guides/installation-guide.md)**
+
+### Plugin (Limited)
+
+Quick setup, but does not support all features (DES enforcement, hook customization, rigor profiles). Use the CLI installer for full functionality.
+
+```
+/plugin marketplace add nwave-ai/nwave
+/plugin install nw@nwave-marketplace
+```
+
+Restart Claude Code and type `/nw-` to see available commands.
 
 ### OpenCode Support (Alternative IDE)
 
@@ -90,38 +118,49 @@ nwave-ai install
 
 | Scenario | Use | Why |
 |----------|-----|-----|
-| First time | Plugin | Zero dependencies, instant setup |
-| Team rollout | Either | Plugin for simplicity, CLI for automation |
+| First time | CLI | Full features, recommended path |
+| Team rollout | CLI | Automation, full DES enforcement |
 | Contributing | CLI | Dev scripts, internals access |
-| Already on CLI | Either | Both coexist safely |
+| Quick trial | Plugin | Fast setup, but limited features |
 
 ### Use (inside Claude Code, after reopening it)
 
+**Start with the buddy:**
+
 ```
+/nw-buddy What should I do next?
+```
+
+The buddy reads your project and gives contextual answers. Use it anytime you're unsure of the next step, where to find documents, or how a feature of nWave works.
+
+**Ready to build? Follow the waves:**
+
+```
+/nw-diverge "user authentication approaches"       # Design exploration (optional for greenfield)
 /nw-discuss "user login with email and password"   # Requirements
 /nw-design --architecture=hexagonal                 # Architecture
 /nw-distill "user-login"                            # Acceptance tests
 /nw-deliver                                         # TDD implementation
 ```
 
-Four commands. Four human checkpoints. One working feature.
+Each wave produces artifacts you review. The machine never runs unsupervised end-to-end.
 
 Full walkthrough: **[Your First Feature](https://github.com/nwave-ai/nwave/tree/main/docs/guides/tutorial-first-feature.md)**
 
-## Staying Updated
+## Keeping nWave Updated
 
-nWave checks for new versions when you open Claude Code. When available, you'll see a note in Claude's context with version details and changes.
+nWave checks for new versions when you open Claude Code. When available, you'll see a note in your context with version details and changes.
 
 **Plugin (self-hosted marketplace):**
 ```
 /plugin marketplace update nwave-marketplace
 ```
 
-Updates are available immediately after each release — no review delay.
+Available immediately after release — no review delay.
 
 **Plugin (official Anthropic directory):**
 
-The official directory pins plugins to reviewed versions. Updates go through Anthropic's review process before reaching users. If you installed from the official directory and want the latest version sooner, add the self-hosted marketplace:
+The official directory pins plugins to reviewed versions. Updates go through Anthropic's review before reaching users. If you want the latest sooner, switch to the self-hosted marketplace:
 
 ```
 /plugin marketplace add nwave-ai/nwave
@@ -134,7 +173,10 @@ pipx upgrade nwave-ai
 nwave-ai install
 ```
 
-Control check frequency via `update_check.frequency` in `~/.nwave/des-config.json`: `daily`, `weekly`, `every_session`, or `never`.
+**Adjust check frequency:**
+```bash
+# Edit ~/.nwave/des-config.json: "update_check.frequency" = "daily", "weekly", "every_session", or "never"
+```
 
 ## Uninstalling
 
@@ -164,10 +206,10 @@ nWave enforces proven engineering practices (TDD, peer review, mutation testing)
 | Profile | Agent | Reviewer | TDD | Mutation | Cost | Use When |
 |---------|-------|----------|-----|----------|------|----------|
 | **lean** | haiku | none | RED→GREEN | no | lowest | Spikes, config, docs |
-| **standard** ⭐ | sonnet | haiku | full 5-phase | no | moderate | Most features |
+| **standard** (default) | sonnet | haiku | full 5-phase | no | moderate | Most features |
 | **thorough** | opus | sonnet | full 5-phase | no | higher | Critical features |
 | **exhaustive** | opus | opus | full 5-phase | ≥80% kill | highest | Production core |
-| **custom** | *you choose* | *you choose* | *you choose* | *you choose* | varies | Exact combo needed |
+| **custom** | *you choose* | *you choose* | *you choose* | *you choose* | varies | Exact combination |
 
 Picked once, persists across sessions. Every `/nw-deliver`, `/nw-design`, `/nw-review` respects your choice. Need to mix profiles? `/nw-rigor custom` walks through each setting.
 
@@ -194,31 +236,6 @@ DES also runs automatic housekeeping at every session start: it removes audit lo
 
 These messages protect code quality but never prevent your work — they guide you toward the safe path.
 
-## How It Works
-
-```text
-  machine        human         machine        human         machine
-    │              │              │              │              │
-    ▼              ▼              ▼              ▼              ▼
-  Agent ──→ Documentation ──→ Review ──→ Decision ──→ Agent ──→ ...
- generates    artifacts      validates   approves    continues
-```
-
-Each wave produces artifacts that you review before the next wave begins. The machine never runs unsupervised end-to-end.
-
-The full workflow has six waves. Use all six for greenfield projects, or jump straight to `/nw-deliver` for brownfield work.
-
-| Wave | Command | Agent | Produces |
-|------|---------|-------|----------|
-| DISCOVER | `/nw-discover` | product-discoverer | Market validation |
-| DISCUSS | `/nw-discuss` | product-owner | Requirements |
-| DESIGN | `/nw-design` | solution-architect | Architecture + ADRs |
-| DEVOPS | `/nw-devops` | platform-architect | Infrastructure readiness |
-| DISTILL | `/nw-distill` | acceptance-designer | Given-When-Then tests |
-| DELIVER | `/nw-deliver` | software-crafter | Working implementation |
-
-23 agents total: 6 wave agents, 6 cross-wave specialists, 11 peer reviewers. Full list: **[Commands Reference](https://github.com/nwave-ai/nwave/tree/main/docs/reference/commands/index.md)**
-
 ## Documentation
 
 ### Getting Started
@@ -239,6 +256,25 @@ The full workflow has six waves. Use all six for greenfield projects, or jump st
 - **[Discord](https://discord.gg/Cywj3uFdpd)** — Questions, feedback, success stories
 - **[GitHub Issues](https://github.com/nWave-ai/nWave/issues)** — Bug reports and feature requests
 - **[Contributing](CONTRIBUTING.md)** — Development setup and guidelines
+
+## Breaking Changes
+
+### Command Format (v2.8.0)
+
+**Starting with v2.8.0, all slash commands use hyphen format instead of colons.**
+
+| Before (v2.7.x) | After (v2.8.0+) |
+|---|---|
+| `/nw:deliver` | `/nw-deliver` |
+| `/nw:design` | `/nw-design` |
+| `/nw:discuss` | `/nw-discuss` |
+| `/nw:distill` | `/nw-distill` |
+| `/nw:discover` | `/nw-discover` |
+| *All other commands* | `/nw-{command}` |
+
+**Why?** Commands migrated from Claude Code's dynamic `commands/` directory to the stable `skills/` system to prevent commands from disappearing during long sessions.
+
+**To upgrade**: Run `pipx upgrade nwave-ai && nwave-ai install` (CLI) or `/plugin marketplace update nwave-marketplace` (plugin). Old `/nw:` commands are automatically removed.
 
 ## Privacy
 

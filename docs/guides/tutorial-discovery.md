@@ -310,7 +310,8 @@ You started with an idea ("bookmark manager CLI tool") and three untested assump
 
 ## Next Steps
 
-- **[Tutorial 5: Requirements and UX Journey](./TUTORIAL-INDEX.md)** -- If Scout said "proceed," the next step is `/nw-discuss` to turn your validated problem into user stories with acceptance criteria
+- **[Tutorial 5: Exploring Design Directions](./diverge-wave-guide.md)** -- If Scout said "proceed" and you have a greenfield project or want to explore multiple approaches, run `/nw-diverge` to generate and evaluate design directions before requirements
+- **[Tutorial 6: Requirements and UX Journey](./tutorial-discuss.md)** -- If you already know the approach, skip DIVERGE and go straight to `/nw-discuss` to turn your validated problem into user stories with acceptance criteria
 - **Run discovery on your own idea** -- Pick a feature you have been meaning to build. Run `/nw-discover` and see if the problem holds up under scrutiny
 - **Re-read your project brief** -- Compare your original assumptions to what the evidence showed. How many survived?
 

@@ -1,17 +1,22 @@
 ---
 name: nw-design
-description: "Designs system architecture with C4 diagrams and technology selection. Use when defining component boundaries, choosing tech stacks, or creating architecture documents."
+description: "Designs system architecture with C4 diagrams and technology selection. Routes to the right architect based on design scope (system, domain, application, or full stack). Two interaction modes: guide (collaborative Q&A) or propose (architect presents options with trade-offs)."
 user-invocable: true
 argument-hint: '[component-name] - Optional: --residuality --paradigm=[auto|oop|fp]'
 ---
 
 # NW-DESIGN: Architecture Design
 
-**Wave**: DESIGN (wave 3 of 6) | **Agents**: Morgan (nw-solution-architect) | **Command**: `*design-architecture`
+**Wave**: DESIGN (wave 3 of 6) | **Agents**: Morgan (nw-solution-architect), nw-system-designer, nw-ddd-architect | **Command**: `*design-architecture`
 
 ## Overview
 
-Execute DESIGN wave through discovery-driven architecture design. Morgan asks about business drivers and constraints first, then recommends architecture that fits. Analyzes existing codebase, evaluates open-source alternatives, produces C4 diagrams (Mermaid) as mandatory output.
+Execute DESIGN wave through discovery-driven architecture design. The command starts with two interactive decisions:
+
+1. **Design Scope** — routes to the right architect: system-level (@nw-system-designer), domain-level (@nw-ddd-architect), application-level (@nw-solution-architect), or full stack (all three in sequence).
+2. **Interaction Mode** — guide (architect asks questions, you decide together) or propose (architect reads requirements, presents 2-3 options with trade-offs).
+
+All architects write to `docs/product/architecture/brief.md` (SSOT), each in its own section. Analyzes existing codebase, evaluates open-source alternatives, produces C4 diagrams (Mermaid) as mandatory output.
 
 ## Prior Wave Consultation
 
@@ -97,7 +102,47 @@ Before dispatching the architect agent, read rigor config from `.nwave/des-confi
 - **`reviewer_model`**: If design review is performed, use this model for the reviewer agent. If `"skip"`, skip design review.
 - **`review_enabled`**: If `false`, skip post-design review step.
 
+## Interactive Decision Points
+
+### Decision 0: Design Scope
+
+**Question**: What are you designing?
+
+**Options**:
+1. **System / infrastructure** — distributed architecture, scalability, caching, load balancing, message queues
+2. **Domain / bounded contexts** — DDD, aggregates, Event Modeling, event sourcing, context mapping
+3. **Application / components** — component boundaries, hexagonal architecture, tech stack, ADRs
+4. **Full stack** — all three in sequence: system -> domain -> application
+
+### Decision 1: Interaction Mode
+
+**Question**: How do you want to work?
+
+**Options**:
+1. **Guide me** — the architect asks questions, you make decisions together
+2. **Propose** — the architect reads your requirements and proposes 2-3 options with trade-offs
+
 ## Agent Invocation
+
+### Architect Routing (based on Decision 0)
+
+| Decision 0 | Agent | Focus |
+|-------------|-------|-------|
+| System / infrastructure | @nw-system-designer | Distributed architecture, scalability, caching, load balancing, message queues |
+| Domain / bounded contexts | @nw-ddd-architect | DDD, aggregates, Event Modeling, event sourcing, context mapping |
+| Application / components | @nw-solution-architect | Component boundaries, hexagonal architecture, tech stack, ADRs |
+| Full stack | @nw-system-designer then @nw-ddd-architect then @nw-solution-architect | All three in sequence |
+
+Pass Decision 1 (guide/propose) to the invoked agent as the interaction mode.
+
+All agents write to `docs/product/architecture/` (SSOT). Each architect owns its section:
+- @nw-system-designer writes `## System Architecture` in `brief.md`
+- @nw-ddd-architect writes `## Domain Model` in `brief.md`
+- @nw-solution-architect writes `## Application Architecture` in `brief.md`
+
+For **Full stack** mode, each agent reads the prior architect's output before starting its own work.
+
+### Default Invocation (Application scope)
 
 @nw-solution-architect
 
@@ -107,6 +152,7 @@ Context files: see Prior Wave Consultation above.
 
 **Configuration:**
 - model: rigor.agent_model (omit if "inherit")
+- interaction_mode: {Decision 1: "guide" or "propose"}
 - interactive: moderate
 - output_format: markdown
 - diagram_format: mermaid (C4)
@@ -162,14 +208,22 @@ This summary enables DEVOPS and DISTILL to quickly assess architecture decisions
 
 ## Expected Outputs
 
+### Feature delta (in `docs/feature/{feature-id}/`)
 ```
-docs/feature/{feature-id}/design/
-  architecture-design.md       (includes C4 diagrams in Mermaid)
-  technology-stack.md
-  component-boundaries.md
-  data-models.md
-  wave-decisions.md
-docs/adrs/
-  ADR-NNN-*.md
-CLAUDE.md (project root)   (optional: ## Development Paradigm section)
+  wave-decisions.md              (appends ## DESIGN Decisions section)
+```
+
+### SSOT updates (in `docs/product/architecture/`)
+```
+  brief.md                       (created or updated — each architect owns its section:
+                                   ## System Architecture — nw-system-designer
+                                   ## Domain Model — nw-ddd-architect
+                                   ## Application Architecture — nw-solution-architect)
+  adr-*.md                       (new ADRs for this feature's architectural decisions)
+  c4-diagrams.md                 (current component topology, if separate from brief)
+```
+
+### Optional
+```
+CLAUDE.md (project root)         (optional: ## Development Paradigm section)
 ```

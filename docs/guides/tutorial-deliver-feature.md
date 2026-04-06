@@ -2,8 +2,8 @@
 
 **Time**: ~20 minutes (9 steps)
 **Platform**: macOS or Linux (Windows: use WSL)
-**Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 7](./tutorial-distill.md) completed
-**What this is**: A hands-on walkthrough of `/nw-deliver` on a real multi-component feature. You will watch the delivery pipeline implement your bookmark CLI against the acceptance tests from Tutorial 7, guided by the hexagonal architecture from Tutorial 6.
+**Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 8](./tutorial-distill.md) completed
+**What this is**: A hands-on walkthrough of `/nw-deliver` on a real multi-component feature. You will watch the delivery pipeline implement your bookmark CLI against the acceptance tests from Tutorial 8, guided by the hexagonal architecture from Tutorial 7.
 
 ---
 
@@ -11,7 +11,7 @@
 
 A fully implemented bookmark CLI -- domain logic, CLI adapter, and SQLite storage adapter -- all built through strict TDD against your acceptance tests.
 
-**Before**: You have acceptance tests from Tutorial 7 (`.feature` files with pytest-bdd step definitions), architecture from Tutorial 6 (hexagonal design with component boundaries), and requirements from Tutorial 5. But you have zero implementation code. Your tests are tagged `@skip` and waiting.
+**Before**: You have acceptance tests from Tutorial 8 (`.feature` files with pytest-bdd step definitions), architecture from Tutorial 7 (hexagonal design with component boundaries), and requirements from Tutorial 6. But you have zero implementation code. Your tests are tagged `@skip` and waiting.
 
 **After**: Every acceptance test passes. The bookmark CLI saves, searches, and manages bookmarks through a clean hexagonal architecture. The domain layer was built first, then the adapters -- exactly as the architecture prescribed. Every line of code exists because a test demanded it.
 
@@ -21,7 +21,7 @@ A fully implemented bookmark CLI -- domain logic, CLI adapter, and SQLite storag
 
 ## Step 1 of 9: Confirm Your Starting Point (~1 minute)
 
-You should be in the `bookmark-cli` project from Tutorial 7, with acceptance tests committed.
+You should be in the `bookmark-cli` project from Tutorial 8, with acceptance tests committed.
 
 Verify your acceptance tests exist:
 
@@ -49,7 +49,7 @@ You should see:
 docs/feature/bookmark-cli/design/architecture-design.md
 ```
 
-> **If either is missing**: Complete the prerequisite tutorials first. `/nw-deliver` reads both acceptance tests and architecture documents to build the roadmap. [Tutorial 6](./tutorial-design.md) produces architecture; [Tutorial 7](./tutorial-distill.md) produces acceptance tests.
+> **If either is missing**: Complete the prerequisite tutorials first. `/nw-deliver` reads both acceptance tests and architecture documents to build the roadmap. [Tutorial 7](./tutorial-design.md) produces architecture; [Tutorial 8](./tutorial-distill.md) produces acceptance tests.
 
 *Next: you will launch the delivery and watch the solution architect plan the work.*
 
@@ -161,7 +161,7 @@ This takes 3-5 minutes for the domain steps. Each step follows the cycle you lea
 
 Two things to notice while it runs:
 
-1. **Acceptance tests get enabled one at a time.** Remember the `@skip` tags from Tutorial 7? The crafter removes one tag, watches that test fail (RED), writes the code to make it pass (GREEN), then moves to the next. This is the "one-at-a-time" strategy Quinn set up.
+1. **Acceptance tests get enabled one at a time.** Remember the `@skip` tags from Tutorial 8? The crafter removes one tag, watches that test fail (RED), writes the code to make it pass (GREEN), then moves to the next. This is the "one-at-a-time" strategy Quinn set up.
 2. **Domain steps touch only domain files.** Check the commit messages -- steps 01-01 and 01-02 modify files in `domain/`, not `adapters/`. The architecture boundary holds.
 
 > **If the crafter seems stuck on a step for more than 3 minutes**: This is normal for complex steps. The crafter may be writing multiple unit tests before getting to GREEN. Wait for the commit message to confirm completion.
@@ -354,17 +354,17 @@ bookmark-cli/
 ### The Full Wave
 
 ```
-DISCOVER         DISCUSS          DESIGN           DISTILL          DELIVER
-(/nw-discover)   (/nw-discuss)    (/nw-design)     (/nw-distill)    (/nw-deliver)
-──────────────   ──────────────   ──────────────   ──────────────   ──────────────
-"Is the problem  "What should     "How should we   "What does done  "Build it with
- real?"           we build?"       build it?"       look like?"      quality gates"
+DISCOVER         DIVERGE          DISCUSS          DESIGN           DEVOPS           DISTILL          DELIVER
+(/nw-discover)   (/nw-diverge)    (/nw-discuss)    (/nw-design)     (/nw-devops)     (/nw-distill)    (/nw-deliver)
+──────────────   ──────────────   ──────────────   ──────────────   ──────────────   ──────────────   ──────────────
+"Is the problem  "Which direction "What should     "How should we   "How do we       "What does done  "Build it with
+ real?"           should we go?"   we build?"       build it?"       deploy it?"      look like?"      quality gates"
 
-Evidence-based   User stories +   Hexagonal arch   Acceptance       Domain-first
-validation       acceptance       + ADRs +         tests + walking  TDD + review +
-                 criteria         diagrams         skeleton         mutation test
+Evidence-based   Design explore   User stories +   Hexagonal arch   CI/CD pipeline   Acceptance       Domain-first
+validation       + recommendation acceptance       + ADRs +         + infra +        tests + walking  TDD + review +
+                 (optional)       criteria         diagrams         observability    skeleton         mutation test
 
-Tutorial 4       Tutorial 5       Tutorial 6       Tutorial 7       This tutorial
+Tutorial 4       Tutorial 5       Tutorial 6       Tutorial 7       Tutorial 10      Tutorial 8       This tutorial
 ```
 
 Each wave constrained the next. Requirements shaped the architecture. Architecture shaped the tests. Tests shaped the implementation. Nothing was generated in a vacuum.

@@ -2,7 +2,7 @@
 
 **Time**: ~12 minutes (7 steps)
 **Platform**: macOS or Linux (Windows: use WSL)
-**Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 6](./tutorial-design.md) completed
+**Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 7](./tutorial-design.md) completed
 **What this is**: An interactive walkthrough of `/nw-distill` -- nWave's acceptance test generation command. You will turn user stories and architecture documents into executable BDD (Behavior-Driven Development) acceptance tests.
 
 ---
@@ -11,7 +11,7 @@
 
 A complete acceptance test suite -- Given/When/Then scenarios in `.feature` files with pytest-bdd step definitions, ready for `/nw-deliver` to implement against.
 
-**Before**: You have requirements from Tutorial 5 (user stories, acceptance criteria) and architecture from Tutorial 6 (hexagonal design, component boundaries, ADRs). But you have no executable tests, no walking skeleton, and no way to know when the feature is "done."
+**Before**: You have requirements from Tutorial 6 (user stories, acceptance criteria) and architecture from Tutorial 7 (hexagonal design, component boundaries, ADRs). But you have no executable tests, no walking skeleton, and no way to know when the feature is "done."
 
 **After**: You have `.feature` files with BDD scenarios covering happy paths, error paths, and edge cases. You have pytest-bdd step definitions wired to driving ports. You have a walking skeleton that defines the simplest end-to-end user journey. Everything is tagged for one-at-a-time implementation in the DELIVER wave.
 
@@ -21,7 +21,7 @@ A complete acceptance test suite -- Given/When/Then scenarios in `.feature` file
 
 ## Step 1 of 7: Confirm Your Starting Point (~1 minute)
 
-You should be in the `bookmark-cli` project from Tutorial 6, with architecture artifacts committed.
+You should be in the `bookmark-cli` project from Tutorial 7, with architecture artifacts committed.
 
 Verify your requirements exist:
 
@@ -47,7 +47,7 @@ You should see:
 docs/feature/bookmark-cli/design/architecture-design.md
 ```
 
-> **If either file is missing**: Complete the prerequisite tutorial first. `/nw-distill` reads both requirements and architecture to generate tests. [Tutorial 5](./tutorial-discuss.md) produces requirements; [Tutorial 6](./tutorial-design.md) produces architecture.
+> **If either file is missing**: Complete the prerequisite tutorial first. `/nw-distill` reads both requirements and architecture to generate tests. [Tutorial 6](./tutorial-discuss.md) produces requirements; [Tutorial 7](./tutorial-design.md) produces architecture.
 
 *Next: you will launch the distill command and answer Quinn's setup questions.*
 
@@ -122,7 +122,7 @@ Two things to notice:
 1. **Business language only** -- The scenario says "Carlos saves" and "Carlos can find," not "POST to /bookmarks endpoint" or "INSERT INTO bookmarks table." Quinn writes in the language of your user stories, not your architecture.
 2. **Observable outcome** -- The Then clause describes what the user sees ("the result shows the URL and tags"), not what the system does internally.
 
-> **Your walking skeleton will differ.** Quinn picks the scenario based on the emotional peak from your UX journey (Tutorial 5). The pattern is what matters: a single scenario that proves end-to-end value.
+> **Your walking skeleton will differ.** Quinn picks the scenario based on the emotional peak from your UX journey (Tutorial 6). The pattern is what matters: a single scenario that proves end-to-end value.
 
 *Next: Quinn will generate the full scenario suite covering happy paths, errors, and edge cases.*
 
@@ -291,17 +291,17 @@ You started with requirements and architecture, and ended with an executable tes
 ### The Wave So Far
 
 ```
-DISCOVER             DISCUSS              DESIGN               DISTILL
-(/nw-discover)       (/nw-discuss)        (/nw-design)         (/nw-distill)
-────────────────     ────────────────     ────────────────     ────────────────
-"Is the problem      "What should we      "How should we       "What does done
- real?"               build?"              build it?"           look like?"
+DISCOVER             DIVERGE              DISCUSS              DESIGN               DEVOPS               DISTILL
+(/nw-discover)       (/nw-diverge)        (/nw-discuss)        (/nw-design)         (/nw-devops)         (/nw-distill)
+────────────────     ────────────────     ────────────────     ────────────────     ────────────────     ────────────────
+"Is the problem      "Which direction     "What should we      "How should we       "How do we           "What does done
+ real?"               should we go?"       build?"              build it?"           deploy it?"          look like?"
 
-Evidence-based       Journey + stories    Architecture +       Acceptance tests
-validation           + acceptance         ADRs + diagrams      + walking skeleton
-                     criteria                                  + step definitions
+Evidence-based       Design exploration   Journey + stories    Architecture +       CI/CD pipeline       Acceptance tests
+validation           + recommendation     + acceptance         ADRs + diagrams      + infra +            + walking skeleton
+                     (optional)           criteria                                  observability        + step definitions
 
-Tutorial 4           Tutorial 5           Tutorial 6           This tutorial
+Tutorial 4           Tutorial 5           Tutorial 6           Tutorial 7           Tutorial 10          This tutorial
 ```
 
 Each wave feeds the next. The acceptance tests reference your user stories (the scenarios) and your architecture (the driving ports). Nothing is generated in a vacuum.
@@ -310,9 +310,9 @@ Each wave feeds the next. The acceptance tests reference your user stories (the 
 
 ## Next Steps
 
-- **[Tutorial 8: Delivering the Feature](./TUTORIAL-INDEX.md)** -- Take your acceptance tests into `/nw-deliver` to implement the bookmark CLI with architecture-guided TDD
+- **[Tutorial 9: Delivering the Feature](./tutorial-deliver-feature.md)** -- Take your acceptance tests into `/nw-deliver` to implement the bookmark CLI with architecture-guided TDD
 - **Read a feature file aloud** -- If it sounds like a conversation about what the user does, it is well-written. If it sounds like a technical specification, it may be too implementation-focused.
-- **Open the walking skeleton** -- Trace the scenario from Given to Then and check that it matches the emotional peak from your UX journey (Tutorial 5)
+- **Open the walking skeleton** -- Trace the scenario from Given to Then and check that it matches the emotional peak from your UX journey (Tutorial 6)
 
 ---
 
@@ -330,4 +330,4 @@ Each wave feeds the next. The acceptance tests reference your user stories (the 
 
 ---
 
-**Last Updated**: 2026-02-17
+**Last Updated**: 2026-04-06

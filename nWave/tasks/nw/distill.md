@@ -49,23 +49,31 @@ After the acceptance designer produces scenarios, you MUST dispatch 3 parallel r
 
 ### Prior Wave Consultation
 
-Read targeted prior wave artifacts before dispatching the acceptance designer:
+DISTILL is the conjunction point — it reads all three SSOT dimensions plus the feature delta.
 
-1. **DISCOVER** (skip): DISCUSS already synthesized DISCOVER evidence.
-2. **DISCUSS** (primary input): Read from `docs/feature/{feature-id}/discuss/`:
-   - `acceptance-criteria.md` | `story-map.md` | `user-stories.md` | `wave-decisions.md`
-3. **DESIGN** (structural context): Read from `docs/feature/{feature-id}/design/`:
-   - `architecture-design.md` | `component-boundaries.md` | `wave-decisions.md`
-4. **DEVOPS** (test environment): Read from `docs/feature/{feature-id}/devops/`:
+**SSOT (all three dimensions):**
+1. **Journeys** (behavior): Read `docs/product/journeys/{name}.yaml` — extract embedded Gherkin as starting scenarios, identify integration checkpoints and failure_modes
+2. **Architecture** (structure): Read `docs/product/architecture/brief.md` — identify driving ports (from `## For Acceptance Designer` section) for port-entry test scenarios
+3. **KPI contracts** (observability): Read `docs/product/kpi-contracts.yaml` — identify which behaviors need `@kpi` tagged scenarios (soft gate — warn if missing, proceed)
+
+**Feature delta:**
+4. **DISCUSS**: Read from `docs/feature/{feature-id}/discuss/`:
+   - `user-stories.md` (scope boundary — generate tests for THIS feature's stories only) | `story-map.md` | `wave-decisions.md`
+5. **DEVOPS** (test environment): Read from `docs/feature/{feature-id}/devops/`:
    - `platform-architecture.md` | `ci-cd-pipeline.md` | `wave-decisions.md`
+
+**Scope rule**: DISTILL generates tests for the behaviors described in `user-stories.md`, not for the entire SSOT. The SSOT provides context (which port to enter through, which KPI to verify) but the scope is bounded by the feature delta.
 
 **READING ENFORCEMENT**: Read every file above using the Read tool. Output confirmation checklist (`+ {file}` for each read, `- {file} (not found)` for missing). Do NOT skip files that exist.
 
+**Fallback**: If `docs/product/` does not exist, fall back to `docs/feature/{feature-id}/` for all inputs (old model).
+
 ### Graceful Degradation
 
+- **KPI contracts missing**: Log warning: "KPI contracts missing — acceptance tests cover behavior only, not observability." Proceed without `@kpi` scenarios.
 - **DEVOPS missing**: Log warning, use default environment matrix (clean, with-pre-commit, with-stale-config). Proceed.
-- **DISCUSS missing**: Log warning, derive AC from DESIGN. Skip story-to-scenario traceability. Proceed.
-- **DESIGN missing**: BLOCK. Ask user to identify driving ports. Without them, hexagonal boundary is unverifiable.
+- **DISCUSS missing**: Log warning, derive AC from architecture. Skip story-to-scenario traceability. Proceed.
+- **Architecture SSOT missing**: BLOCK. Ask user to identify driving ports. Without them, hexagonal boundary is unverifiable.
 
 ### Rigor Profile
 

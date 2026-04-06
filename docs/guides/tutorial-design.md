@@ -2,7 +2,7 @@
 
 **Time**: ~15 minutes (9 steps)
 **Platform**: macOS or Linux (Windows: use WSL)
-**Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 5](./tutorial-discuss.md) completed
+**Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 6](./tutorial-discuss.md) completed
 **What this is**: An interactive walkthrough of `/nw-design` and `/nw-diagram` -- nWave's architecture design commands. You will turn requirements into a technical architecture with visual diagrams.
 
 ---
@@ -11,9 +11,9 @@
 
 A complete architecture package for the bookmark CLI -- component boundaries, technology decisions, and visual diagrams.
 
-**Before**: You have validated requirements from Tutorial 5 (user stories, acceptance criteria, UX journey) in `docs/feature/bookmark-cli/discuss/`. But you have no architecture, no technology decisions, and no component design.
+**Before**: You have validated requirements from Tutorial 6 (user stories, acceptance criteria, UX journey) in `docs/feature/bookmark-cli/discuss/`. But you have no architecture, no technology decisions, and no component design.
 
-**After**: You have an architecture document defining how the bookmark CLI is structured (domain layer, CLI adapter, storage adapter), ADRs explaining each technology choice, and Mermaid diagrams you can render in any markdown viewer.
+**After**: You have an architecture document defining how the bookmark CLI is structured (domain layer, CLI adapter, storage adapter), ADRs explaining each technology choice, and Mermaid diagrams you can render in any markdown viewer. Architecture lives in `docs/product/architecture/` (SSOT) with feature-specific deltas in `docs/feature/bookmark-cli/design/`.
 
 **Why this matters**: Jumping from requirements to code skips the question "how should the pieces fit together?" `/nw-design` answers that question with documented decisions and visual diagrams, so the DISTILL and DELIVER waves have clear boundaries to work within.
 
@@ -21,7 +21,7 @@ A complete architecture package for the bookmark CLI -- component boundaries, te
 
 ## Step 1 of 9: Confirm Your Starting Point (~1 minute)
 
-You should be in the `bookmark-cli` project from Tutorial 5, with requirements artifacts committed.
+You should be in the `bookmark-cli` project from Tutorial 6, with requirements artifacts committed.
 
 Verify:
 
@@ -41,9 +41,9 @@ Check that your requirements include user stories:
 head -5 docs/feature/bookmark-cli/discuss/user-stories.md
 ```
 
-You should see the beginning of your user stories file from Tutorial 5 (content varies based on your discuss session).
+You should see the beginning of your user stories file from Tutorial 6 (content varies based on your discuss session).
 
-> **If `docs/feature/bookmark-cli/discuss/` does not exist**: Complete [Tutorial 5](./tutorial-discuss.md) first. This tutorial builds directly on its output.
+> **If `docs/feature/bookmark-cli/discuss/` does not exist**: Complete [Tutorial 6](./tutorial-discuss.md) first. This tutorial builds directly on its output.
 
 *Next: you will launch the design command and answer architecture questions.*
 
@@ -63,9 +63,31 @@ Start the architecture design:
 /nw-design bookmark-cli
 ```
 
-> **AI output varies between runs.** Your conversation with Morgan will differ from the examples below. That is expected -- Morgan adapts to your requirements and codebase. What matters is the structure (decisions, architecture document, diagrams), not the exact wording.
+> **AI output varies between runs.** Your conversation with the architect will differ from the examples below. That is expected -- the architect adapts to your requirements and codebase. What matters is the structure (decisions, architecture document, diagrams), not the exact wording.
 
-Morgan (the solution architect agent) will ask four architecture decisions before designing. Give these answers:
+`/nw-design` starts with two routing decisions before design begins:
+
+**Decision 1: Design scope** -- What are you designing?
+
+| Option | When to pick | Architect |
+|--------|-------------|-----------|
+| System / infrastructure | Distributed systems, scalability, caching | Titan (`@system-designer`) |
+| Domain / bounded contexts | DDD, aggregates, Event Modeling, event sourcing | Hera (`@ddd-architect`) |
+| **Application / components** | Component boundaries, hexagonal architecture, ADRs | Morgan (`@solution-architect`) |
+| Full stack | All three in sequence | All three architects |
+
+For a CLI tool like bookmark-cli, pick **Application / components**. This routes to Morgan.
+
+**Decision 2: Interaction mode** -- How do you want to work?
+
+| Option | When to pick |
+|--------|-------------|
+| **Guide me** | You want to make decisions together through Q&A |
+| Propose | You want the architect to analyze and present options with trade-offs |
+
+Pick **Guide me** for this tutorial so you can see the decision process.
+
+After these two routing decisions, Morgan asks four architecture decisions. Give these answers:
 
 | Question | Answer | Why |
 |----------|--------|-----|
@@ -73,8 +95,6 @@ Morgan (the solution architect agent) will ask four architecture decisions befor
 | System design approach? | **Monolithic** | This is a CLI tool, not a distributed system |
 | Communication pattern? | **Synchronous** | CLI commands run sequentially |
 | Data architecture? | **Single Database** | One SQLite file is all we need |
-
-Morgan may present these as multiple-choice lists. Pick the option matching each answer above.
 
 <details>
 <summary>What are the other options?</summary>
@@ -89,7 +109,7 @@ Each question has alternatives you might choose for different projects:
 For a CLI tool, the simple options above are the right choices. These alternatives matter more for distributed systems or complex backends.
 </details>
 
-**What just happened?** Morgan read your requirements and asked you to make four foundational decisions. For a CLI tool, the simplest options (hexagonal monolith, synchronous, single database) are the right choices.
+**What just happened?** `/nw-design` routed you to Morgan (application scope) in guided mode. Morgan then asked four foundational architecture decisions. For a CLI tool, the simplest options (hexagonal monolith, synchronous, single database) are the right choices.
 
 *Next: Morgan will analyze your codebase and design the architecture.*
 
@@ -344,17 +364,17 @@ You started with requirements and ended with a complete architecture package:
 ## Step 9 of 9: The Wave So Far (~30 seconds)
 
 ```
-DISCOVER             DISCUSS              DESIGN               DISTILL
-(/nw-discover)       (/nw-discuss)        (/nw-design)         (/nw-distill)
-────────────────     ────────────────     ────────────────     ────────────────
-"Is the problem      "What should we      "How should we       "Generate test
- real?"               build?"              build it?"           specs"
+DISCOVER             DIVERGE              DISCUSS              DESIGN               DISTILL
+(/nw-discover)       (/nw-diverge)        (/nw-discuss)        (/nw-design)         (/nw-distill)
+────────────────     ────────────────     ────────────────     ────────────────     ────────────────
+"Is the problem      "Which direction     "What should we      "How should we       "Generate test
+ real?"               should we go?"       build?"              build it?"           specs"
 
-Evidence-based       Journey + stories    Architecture +       Acceptance tests
-validation           + acceptance         ADRs + diagrams      from requirements
-                     criteria                                  + architecture
+Evidence-based       Design exploration   Journey + stories    Architecture +       Acceptance tests
+validation           + recommendation     + acceptance         ADRs + diagrams      from requirements
+                     (optional)           criteria                                  + architecture
 
-Tutorial 4           Tutorial 5           This tutorial        Tutorial 7
+Tutorial 4           Tutorial 5           Tutorial 6           This tutorial        Tutorial 8
 ```
 
 Each wave builds on the previous one. The architecture document references your user stories. The component boundaries map to your acceptance criteria. Nothing is designed in a vacuum.
@@ -363,7 +383,7 @@ Each wave builds on the previous one. The architecture document references your 
 
 ## Next Steps
 
-- **[Tutorial 7: Generating Acceptance Tests](./tutorial-distill.md)** -- Take your architecture into `/nw-distill` to auto-generate BDD acceptance tests from user stories and component boundaries
+- **[Tutorial 8: Generating Acceptance Tests](./tutorial-distill.md)** -- Take your architecture into `/nw-distill` to auto-generate BDD acceptance tests from user stories and component boundaries
 - **Read an ADR aloud** -- If the "Alternatives Considered" section explains why each was rejected, the ADR is well-written. If it just lists names without rationale, it needs more detail.
 - **Render a diagram** -- Paste the Mermaid code into [mermaid.live](https://mermaid.live) and see the visual architecture. Share it with a teammate to validate the design.
 
@@ -383,4 +403,4 @@ Each wave builds on the previous one. The architecture document references your 
 
 ---
 
-**Last Updated**: 2026-02-17
+**Last Updated**: 2026-04-06

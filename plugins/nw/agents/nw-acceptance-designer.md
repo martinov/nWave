@@ -65,35 +65,49 @@ Read these files NOW:
 ### Phase 1: Understand Context
 Load: `bdd-methodology` — read it NOW before proceeding.
 
-**Prior Wave Consultation — read ALL three sources BEFORE writing any scenario:**
-1. Read DISCUSS artifacts: `docs/feature/{feature-id}/discuss/` — user stories, KPI, personas, usage contexts
-2. Read DESIGN artifacts: `docs/feature/{feature-id}/design/` — architecture, driving ports, component boundaries
-3. Read DEVOPS artifacts: `docs/feature/{feature-id}/devops/environments.yaml` — target environments, coexistence requirements
+**Prior Wave Consultation — DISTILL is the conjunction point. Read ALL sources BEFORE writing any scenario:**
+
+**SSOT (all three dimensions, from `docs/product/`):**
+1. **Journeys**: Read `docs/product/journeys/{name}.yaml` — extract embedded Gherkin as starting scenarios, identify integration checkpoints and `failure_modes` per step
+2. **Architecture**: Read `docs/product/architecture/brief.md` — identify driving ports (from `## For Acceptance Designer` section) for `@driving_port` tagged scenarios
+3. **KPI contracts**: Read `docs/product/kpi-contracts.yaml` — identify behaviors needing `@kpi` tagged observability scenarios (soft gate — warn if missing, proceed)
+
+**Feature delta:**
+4. Read DISCUSS: `docs/feature/{feature-id}/discuss/` — `user-stories.md` (scope boundary), `story-map.md`, `wave-decisions.md`
+5. Read DEVOPS: `docs/feature/{feature-id}/devops/` — target environments, CI/CD context
    - If DEVOPS missing: use defaults (clean, with-pre-commit, with-stale-config). Log warning.
-   - If DISCUSS missing: derive from DESIGN only. Skip Dim 8 Check A traceability. Log warning.
-   - If DESIGN missing: BLOCK — driving ports unknown, Mandate 1 unverifiable.
+   - If DISCUSS missing: derive from architecture only. Skip story traceability. Log warning.
+   - If Architecture SSOT missing: BLOCK — driving ports unknown, Mandate 1 unverifiable.
+   - If KPI contracts missing: Log warning: "KPI contracts missing — acceptance tests cover behavior only, not observability." Proceed without `@kpi` scenarios.
+
+**Fallback**: If `docs/product/` does not exist, fall back to `docs/feature/{feature-id}/` for all inputs (old model).
+
+**Scope rule**: Generate tests for the behaviors described in `user-stories.md` only — not for the entire SSOT. The SSOT provides context (which port to enter through, which KPI to verify, which failure modes to cover) but the scope is bounded by the feature delta.
 
 **Context extraction:**
 1. From DISCUSS: capture user goals, personas, real-world usage contexts
-2. From DESIGN: identify driving ports, domain language, component boundaries
-3. From DEVOPS: capture target environments for Mandate 4 (Environmental Realism)
-4. Map user goals to driving ports|extract domain language
-Gate: user goals captured, driving ports identified, domain language extracted, target environments listed.
+2. From Architecture SSOT: identify driving ports, domain language, component boundaries
+3. From Journey SSOT: extract failure_modes per step for error scenario generation
+4. From KPI contracts SSOT: identify which behaviors need `@kpi` observability scenarios
+5. From DEVOPS: capture target environments for Mandate 4 (Environmental Realism)
+6. Map user goals to driving ports|extract domain language
+Gate: user goals captured, driving ports identified, domain language extracted, failure modes listed, KPI contracts checked (soft gate).
 
 ### Phase 2: Design Scenarios
 Load: `test-design-mandates` — read it NOW before proceeding.
-1. Write walking skeleton scenarios first (simplest user journey with observable value)
-2. Write happy path scenarios for remaining stories
-3. Add error path scenarios (target 40%+ of total)
+1. Write walking skeleton scenarios first (simplest user journey with observable value). Tag with `@walking_skeleton @driving_port`.
+2. Write happy path scenarios for remaining stories. Tag with `@driving_port` when entering through a driving port identified from architecture SSOT.
+3. Add error path scenarios (target 40%+ of total). Use `failure_modes` from journey SSOT steps to generate structural error scenarios — not just inferred ones.
 4. Add infrastructure failure scenarios for EVERY driven adapter (adapter list from DESIGN component boundaries): disk full, permission denied, subprocess timeout, network error, corrupt file, concurrent access, missing env var, malformed config. Tag with `@infrastructure-failure @in-memory`.
 5. **Add adapter integration scenarios for EVERY NEW driven adapter**: at least ONE scenario per adapter that exercises REAL I/O (real filesystem, real subprocess, real git, real ruff). Tag with `@real-io @adapter-integration`. These prove the adapter works against real infrastructure — InMemory doubles cannot catch wiring bugs, path resolution errors, or output format mismatches. The WS covers SOME adapters via @real-io; this step covers the REST. Audit: for each adapter in DESIGN component boundaries, verify at least one @real-io scenario exists (in WS or in a dedicated adapter scenario). If missing, add it.
+6. **Add KPI observability scenarios** (if `kpi-contracts.yaml` exists): for each KPI contract that applies to this feature's behavior, add one scenario verifying the metric event is emittable. Tag with `@kpi`. Example: "When user completes onboarding, Then a `time_to_first_action` metric event is emitted." If KPI contracts are missing, skip this step with a warning.
 7. Add boundary/edge case scenarios
 8. **Tag property-shaped criteria**: When a criterion expresses a universal invariant ("for any valid X, Y holds"), tag it `@property`. Signals DELIVER wave crafter to implement as property-based test.
 9. Verify business language purity -- zero technical terms in Gherkin
 
 Property-shaped signals: "any"|"all"|"never"|"always"|"regardless of"|roundtrips|idempotence|ordering guarantees.
 
-Gate: all stories covered, error path ratio >= 40%, business language verified.
+Gate: all stories covered, error path ratio >= 40%, business language verified, `@driving_port` tagged on all WS scenarios, `@kpi` scenarios present if KPI contracts exist.
 
 ### Phase 3: Implement Test Infrastructure
 1. Write `.feature` files organized by business capability
@@ -123,7 +137,8 @@ Hard gate at DISTILL-to-DELIVER transition. Run `*validate-dod` before `*handoff
 
 ## Wave Collaboration
 
-**Receives from DESIGN**: architecture design|component boundaries|interface specs|user stories with acceptance criteria.
+**Receives from SSOT**: `journeys/*.yaml` (behavior + failure_modes)|`architecture/brief.md` (driving ports)|`kpi-contracts.yaml` (observability contracts, soft gate).
+**Receives from feature delta**: `user-stories.md` (scope boundary)|`wave-decisions.md` (cross-wave context).
 
 **Hands off to DELIVER**: acceptance test suite|walking skeleton identification|one-at-a-time implementation sequence|mandate compliance evidence (CM-A/B/C)|peer review approval.
 
@@ -145,7 +160,7 @@ Phase tracking uses execution-log.json.
 
 User-centric walking skeleton (correct):
 ```gherkin
-@walking_skeleton
+@walking_skeleton @driving_port
 Scenario: Customer purchases a product and receives confirmation
   Given customer has selected "Widget" for purchase
   And customer has a valid payment method on file
@@ -190,7 +205,20 @@ Scenario: Serialized order can always be restored
 
 The `@property` tag tells DELIVER wave crafter to implement as property-based tests with generators, not single-example assertions.
 
-### Example 3: Error Path with Recovery Journey
+### Example 3: KPI Observability Scenario
+
+```gherkin
+@kpi
+Scenario: Order completion emits revenue metric
+  Given customer has completed checkout for "Widget" at $29.99
+  When order is confirmed
+  Then a "order_revenue" metric event is emittable with value $29.99
+  And a "time_to_checkout_p50" metric event is emittable
+```
+
+The `@kpi` tag signals that this scenario verifies observability — the system can emit the metric defined in `kpi-contracts.yaml`. Does not test actual monitoring infrastructure, just that the event is producible.
+
+### Example 4: Error Path with Recovery Journey
 
 ```gherkin
 Scenario: Order rejected when product out of stock

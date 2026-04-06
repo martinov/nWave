@@ -1,79 +1,98 @@
 # Wave Directory Structure
 
-How nWave organizes artifacts across the six-wave pipeline.
+How nWave organizes artifacts across the seven-wave methodology.
 
-## The Rule
+## Document Model: SSOT + Delta
 
-Every wave writes its output under a single, predictable path:
+nWave uses a two-tier document model:
 
-```
-docs/feature/{feature-id}/{wave}/
-```
-
-Where `{feature-id}` is a kebab-case identifier derived from the feature description (see [Feature ID Derivation](#feature-id-derivation) below).
-
-## Directory Layout
+**Product SSOT** (`docs/product/`) — what the system IS now. Updated by each wave. Never duplicated per feature.
 
 ```
-docs/feature/{feature-id}/
-├── discover/                 # DISCOVER wave — evidence & validation
+docs/product/
+  vision.md                 ← product vision (updated by DIVERGE)
+  jobs.yaml                 ← validated JTBD jobs (updated by DIVERGE)
+  journeys/
+    {name}.yaml             ← current journey schema (updated by DISCUSS)
+    {name}-visual.md        ← human-readable journey (updated by DISCUSS)
+  architecture/
+    brief.md                ← current architecture (updated by DESIGN)
+    adr-*.md                ← permanent decisions
+  kpi-contracts.yaml        ← measurement contracts (updated by DEVOPS)
+```
+
+**Feature Delta** (`docs/features/{id}/`) — what THIS feature changes. Max 6 files.
+
+```
+docs/features/{id}/
+  feature-brief.md          ← generated summary for human review
+  recommendation.md         ← chosen direction (from DIVERGE)
+  user-stories.md           ← stories for this feature (from DISCUSS)
+  wave-decisions.md         ← decisions made across all waves
+  acceptance-tests.feature  ← executable specs (from DISTILL)
+  roadmap.json              ← implementation plan (from DELIVER)
+```
+
+See [Understanding the SSOT Model](understanding-ssot-model.md) for the full explanation.
+
+## New Features: SSOT + Delta Model
+
+New features write output to two locations:
+
+1. **SSOT updates** in `docs/product/` — the wave updates the living product documents
+2. **Feature delta** in `docs/features/{id}/` — max 6 files describing what this feature changes
+
+Waves do NOT create per-wave subdirectories. Each wave appends to feature-level files or updates the SSOT. The `wave-decisions.md` file is built incrementally — each wave adds its section.
+
+### Which Wave Updates What
+
+| Wave | Reads from SSOT | Produces delta | Updates SSOT |
+|------|----------------|----------------|--------------|
+| DISCOVER | `jobs.yaml` | (evidence brief, internal) | `jobs.yaml` |
+| DIVERGE | `jobs.yaml`, `vision.md` | `recommendation.md` | `jobs.yaml` |
+| DISCUSS | `journeys/{name}.yaml` | `user-stories.md` | `journeys/{name}.yaml` |
+| DESIGN | `architecture/brief.md` | `wave-decisions.md` | `architecture/brief.md` + ADRs |
+| DEVOPS | `kpi-contracts.yaml` | (infra spec, internal) | `kpi-contracts.yaml` |
+| DISTILL | all 3 SSOT dimensions | `acceptance-tests.feature` | — |
+| DELIVER | `acceptance-tests.feature` | code | code |
+
+## Old Features: Per-Wave Directories (Archived)
+
+Existing features created before the SSOT model use per-wave subdirectories under `docs/feature/{feature-id}/`. These are frozen archives — not updated, not migrated.
+
+```
+docs/feature/{feature-id}/          ← OLD MODEL (archived)
+├── discover/
 │   ├── problem-validation.md
-│   ├── opportunity-tree.md
-│   ├── solution-testing.md
-│   ├── lean-canvas.md
-│   └── interview-log.md
-│
-├── discuss/                  # DISCUSS wave — JTBD, journeys, requirements
-│   ├── jtbd-job-stories.md
-│   ├── jtbd-four-forces.md
-│   ├── jtbd-opportunity-scores.md
+│   └── lean-canvas.md
+├── discuss/
 │   ├── journey-{name}-visual.md
 │   ├── journey-{name}.yaml
-│   ├── journey-{name}.feature
-│   ├── shared-artifacts-registry.md
-│   ├── requirements.md
 │   ├── user-stories.md
-│   ├── acceptance-criteria.md
-│   └── dor-checklist.md
-│
-├── design/                   # DESIGN wave — architecture, technology, components, data
-│   ├── architecture-design.md (mandatory — C4 diagrams in Mermaid format)
-│   ├── technology-stack.md
-│   ├── component-boundaries.md
-│   └── data-models.md
-│
-├── devops/                   # DEVOPS wave — infrastructure, CI/CD, observability, deployment
-│   ├── platform-architecture.md
-│   ├── ci-cd-pipeline.md
-│   ├── observability-design.md
-│   ├── monitoring-alerting.md
-│   ├── infrastructure-integration.md (if existing infrastructure)
-│   ├── branching-strategy.md
-│   └── continuous-learning.md (if applicable)
-│
-├── distill/                  # DISTILL wave — acceptance test design (summary only)
-│   ├── test-scenarios.md (summary of planned test coverage)
-│   ├── walking-skeleton.md (minimal user journey for E2E wiring)
-│   └── acceptance-review.md (peer review results & DoD validation)
-│
-└── deliver/                  # DELIVER wave — TDD execution
+│   └── ...
+├── design/
+│   └── architecture-design.md
+├── devops/
+│   └── platform-architecture.md
+├── distill/
+│   └── test-scenarios.md
+└── deliver/
     ├── roadmap.json
-    ├── execution-log.json
-    ├── .develop-progress.json
-    └── mutation/
-        └── mutation-report.md (when mutation testing is enabled via rigor profile)
+    └── execution-log.json
 ```
+
+Agents check `docs/product/` first (SSOT). If it does not exist, they fall back to `docs/feature/{id}/` for the current feature (old model).
 
 ## Cross-Feature Artifacts
 
 Acceptance test files and cross-feature documents live outside the per-feature tree:
 
-| Location | Content | Why | Written By |
-|----------|---------|-----|-----------|
-| `tests/{test-type}/{feature-id}/acceptance/` | Acceptance test files (.feature, step definitions) | Actual executable tests, not documentation | acceptance-designer (DISTILL) |
-| `CLAUDE.md` (project root) | Development paradigm (OOP or Functional), mutation testing strategy | Shared across all features in project | solution-architect (DESIGN), platform-architect (DEVOPS) |
-| `docs/adrs/` | Architecture Decision Records | Cross-feature decisions affecting multiple features | solution-architect (DESIGN) |
-| `docs/evolution/` | Post-completion archives | Centralized history of completed features | platform-architect (/nw-finalize) |
+| Location | Content | Written By |
+|----------|---------|-----------|
+| `tests/{test-type}/{feature-id}/acceptance/` | Executable test files (.feature, step definitions) | acceptance-designer (DISTILL) |
+| `docs/product/architecture/adr-*.md` | Architecture Decision Records (SSOT) | solution-architect (DESIGN) |
+| `docs/evolution/` | Post-completion archives | platform-architect (/nw-finalize) |
+| `CLAUDE.md` (project root) | Development paradigm, mutation testing strategy | solution-architect, platform-architect |
 
 ## Feature ID Derivation
 
@@ -87,11 +106,12 @@ When you run `/nw-new`, `/nw-deliver`, or any wave command, nWave derives a feat
 **Examples:**
 - "Add rate limiting to the API gateway" → `rate-limiting-api-gateway`
 - "OAuth2 upgrade" → `oauth2-upgrade`
-- "Implement real-time notifications with WebSocket" → `real-time-notifications-websocket`
+
+In the SSOT model, this ID is used as `docs/features/{id}/` for delta files.
 
 ## Acceptance Test Directory Structure
 
-Actual executable acceptance tests are NOT in `distill/`. They are organized by test type in the `tests/` directory:
+Executable acceptance tests live in `tests/`, not in documentation:
 
 ```
 tests/
@@ -103,63 +123,59 @@ tests/
 │       └── conftest.py                 (pytest configuration for this feature)
 ```
 
-This separation is critical: `docs/feature/{feature-id}/distill/` contains design summaries and peer review records, while `tests/acceptance/{feature-id}/` contains the actual executable specifications. The acceptance-designer (DISTILL wave) designs the tests, but implementation goes to `tests/` where they become part of the executable test suite.
+The acceptance-designer (DISTILL wave) designs the tests and writes them directly to `tests/acceptance/{feature-id}/`.
 
 ## Wave Detection
 
 `/nw-continue` uses these rules to detect progress:
 
+### New model (SSOT)
+
+| Wave | Complete When |
+|------|--------------|
+| DISCOVER | `docs/product/jobs.yaml` has a validated job for this feature |
+| DIVERGE | `docs/features/{id}/recommendation.md` exists |
+| DISCUSS | `docs/features/{id}/user-stories.md` exists |
+| DESIGN | `docs/product/architecture/brief.md` updated for this feature |
+| DEVOPS | `docs/product/kpi-contracts.yaml` has contracts for this feature |
+| DISTILL | `docs/features/{id}/acceptance-tests.feature` exists AND `tests/acceptance/{id}/` has feature files |
+| DELIVER | `docs/features/{id}/roadmap.json` with all steps at COMMIT/PASS |
+
+### Old model (archived features)
+
 | Wave | Complete When |
 |------|--------------|
 | DISCOVER | `discover/problem-validation.md` AND `discover/lean-canvas.md` exist |
-| DISCUSS | `discuss/requirements.md` AND `discuss/user-stories.md` exist |
+| DISCUSS | `discuss/user-stories.md` exists |
 | DESIGN | `design/architecture-design.md` exists |
 | DEVOPS | `devops/platform-architecture.md` exists |
-| DISTILL | `distill/test-scenarios.md` exists AND `tests/acceptance/{feature-id}/` has feature files |
+| DISTILL | `distill/test-scenarios.md` exists AND `tests/acceptance/{id}/` has feature files |
 | DELIVER | `deliver/execution-log.json` with all steps at COMMIT/PASS |
 
 ## Wave Summary Table
 
-Quick reference for each wave's primary deliverable, location, and completion gate:
-
-| Wave | Agent | Primary Deliverable | Location | Completion Gate |
-|------|-------|---------------------|----------|-----------------|
-| DISCOVER | product-discoverer | Problem validation + lean canvas | `docs/feature/{id}/discover/` | `problem-validation.md` + `lean-canvas.md` exist |
-| DISCUSS | product-owner | User stories + requirements + journey artifacts | `docs/feature/{id}/discuss/` | `requirements.md` + `user-stories.md` + acceptance criteria |
-| DESIGN | solution-architect | Architecture design with C4 diagrams + ADRs | `docs/feature/{id}/design/` + `docs/adrs/` | `architecture-design.md` exists with Mermaid C4 diagrams |
-| DEVOPS | platform-architect | Platform architecture + CI/CD + observability + monitoring | `docs/feature/{id}/devops/` | `platform-architecture.md` + `ci-cd-pipeline.md` + `observability-design.md` exist |
-| DISTILL | acceptance-designer | Acceptance test design + feature files in Gherkin | `docs/feature/{id}/distill/` + `tests/acceptance/{id}/` | `.feature` files exist with step definitions implemented |
-| DELIVER | software-crafter | Working code + passing tests (unit + acceptance + integration) | `src/` + `tests/` | `deliver/execution-log.json` with all steps at COMMIT/PASS |
-| FINALIZE | platform-architect | Feature completion archive + cleanup | `docs/evolution/YYYY-MM-DD-{id}.md` | Feature directory cleaned, evolution document committed |
+| Wave | Agent | SSOT Update | Feature Delta | Completion Gate |
+|------|-------|-------------|---------------|-----------------|
+| DISCOVER | product-discoverer | `jobs.yaml` | — | Validated job exists |
+| DIVERGE | nw-diverger | `jobs.yaml` | `recommendation.md` | Recommendation + peer review |
+| DISCUSS | product-owner | `journeys/{name}.yaml` | `user-stories.md` | User stories + DoR passed |
+| DESIGN | solution-architect | `architecture/brief.md` + ADRs | `wave-decisions.md` | Architecture with C4 diagrams |
+| DEVOPS | platform-architect | `kpi-contracts.yaml` | — | KPI contracts defined |
+| DISTILL | acceptance-designer | — | `acceptance-tests.feature` | Feature files + step definitions |
+| DELIVER | software-crafter | code | `roadmap.json` | All steps COMMIT/PASS |
+| FINALIZE | platform-architect | — | — | Evolution doc committed |
 
 ## Handoff Chain
 
-Each wave reads from the previous wave's directory:
+Each wave reads SSOT first, then prior wave delta:
 
 ```
-DISCOVER → DISCUSS reads discover/ (problem + opportunity + viability)
-DISCUSS  → DESIGN reads discuss/ (requirements + journey artifacts)
-DESIGN   → DEVOPS reads design/ (architecture + technology stack + ADRs)
-DEVOPS   → DISTILL reads devops/ + design/ (infrastructure design informs test environment)
-DISTILL  → DELIVER reads distill/ + design/ (acceptance tests + architecture)
-DELIVER  → reads deliver/ (roadmap + execution log for resumption)
+DISCOVER → DIVERGE reads jobs.yaml (validated problems + opportunities)
+DIVERGE  → DISCUSS reads recommendation.md + jobs.yaml (selected direction + job)
+DISCUSS  → DESIGN reads journeys/*.yaml + user-stories.md (experience + requirements)
+DESIGN   → DEVOPS reads architecture/brief.md + kpi-contracts.yaml (components + measurement)
+DEVOPS   → DISTILL reads all 3 SSOT dimensions (journeys + architecture + kpi-contracts)
+DISTILL  → DELIVER reads acceptance-tests.feature + roadmap.json (specs + plan)
 ```
 
 After DELIVER completes and all tests pass, `/nw-finalize` archives a summary to `docs/evolution/`.
-
-## Critical Distinctions
-
-### DISTILL Wave Output vs Test Files
-**DISTILL deliverables** (`docs/feature/{id}/distill/`): Design documents, peer review records, test scenario summaries. These are documentation of WHAT tests to write.
-
-**Actual test code** (`tests/acceptance/{id}/`): Executable .feature files and step definitions. Written by acceptance-designer but stored in executable test suite location. These are the tests themselves.
-
-This distinction matters: you can review DISTILL documentation before tests are executable, and the tests live alongside other test code for CI/CD integration.
-
-### DESIGN Wave Output Structure
-**solution-architect** produces: `docs/feature/{id}/design/architecture-design.md` (must include C4 diagrams in Mermaid), `technology-stack.md`, `component-boundaries.md`, `data-models.md`, plus ADRs in `docs/adrs/`. Also documents development paradigm (OOP or Functional) in project `CLAUDE.md`.
-
-### DEVOPS Wave Output Structure
-**platform-architect** produces: `docs/feature/{id}/devops/platform-architecture.md`, `ci-cd-pipeline.md`, `observability-design.md`, `monitoring-alerting.md`, `branching-strategy.md`, plus conditional files `infrastructure-integration.md` (if existing infra) and `continuous-learning.md` (if applicable). Also configures mutation testing strategy in project `CLAUDE.md` (Decision 9 of DEVOPS workflow).
-
-Note: DESIGN produces software architecture and technology decisions. DEVOPS produces operational infrastructure, CI/CD pipelines, observability, and deployment strategy for that architecture.

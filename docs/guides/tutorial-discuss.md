@@ -2,7 +2,7 @@
 
 **Time**: ~17 minutes (9 steps)
 **Platform**: macOS or Linux (Windows: use WSL)
-**Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 4](./tutorial-discovery.md) completed
+**Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 4](./tutorial-discovery.md) completed (optionally [Tutorial 5: DIVERGE](./diverge-wave-guide.md) for greenfield projects)
 **What this is**: An interactive walkthrough of `/nw-discuss` -- nWave's requirements and UX journey command. You will turn a validated problem into structured user stories with acceptance criteria.
 
 ---
@@ -152,10 +152,9 @@ After discovery, Luna produces visual journey artifacts. You will see her write 
 ```
 Creating docs/feature/bookmark-cli/discuss/journey-core-visual.md
 Creating docs/feature/bookmark-cli/discuss/journey-core.yaml
-Creating docs/feature/bookmark-cli/discuss/journey-core.feature
 ```
 
-> **You may see different file names.** Luna names artifacts based on the journey she discovers. The path pattern `docs/feature/{name}/discuss/journey-{name}.*` is what matters.
+> **You may see different file names.** Luna names artifacts based on the journey she discovers. The path pattern `docs/feature/{name}/discuss/journey-{name}.*` is what matters. Journey files are `.yaml` (structured data) and `-visual.md` (human-readable diagram).
 
 The journey visual maps the complete experience from start to finish. Luna designed it using two ideas:
 
@@ -314,20 +313,19 @@ Check what Luna created:
 ls docs/feature/bookmark-cli/discuss/
 ```
 
-You should see:
+You should see something like:
 
 ```
 dor-validation.md
 journey-core-visual.md
 journey-core.yaml
-journey-core.feature
-peer-review.md
-shared-artifacts-registry.md
+outcome-kpis.md
+story-map.md
 user-stories.md
 wave-decisions.md
 ```
 
-> **Your file names will differ.** Luna names files based on the journey she designed. The path pattern `docs/feature/{name}/discuss/` is what matters, with journey files, user stories, and validation artifacts inside.
+> **Your file names will differ.** Luna names files based on the journey she designed. The path pattern `docs/feature/{name}/discuss/` is what matters. Luna also updates the SSOT at `docs/product/journeys/` with journey YAML files.
 
 Commit everything:
 
@@ -364,23 +362,26 @@ You started with a validated problem and ended with a complete requirements pack
 ### The Wave So Far
 
 ```
-DISCOVER (/nw-discover)     DISCUSS (/nw-discuss)        DESIGN (/nw-design)
-─────────────────────────   ──────────────────────────   ───────────────────
-"Is the problem real?"  --> "What should we build?"  --> "How should we
-                                                          build it?"
-Evidence-based              Journey + user stories        Architecture
-validation                  + acceptance criteria         decisions
+DISCOVER             DIVERGE              DISCUSS              DESIGN
+(/nw-discover)       (/nw-diverge)        (/nw-discuss)        (/nw-design)
+────────────────     ────────────────     ────────────────     ────────────────
+"Is the problem      "Which direction     "What should we      "How should we
+ real?"               should we go?"       build?"              build it?"
 
-Tutorial 4                  This tutorial                 Tutorial 6
+Evidence-based       Design exploration   Journey + stories    Architecture
+validation           + recommendation     + acceptance         decisions
+                     (optional)           criteria
+
+Tutorial 4           Tutorial 5           This tutorial        Tutorial 7
 ```
 
-Each wave validates before the next one begins. No handoff without evidence.
+Each wave validates before the next one begins. No handoff without evidence. DIVERGE is optional -- skip it for brownfield features where the approach is clear.
 
 ---
 
 ## Next Steps
 
-- **[Tutorial 6: Architecture Design](./TUTORIAL-INDEX.md)** -- Take your requirements into `/nw-design` to make architecture decisions before writing code
+- **[Tutorial 7: Architecture Design](./tutorial-design.md)** -- Take your requirements into `/nw-design` to make architecture decisions before writing code
 - **Review the journey visual** -- Open `docs/feature/bookmark-cli/discuss/journey-core-visual.md` and trace the emotional arc from frustration to relief
 - **Read a user story aloud** -- If the Given/When/Then reads naturally, the acceptance criteria are well-written. If it sounds awkward, Luna may have been too technical.
 
@@ -399,4 +400,4 @@ Each wave validates before the next one begins. No handoff without evidence.
 
 ---
 
-**Last Updated**: 2026-02-17
+**Last Updated**: 2026-04-06

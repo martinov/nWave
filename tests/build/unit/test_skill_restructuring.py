@@ -1,7 +1,7 @@
 """Tests for skill restructuring to nw-prefixed SKILL.md format.
 
 Step 01-02: Restructure 3 troubleshooter skills (pilot).
-Step 02-01: Restructure all 127 non-colliding skills (bulk migration).
+Step 02-01: Restructure all 146 non-colliding skills (bulk migration).
 """
 
 from pathlib import Path
@@ -24,7 +24,7 @@ TROUBLESHOOTER_HASHES = {
     "nw-post-mortem-framework": "5f31098a93108aea8373715a6f7f2485",
 }
 
-# Step 02-01: All 127 non-colliding skills to migrate (bulk)
+# Step 02-01: All 146 non-colliding skills to migrate (bulk)
 # Excludes: critique-dimensions (7), review-criteria (7), review-dimensions (2)
 EXPECTED_BULK_SKILLS = [
     "nw-agent-creation-workflow",
@@ -37,6 +37,12 @@ EXPECTED_BULK_SKILLS = [
     "nw-backward-design-ubd",
     "nw-bdd-methodology",
     "nw-bdd-requirements",
+    "nw-brainstorming",
+    "nw-buddy",
+    "nw-buddy-command-catalog",
+    "nw-buddy-project-reading",
+    "nw-buddy-ssot-knowledge",
+    "nw-buddy-wave-knowledge",
     "nw-cialdini-outreach",
     "nw-cicd-and-deployment",
     "nw-cognitive-load-management",
@@ -54,12 +60,18 @@ EXPECTED_BULK_SKILLS = [
     "nw-data-architecture-patterns",
     "nw-data-source-catalog",
     "nw-database-technology-selection",
+    "nw-ddd-event-modeling",
+    "nw-ddd-eventsourcing",
+    "nw-ddd-strategic",
+    "nw-ddd-tactical",
     "nw-deliver-orchestration",
     "nw-deployment-strategies",
     "nw-design-methodology",
     "nw-design-patterns",
     "nw-discovery-methodology",
     "nw-discovery-workflow",
+    "nw-diverge",
+    "nw-diverger-review-criteria",
     "nw-divio-framework",
     "nw-domain-driven-design",
     "nw-dor-validation",
@@ -84,7 +96,9 @@ EXPECTED_BULK_SKILLS = [
     "nw-infrastructure-and-observability",
     "nw-interaction-choreography",
     "nw-interviewing-techniques",
+    "nw-investigation-techniques",
     "nw-it-specific-pedagogy",
+    "nw-jtbd-analysis",
     "nw-jtbd-bdd-integration",
     "nw-jtbd-core",
     "nw-jtbd-interviews",
@@ -128,6 +142,10 @@ EXPECTED_BULK_SKILLS = [
     "nw-review-workflow",
     "nw-roadmap-design",
     "nw-roadmap-review-checks",
+    "nw-sd-case-studies",
+    "nw-sd-framework",
+    "nw-sd-patterns",
+    "nw-sd-patterns-advanced",
     "nw-sci-fi-design-patterns",
     "nw-security-and-governance",
     "nw-security-by-design",
@@ -137,6 +155,7 @@ EXPECTED_BULK_SKILLS = [
     "nw-source-verification",
     "nw-stakeholder-engagement",
     "nw-stress-analysis",
+    "nw-taste-evaluation",
     "nw-tbr-methodology",
     "nw-tdd-methodology",
     "nw-tdd-review-enforcement",
@@ -167,6 +186,12 @@ BULK_HASHES = {
     "nw-backward-design-ubd": "8e88399482057722474748531482667f",
     "nw-bdd-methodology": "09cef8098c75b9f1504a9f547c6e6bb4",
     "nw-bdd-requirements": "ebd7074559c724336422e9287e2e6a78",
+    "nw-brainstorming": "e1b52438744b39ae52c37c89d7b4b338",
+    "nw-buddy": "de628ca01961c8a99e191b789b7dd21d",
+    "nw-buddy-command-catalog": "403ff4bf5cc44e73183e6021e0e3147d",
+    "nw-buddy-project-reading": "b3f7b8d0d9f4df58ab2c5aa9df317330",
+    "nw-buddy-ssot-knowledge": "a69e90f8b8111bcd52f722536a8f0f4b",
+    "nw-buddy-wave-knowledge": "77718f959280e08b47dd6235f2f018ac",
     "nw-cialdini-outreach": "90aea943d1a2eb313561ecbd0f2c5915",
     "nw-cicd-and-deployment": "2195ace1646b4c0ced64070d57bb542a",
     "nw-cognitive-load-management": "3e06303c46182b62288a7bffeb342909",
@@ -184,12 +209,18 @@ BULK_HASHES = {
     "nw-data-architecture-patterns": "319bf0158dcd71391e144be1abda9446",
     "nw-data-source-catalog": "2aeb92d37d80a9446692ba3b2546c4f9",
     "nw-database-technology-selection": "f0e061724fe5a77c7fcf4e9cd56f17a5",
+    "nw-ddd-event-modeling": "486ed0acfe9a38624c03395ff1e268f4",
+    "nw-ddd-eventsourcing": "f014437fa2b76008896d3a83e4f48288",
+    "nw-ddd-strategic": "1bee905e197ac9f2cacf4e5e37f3f8ef",
+    "nw-ddd-tactical": "7ec690c487144de353ae7d01ba24cd6c",
     "nw-deliver-orchestration": "554feea5efff15d9811cf44c5e682559",
     "nw-deployment-strategies": "a73beb26bce3706db567f8cce3497b9b",
-    "nw-design-methodology": "9ccd247a6c0ace4c6bcd7e4c773dd440",
+    "nw-design-methodology": "9f161d6ae6ad061a6a4eb7dcb63c082c",
     "nw-design-patterns": "b0e3f59bfde50d1a7bb6ada40ca9b3b4",
     "nw-discovery-methodology": "9aaa21156acebc19a94298afe517e1a8",
     "nw-discovery-workflow": "4602c7858e3e1b8221af03c888086dc5",
+    "nw-diverge": "c0c1a03cba14824f5c2884a5bc34b985",
+    "nw-diverger-review-criteria": "1049555d0db9de4d8b8a1e0405ca6595",
     "nw-divio-framework": "8bb88b5fb6f476838b10b61c419119ba",
     "nw-domain-driven-design": "d3afa990b8d65675d17015c41bed49e3",
     "nw-dor-validation": "8f7e905593670b0c497e9743c5d6d6e0",
@@ -214,7 +245,9 @@ BULK_HASHES = {
     "nw-infrastructure-and-observability": "f190e2f9695ec7b42695c746496a9e4d",
     "nw-interaction-choreography": "8707cda3fea5be7df1daa63d6f56660f",
     "nw-interviewing-techniques": "fffd5344322d67d5070f3a7e4f435304",
+    "nw-investigation-techniques": "b04c2a2ec34ed186c238518788ea7640",
     "nw-it-specific-pedagogy": "0a144003672f4a21f40fd99f69704148",
+    "nw-jtbd-analysis": "325735a2314231e61af6f7f819f3baa7",
     "nw-jtbd-bdd-integration": "c0226577d42aef2f8ac314b1a4001841",
     "nw-jtbd-core": "7c211aab49cd6d81b331953ae334081a",
     "nw-jtbd-interviews": "4388705b8621dabdc147ae7f2339e839",
@@ -258,6 +291,10 @@ BULK_HASHES = {
     "nw-review-workflow": "caa53b43f091166167e49b98f40af1f8",
     "nw-roadmap-design": "4d00e7a6794a81e4ffbe4bafad5895b8",
     "nw-roadmap-review-checks": "9470251073ac44ffc154c57e53e867a5",
+    "nw-sd-case-studies": "d55bf7d35ffe48db3a04425b3e8596c1",
+    "nw-sd-framework": "4e5958639f9e4eb9117d581f165a7e5a",
+    "nw-sd-patterns": "f7b924a26a499520b4eaaa4a0b23e20e",
+    "nw-sd-patterns-advanced": "c857dfa4b586e796146ed0ee8c245285",
     "nw-sci-fi-design-patterns": "55e26b7d46745d10f0e03e726a1c7866",
     "nw-security-and-governance": "37b7d66456ce43c2817d7e0be5faaa37",
     "nw-security-by-design": "1f998c527a0d90be35648bbdd4fbc15d",
@@ -267,6 +304,7 @@ BULK_HASHES = {
     "nw-source-verification": "0c9a94d055e58634c55d32fe7c6cf4a8",
     "nw-stakeholder-engagement": "32b0f2710a6afb70fa434a2a55962fac",
     "nw-stress-analysis": "ad5e1b64848a4343e749ec99c61f3517",
+    "nw-taste-evaluation": "93f3f75be13aae0ec1a260ca68af94b7",
     "nw-tbr-methodology": "40e44f3c469968c140bd7c107b536644",
     "nw-tdd-methodology": "c7a8c61b0c6155198c919cbe16ae2baa",
     "nw-tdd-review-enforcement": "0bff90d97c6c449555a7415b8d829a80",
@@ -352,7 +390,7 @@ class TestTroubleshooterSkillRestructuring:
 
 
 class TestBulkSkillRestructuring:
-    """Step 02-01: Verify all 127 non-colliding skills are restructured to
+    """Step 02-01: Verify all 146 non-colliding skills are restructured to
     nw-prefixed SKILL.md format."""
 
     @pytest.mark.parametrize("skill_name", EXPECTED_BULK_SKILLS)
@@ -364,13 +402,13 @@ class TestBulkSkillRestructuring:
         )
 
     def test_total_nw_prefixed_skill_count(self) -> None:
-        """Total nw-* directories should be 130 (127 bulk + 3 troubleshooter)."""
+        """Total nw-* directories should be 149 (146 bulk + 3 troubleshooter)."""
         nw_dirs = sorted(
             d for d in SKILLS_DIR.iterdir() if d.is_dir() and d.name.startswith("nw-")
         )
         skill_dirs_with_md = [d for d in nw_dirs if (d / "SKILL.md").exists()]
-        assert len(skill_dirs_with_md) >= 130, (
-            f"Expected >= 130 nw-*/SKILL.md directories, found {len(skill_dirs_with_md)}"
+        assert len(skill_dirs_with_md) >= 149, (
+            f"Expected >= 149 nw-*/SKILL.md directories, found {len(skill_dirs_with_md)}"
         )
 
     @pytest.mark.parametrize("skill_name", EXPECTED_BULK_SKILLS)

@@ -6,6 +6,7 @@
 Build a working, tested feature from scratch using nWave. Three commands, five minutes.
 
 **Prerequisites**:
+- **Platform**: Linux, macOS, or Windows (WSL2 required)
 - nWave installed — `pipx install nwave-ai && nwave-ai install` (in your terminal, not Claude Code)
 - Claude Code open in an empty Python project with `pytest` available
 - Use a permanent directory (not `/tmp`) — later tutorials build on this project
@@ -41,6 +42,8 @@ The `@product-owner` agent asks clarifying questions — answer simply. When it 
 ```
 docs/feature/{feature-id}/discuss/
 ```
+
+> **SSOT model**: Product-level documents (journeys, architecture) are in `docs/product/`. Feature-specific artifacts (user stories, wave decisions) are in `docs/feature/{feature-id}/discuss/`.
 
 **What to check**: Open the file. Are the requirements reasonable? Is the scope small? If the agent added too much (colors, fonts, animations), edit the file and remove it. Keep it simple: one function, block letters, A-Z + space.
 
@@ -125,4 +128,5 @@ The feature is tested, committed, and ready to use.
 
 - **Bigger feature**: See [Your First Feature](./tutorial-first-feature.md) for a multi-phase workflow with architecture design
 - **Existing codebase**: See [Jobs To Be Done Guide](./jobs-to-be-done-guide.md) for adding features to brownfield projects
+- **Need help?**: Type `/nw-buddy "what should I do next?"` to get contextual guidance from the concierge agent
 - **All commands**: See [nWave Commands Reference](../reference/commands/index.md)

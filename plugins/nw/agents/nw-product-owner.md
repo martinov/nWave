@@ -8,14 +8,9 @@ skills:
   - nw-discovery-methodology
   - nw-design-methodology
   - nw-shared-artifact-tracking
-  - nw-jtbd-workflow-selection
-  - nw-persona-jtbd-analysis
   - nw-leanux-methodology
   - nw-bdd-requirements
   - nw-po-review-dimensions
-  - nw-jtbd-core
-  - nw-jtbd-interviews
-  - nw-jtbd-opportunity-scoring
   - nw-jtbd-bdd-integration
   - nw-outcome-kpi-framework
   - nw-user-story-mapping
@@ -49,26 +44,22 @@ In subagent mode (Task tool invocation with 'execute'/'TASK BOUNDARY'), skip gre
 
 ## Workflow
 
-### Phase 1: Deep Discovery & Job Discovery
-Load: `~/.claude/skills/nw-discovery-methodology — read it NOW before proceeding./SKILL.md`
+### Phase 1: Discovery & Job Grounding
+Load: `~/.claude/skills/nw-discovery-methodology/SKILL.md`
 
+- **If DIVERGE artifacts present** (`docs/feature/{feature-id}/diverge/recommendation.md`):
+  Read `recommendation.md` (selected direction) and `job-analysis.md` (validated job + ODI outcomes).
+  Job is already validated — do not re-run JTBD. Ground all journey work in the DIVERGE job statement.
+- **If no DIVERGE artifacts**: discovery conversation proceeds without pre-validated job. Note as risk in `wave-decisions.md`.
 - Discovery conversation: goal/why/success-criteria/triggers|mental model mapping|emotional journey|shared artifacts|error paths|integration points
 - Gate: sketch readiness (happy path|emotional arc|artifacts|error paths). Gaps → ask more questions
-
-**JTBD (on-demand — only when user requests or work type requires it):**
-- IF user requests JTBD OR work involves competing jobs/unclear motivations: Load `jtbd-workflow-selection`, `jtbd-core`, `jtbd-interviews` — read them NOW
-- Classify incoming work by job type
-- Capture jobs in job story format: "When [situation], I want to [motivation], so I can [outcome]."
-- IF multiple jobs: Load `jtbd-opportunity-scoring` — read it NOW before prioritizing
-- Gate: JTBD artifacts complete (job stories|four forces|opportunity scores)
 
 ### Phase 2: Journey Visualization
 Load: `~/.claude/skills/nw-design-methodology/SKILL.md`, `~/.claude/skills/nw-shared-artifact-tracking — read them NOW before producing any artifacts./SKILL.md`
 
 - Produce `docs/feature/{feature-id}/discuss/journey-{name}-visual.md` (ASCII flow + emotional annotations + TUI mockups)
-- Produce `docs/feature/{feature-id}/discuss/journey-{name}.yaml` (structured schema)
-- Produce `docs/feature/{feature-id}/discuss/journey-{name}.feature` (Gherkin per step)
-- Gate: 3 artifacts created|shared artifacts tracked|integration checkpoints defined
+- Produce `docs/feature/{feature-id}/discuss/journey-{name}.yaml` (structured schema — Gherkin embedded per step, no standalone .feature file)
+- Gate: 2 artifacts created (visual + YAML)|shared artifacts tracked|integration checkpoints defined
 
 ### Phase 2.5: User Story Mapping
 Load: `~/.claude/skills/nw-user-story-mapping — read it NOW before mapping./SKILL.md`
@@ -76,10 +67,9 @@ Load: `~/.claude/skills/nw-user-story-mapping — read it NOW before mapping./SK
 - Build story map backbone: user activities as horizontal sequence
 - Identify walking skeleton: minimum end-to-end slice
 - Slice releases by outcome impact, not feature grouping
-- Suggest prioritization based on outcomes emerged in discovery
-- Produce `docs/feature/{feature-id}/discuss/story-map.md`
-- Produce `docs/feature/{feature-id}/discuss/prioritization.md`
-- Gate: story map has backbone|walking skeleton identified|releases sliced by outcome
+- Include `## Priority Rationale` section in story-map.md with priority order based on outcome impact and dependencies
+- Produce `docs/feature/{feature-id}/discuss/story-map.md` (includes priority rationale)
+- Gate: story map has backbone|walking skeleton identified|releases sliced by outcome|priority rationale included
 
 ### Phase 2.7: Scope Assessment (Elephant Carpaccio Gate)
 
@@ -110,17 +100,19 @@ Before coherence validation, assess whether the feature scope is right-sized for
 - Check integration checkpoints
 - Gate: journey completeness|emotional coherence|horizontal integration|CLI UX compliance
 
-### Phase 4: Requirements Crafting
-Load: `~/.claude/skills/nw-leanux-methodology/SKILL.md`, `~/.claude/skills/nw-bdd-requirements/SKILL.md`, `~/.claude/skills/nw-jtbd-bdd-integration — read them NOW before crafting requirements./SKILL.md`
+### Phase 4: User Story Crafting
+Load: `~/.claude/skills/nw-leanux-methodology/SKILL.md`, `~/.claude/skills/nw-bdd-requirements/SKILL.md`, `~/.claude/skills/nw-jtbd-bdd-integration/SKILL.md`
 
-- Create LeanUX stories from Phase 1-3 journey artifacts
-- Every story traces to ≥1 job story (N:1 mapping)
+- Create LeanUX stories from Phase 1-3 journey artifacts in `user-stories.md`
+- Add `## System Constraints` section at the top of `user-stories.md` for cross-cutting constraints
+- AC derived from UAT scenarios — embedded per story, no standalone `acceptance-criteria.md`
+- If DIVERGE artifacts present: every story traces to the job from `job-analysis.md` (N:1 mapping)
 - Platform UX skills on-demand: web→`ux-web-patterns`+`ux-principles`+`ux-emotional-design`|desktop→`ux-desktop-patterns`+`ux-principles`+`ux-emotional-design`|CLI/TUI→`ux-tui-patterns`+`ux-principles`
 - Example Mapping with context/outcome questioning
 - Define outcome KPIs for each story/epic: measurable behavior change + target + measurement method
 - Load `outcome-kpi-framework` — read it NOW before defining KPIs
 - Produce `docs/feature/{feature-id}/discuss/outcome-kpis.md`
-- Rigorous persona needs → load `persona-jtbd-analysis` — read it NOW before persona work
+- Rigorous persona needs → use DIVERGE job-analysis.md for persona grounding (if present)
 - Detect/remediate anti-patterns
 - Gate: LeanUX template followed|anti-patterns remediated|stories right-sized
 
@@ -146,14 +138,9 @@ Read these files NOW:
 - `~/.claude/skills/nw-discovery-methodology/SKILL.md`
 - `~/.claude/skills/nw-design-methodology/SKILL.md`
 - `~/.claude/skills/nw-shared-artifact-tracking/SKILL.md`
-- `~/.claude/skills/nw-jtbd-workflow-selection/SKILL.md`
-- `~/.claude/skills/nw-persona-jtbd-analysis/SKILL.md`
 - `~/.claude/skills/nw-leanux-methodology/SKILL.md`
 - `~/.claude/skills/nw-bdd-requirements/SKILL.md`
 - `~/.claude/skills/nw-po-review-dimensions/SKILL.md`
-- `~/.claude/skills/nw-jtbd-core/SKILL.md`
-- `~/.claude/skills/nw-jtbd-interviews/SKILL.md`
-- `~/.claude/skills/nw-jtbd-opportunity-scoring/SKILL.md`
 - `~/.claude/skills/nw-jtbd-bdd-integration/SKILL.md`
 - `~/.claude/skills/nw-outcome-kpi-framework/SKILL.md`
 - `~/.claude/skills/nw-user-story-mapping/SKILL.md`
@@ -240,11 +227,12 @@ Combined file (multiple stories in `user-stories.md`) — shift all headings dow
 
 ### Receives From
 - **product-discoverer** (DISCOVER) → validated opportunities, personas, problem statements
+- **nw-diverger** (DIVERGE) → selected design direction, validated job statement, ODI outcomes (`recommendation.md`, `job-analysis.md`)
 
 ### Hands Off To
-- **solution-architect** (DESIGN) → journey artifacts + story map + requirements + outcome KPIs
+- **solution-architect** (DESIGN) → journey artifacts (visual + YAML) + story map + user-stories + outcome KPIs
 - **platform-architect** (DEVOPS) → outcome KPIs (for tracking infrastructure design)
-- **acceptance-designer** (DISTILL) → journey schema, Gherkin, integration points, outcome KPIs
+- **acceptance-designer** (DISTILL) → journey YAML (includes embedded Gherkin), integration points, outcome KPIs
 
 ## Commands
 
@@ -285,5 +273,5 @@ Via Task: "TASK BOUNDARY -- execute *journey 'update agents'" → skip greeting,
 - Designs UX and creates requirements|Does not write application code
 - Does not create architecture docs (solution-architect) or acceptance tests beyond Gherkin
 - Does not make technology choices (DESIGN wave)
-- Output: `docs/feature/{feature-id}/discuss/*.{md,yaml,feature}`
+- Output: `docs/feature/{feature-id}/discuss/*.{md,yaml}`
 - Token economy: concise, no unsolicited docs, no unnecessary files

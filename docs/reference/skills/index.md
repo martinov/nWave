@@ -56,6 +56,30 @@
 
 - [nw-br-review-criteria](../../../nWave/skills/nw-br-review-criteria/SKILL.md) — Review criteria, ethical boundaries, compliance checklists, and numerical benchmarks for business artifact review
 
+## nw-brainstorming
+
+- [nw-brainstorming](../../../nWave/skills/nw-brainstorming/SKILL.md) — Structured divergent thinking techniques — HMW framing, SCAMPER, Crazy 8s mechanics, and option diversity guarantees. Enforces strict separation of generation and evaluation phases.
+
+## nw-buddy
+
+- [nw-buddy](../../../nWave/skills/nw-buddy/SKILL.md) — nWave concierge — ask any question about methodology, project state, commands, migration, or troubleshooting. Read-only, contextual answers.
+
+## nw-buddy-command-catalog
+
+- [nw-buddy-command-catalog](../../../nWave/skills/nw-buddy-command-catalog/SKILL.md) — All /nw-* commands — what they do, when to use them, which agent they invoke. For the buddy agent to help users pick the right command.
+
+## nw-buddy-project-reading
+
+- [nw-buddy-project-reading](../../../nWave/skills/nw-buddy-project-reading/SKILL.md) — How to read a project's nWave state — detect document model, determine wave progress, find feature artifacts. For the buddy agent to give contextual advice.
+
+## nw-buddy-ssot-knowledge
+
+- [nw-buddy-ssot-knowledge](../../../nWave/skills/nw-buddy-ssot-knowledge/SKILL.md) — How the SSOT + Delta document model works — file locations, what each file contains, backward compatibility, migration. For the buddy agent to explain and navigate the document model.
+
+## nw-buddy-wave-knowledge
+
+- [nw-buddy-wave-knowledge](../../../nWave/skills/nw-buddy-wave-knowledge/SKILL.md) — How the 7-wave methodology works — wave graph, entry points, skip conditions, and handoff chain. For the buddy agent to explain methodology to users.
+
 ## nw-bugfix
 
 - [nw-bugfix](../../../nWave/skills/nw-bugfix/SKILL.md) — Bug fix workflow: root cause analysis → user review → regression test + fix via TDD
@@ -136,6 +160,22 @@
 
 - [nw-database-technology-selection](../../../nWave/skills/nw-database-technology-selection/SKILL.md) — Database comparison catalogs, RDBMS vs NoSQL selection criteria, CAP/ACID/BASE theory, OLTP vs OLAP, and technology-specific characteristics
 
+## nw-ddd-event-modeling
+
+- [nw-ddd-event-modeling](../../../nWave/skills/nw-ddd-event-modeling/SKILL.md) — Event Modeling facilitation technique — brainstorm events, identify commands and views, define aggregate boundaries, write Given-When-Then specifications
+
+## nw-ddd-eventsourcing
+
+- [nw-ddd-eventsourcing](../../../nWave/skills/nw-ddd-eventsourcing/SKILL.md) — Event Sourcing and CQRS as DDD implementation patterns — when to use, aggregate event streams, projections, snapshots, sagas, upcasting, conflict resolution
+
+## nw-ddd-strategic
+
+- [nw-ddd-strategic](../../../nWave/skills/nw-ddd-strategic/SKILL.md) — Strategic DDD — bounded context discovery, context mapping patterns, subdomain classification, ubiquitous language, and organizational alignment
+
+## nw-ddd-tactical
+
+- [nw-ddd-tactical](../../../nWave/skills/nw-ddd-tactical/SKILL.md) — Tactical DDD — aggregate design rules, entities, value objects, domain events, repositories, domain services, and anti-pattern detection
+
 ## nw-deliver
 
 - [nw-deliver](../../../nWave/skills/nw-deliver/SKILL.md) — Orchestrates the full DELIVER wave end-to-end (roadmap > execute-all > finalize). Use when all prior waves are complete and the feature is ready for implementation.
@@ -154,7 +194,7 @@
 
 ## nw-design
 
-- [nw-design](../../../nWave/skills/nw-design/SKILL.md) — Designs system architecture with C4 diagrams and technology selection. Use when defining component boundaries, choosing tech stacks, or creating architecture documents.
+- [nw-design](../../../nWave/skills/nw-design/SKILL.md) — Designs system architecture with C4 diagrams and technology selection. Routes to the right architect based on design scope (system, domain, application, or full stack). Two interaction modes: guide (collaborative Q&A) or propose (architect presents options with trade-offs).
 
 ## nw-design-methodology
 
@@ -191,6 +231,14 @@
 ## nw-distill
 
 - [nw-distill](../../../nWave/skills/nw-distill/SKILL.md) — Acceptance test creation methodology for the DISTILL wave. Domain knowledge for the acceptance designer agent: port-to-port principle, prior wave reading, wave-decision reconciliation, graceful degradation, and document back-propagation.
+
+## nw-diverge
+
+- [nw-diverge](../../../nWave/skills/nw-diverge/SKILL.md) — Generates 3-5 divergent design directions through JTBD analysis, competitive research, structured brainstorming, and taste evaluation before convergence. Use when the team has a validated problem but hasn't chosen a solution approach.
+
+## nw-diverger-review-criteria
+
+- [nw-diverger-review-criteria](../../../nWave/skills/nw-diverger-review-criteria/SKILL.md) — Review criteria for the nw-diverger-reviewer — validates JTBD rigor, research quality, option diversity, taste application correctness, and recommendation coherence in DIVERGE wave artifacts
 
 ## nw-divio-framework
 
@@ -327,6 +375,10 @@
 ## nw-it-specific-pedagogy
 
 - [nw-it-specific-pedagogy](../../../nWave/skills/nw-it-specific-pedagogy/SKILL.md) — IT-specific learning formats — coding katas, coding dojos, mob/ensemble programming, TDD workshops, architecture katas, refactoring katas — with facilitation rules, format selection logic, group size constraints, and activity sequencing for technical skill development
+
+## nw-jtbd-analysis
+
+- [nw-jtbd-analysis](../../../nWave/skills/nw-jtbd-analysis/SKILL.md) — JTBD methodology for extracting real jobs behind feature requests — job statements, abstraction layers, first-principles extraction, ODI outcome statements, and opportunity scoring
 
 ## nw-jtbd-bdd-integration
 
@@ -580,6 +632,22 @@
 
 - [nw-sci-fi-design-patterns](../../../nWave/skills/nw-sci-fi-design-patterns/SKILL.md) — Catalog of UI patterns from games, anime, and films with analysis of why they work -- structural principles extractable to real interfaces
 
+## nw-sd-case-studies
+
+- [nw-sd-case-studies](../../../nWave/skills/nw-sd-case-studies/SKILL.md) — 25 real-world system design case studies condensed from Alex Xu's System Design Interview Vol 1 and 2 - requirements, architecture, deep dive insights, key takeaways
+
+## nw-sd-framework
+
+- [nw-sd-framework](../../../nWave/skills/nw-sd-framework/SKILL.md) — 4-step system design framework with back-of-envelope estimation, scaling ladder, and common pitfalls
+
+## nw-sd-patterns
+
+- [nw-sd-patterns](../../../nWave/skills/nw-sd-patterns/SKILL.md) — Core distributed systems patterns - load balancing, caching, sharding, consistent hashing, message queues, rate limiting, CDN, Bloom filters, ID generation, replication, conflict resolution, CAP theorem
+
+## nw-sd-patterns-advanced
+
+- [nw-sd-patterns-advanced](../../../nWave/skills/nw-sd-patterns-advanced/SKILL.md) — Advanced distributed patterns - event sourcing, CQRS, saga, stream processing, append-only log, exactly-once delivery, sequencer, double-entry ledger, erasure coding, order book, watermarks
+
 ## nw-security-and-governance
 
 - [nw-security-and-governance](../../../nWave/skills/nw-security-and-governance/SKILL.md) — Database security (encryption, access control, injection prevention), data governance (lineage, quality, MDM), and compliance frameworks (GDPR, CCPA, HIPAA)
@@ -611,6 +679,10 @@
 ## nw-stress-analysis
 
 - [nw-stress-analysis](../../../nWave/skills/nw-stress-analysis/SKILL.md) — Advanced architecture stress analysis methodology for designing systems that survive unknown stresses. Load when --residuality flag is used or when designing high-uncertainty, mission-critical systems.
+
+## nw-taste-evaluation
+
+- [nw-taste-evaluation](../../../nWave/skills/nw-taste-evaluation/SKILL.md) — Design taste evaluation framework — DVF primary filter, Apple/Google/Jobs design principles as explicit scoring criteria, weighted decision matrix, and option ranking for the DIVERGE wave
 
 ## nw-tbr-methodology
 

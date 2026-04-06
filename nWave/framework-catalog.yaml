@@ -1,13 +1,14 @@
 name: nWave
-version: 3.3.1
-description: "Comprehensive DISCOVER\u2192DISCUSS\u2192DESIGN\u2192DEVOPS\u2192DISTILL\u2192\
-  DELIVER methodology with visual architecture lifecycle management"
+version: 3.4.0
+description: "Comprehensive DISCOVER\u2192DIVERGE\u2192DISCUSS\u2192DESIGN\u2192DEVOPS\u2192\
+  DISTILL\u2192DELIVER methodology with visual architecture lifecycle management"
 author: nWave Team
 license: MIT
 documentation_url: https://github.com/your-org/nwave/nWave
 methodology: nWave
 wave_phases:
 - DISCOVER
+- DIVERGE
 - DISCUSS
 - DESIGN
 - DEVOPS
@@ -20,6 +21,13 @@ agents:
     role: product_discovery
     public: true
     description: Evidence-based product discovery and market validation
+  diverger:
+    wave: DIVERGE
+    priority: 1
+    role: divergent_thinking
+    public: true
+    description: Structured divergent option generation through JTBD, competitive
+      research, brainstorming, and taste evaluation (Flux)
   product-owner:
     wave: DISCUSS
     priority: 1
@@ -33,6 +41,21 @@ agents:
     role: architecture_design
     public: true
     description: System architecture and technical design
+  system-designer:
+    wave: DESIGN
+    priority: 1
+    role: system_design
+    public: true
+    description: Distributed systems infrastructure design - scalability, caching,
+      sharding, load balancing, message queues, back-of-envelope estimation, and trade-off
+      analysis (Titan)
+  ddd-architect:
+    wave: DESIGN
+    priority: 1
+    role: domain_modeling
+    public: true
+    description: Domain discovery and modeling using DDD, Event Modeling, and selective
+      ES/CQRS recommendations (Hera)
   acceptance-designer:
     wave: DISTILL
     priority: 1
@@ -108,12 +131,26 @@ agents:
     role: agent_design_review
     public: true
     description: Reviews agent specifications for compliance and quality
+  ddd-architect-reviewer:
+    wave: CROSS_WAVE
+    priority: 2
+    role: domain_model_review
+    public: true
+    description: Reviews domain models for DDD correctness, aggregate design, context
+      mapping, and ES/CQRS justification (Athena)
   data-engineer-reviewer:
     wave: CROSS_WAVE
     priority: 2
     role: data_architecture_review
     public: true
     description: Reviews data architecture and pipeline designs
+  diverger-reviewer:
+    wave: CROSS_WAVE
+    priority: 2
+    role: divergence_review
+    public: true
+    description: Reviews DIVERGE artifacts for JTBD rigor, research evidence, option
+      diversity, taste correctness, and recommendation coherence (Prism)
   documentarist-reviewer:
     wave: CROSS_WAVE
     priority: 2
@@ -156,12 +193,27 @@ agents:
     role: architecture_review
     public: true
     description: Reviews architecture designs, patterns, and quality attributes
+  system-designer-reviewer:
+    wave: CROSS_WAVE
+    priority: 2
+    role: system_design_review
+    public: true
+    description: Reviews system design architecture for estimation accuracy, SPOF
+      detection, trade-off completeness, and component justification (Praxis)
   troubleshooter-reviewer:
     wave: CROSS_WAVE
     priority: 2
     role: investigation_review
     public: true
     description: Reviews root cause analyses and failure mode investigations
+  nwave-buddy:
+    wave: CROSS_WAVE
+    priority: 1
+    role: concierge
+    public: true
+    description: "nWave concierge \u2014 answers methodology questions, navigates\
+      \ project state, recommends commands, assists with migration and onboarding\
+      \ (Guide)"
 commands:
   discover:
     description: Conducts evidence-based product discovery through customer interviews
@@ -175,6 +227,19 @@ commands:
     - problem_validation
     - opportunity_tree
     - lean_canvas
+  diverge:
+    description: Generates 3-5 divergent design directions through JTBD analysis,
+      competitive research, structured brainstorming, and taste evaluation before
+      convergence.
+    argument_hint: '[feature-id] - Optional: --work-type=[new-product|brownfield|pivot]'
+    agents:
+    - diverger
+    wave: DIVERGE
+    outputs:
+    - recommendation
+    - job_analysis
+    - competitive_research
+    - taste_evaluation
   discuss:
     description: Conducts Jobs-to-be-Done analysis, UX journey design, and requirements
       gathering through interactive discovery. Use when starting feature analysis,
@@ -367,6 +432,16 @@ commands:
     wave: CROSS_WAVE
     outputs:
     - rigor_config
+  buddy:
+    description: "nWave concierge \u2014 ask any question about methodology, project\
+      \ state, commands, migration, or troubleshooting. Read-only, contextual answers."
+    argument_hint: '[question] - Example: "What should I do next for rate-limiting?"'
+    agents:
+    - nwave-buddy
+    wave: CROSS_WAVE
+    outputs:
+    - contextual_answer
+    - command_recommendation
 quality_gates:
   knowledge_preservation:
     software-crafter: 925_lines_methodology

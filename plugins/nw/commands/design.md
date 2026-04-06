@@ -5,26 +5,48 @@ argument-hint: "[component-name] - Optional: --residuality --paradigm=[auto|oop|
 
 # NW-DESIGN: Architecture Design
 
-**Wave**: DESIGN (wave 3 of 6) | **Agents**: Morgan (nw-solution-architect) | **Command**: `*design-architecture`
+**Wave**: DESIGN (wave 3 of 6) | **Agents**: Morgan (nw-solution-architect), nw-system-designer, nw-ddd-architect | **Command**: `*design-architecture`
 
 ## Overview
 
-Execute DESIGN wave through discovery-driven architecture design. Morgan asks about business drivers and constraints first, then recommends architecture that fits. Analyzes existing codebase, evaluates open-source alternatives, produces C4 diagrams (Mermaid) as mandatory output.
+Execute DESIGN wave through discovery-driven architecture design. The command routes to the right architect based on design scope: system-level (distributed architecture, scalability), domain-level (DDD, bounded contexts), or application-level (component boundaries, tech stack). Users choose an interaction mode — guided (collaborative Q&A) or propose (architect analyzes requirements and presents options with trade-offs). Analyzes existing codebase, evaluates open-source alternatives, produces C4 diagrams (Mermaid) as mandatory output.
+
+## Interactive Decision Points
+
+### Decision 0: Design Scope
+
+**Question**: What are you designing?
+
+**Options**:
+1. **System / infrastructure** — distributed architecture, scalability, caching, load balancing, message queues
+2. **Domain / bounded contexts** — DDD, aggregates, Event Modeling, event sourcing, context mapping
+3. **Application / components** — component boundaries, hexagonal architecture, tech stack, ADRs
+4. **Full stack** — all three in sequence: system -> domain -> application
+
+### Decision 1: Interaction Mode
+
+**Question**: How do you want to work?
+
+**Options**:
+1. **Guide me** — the architect asks questions, you make decisions together
+2. **Propose** — the architect reads your requirements and proposes 2-3 options with trade-offs
 
 ## Prior Wave Consultation
 
-Before beginning DESIGN work, read targeted prior wave artifacts:
+Before beginning DESIGN work, read SSOT and prior wave artifacts:
 
-1. **DISCOVER** (synthesis check only): Read `docs/feature/{feature-id}/discover/wave-decisions.md` — if any decision is unclear or relevant to architecture, read the referenced source file
-2. **DISCUSS** (primary input): Read these key artifacts from `docs/feature/{feature-id}/discuss/`:
+1. **SSOT** (if `docs/product/` exists):
+   - `docs/product/architecture/brief.md` — current architecture to extend (if exists)
+   - `docs/product/architecture/adr-*.md` — existing architectural decisions
+   - `docs/product/journeys/{name}.yaml` — journey schema for port identification
+2. **DISCUSS** (primary input): Read from `docs/feature/{feature-id}/discuss/`:
    - `wave-decisions.md` — decision summary
-   - `requirements.md` — functional requirements
-   - `acceptance-criteria.md` — testable criteria driving architecture
-   - `user-stories.md` — scope of what to build
-   - `story-map.md` — walking skeleton and release slicing
+   - `user-stories.md` — functional requirements, system constraints, and scope (includes AC per story)
+   - `story-map.md` — walking skeleton, release slicing, and priority rationale
    - `outcome-kpis.md` — quality attributes informing architecture
+3. **DISCOVER** (synthesis check only): Read `docs/feature/{feature-id}/discover/wave-decisions.md` — only if architecturally relevant
 
-DISCUSS already synthesizes DISCOVER evidence into structured requirements. DESIGN does not need raw DISCOVER artifacts (problem-validation, interview-log, etc.) unless wave-decisions.md flags something architecturally significant.
+DISCUSS already synthesizes evidence into structured user stories. DESIGN reads SSOT architecture first (to extend, not recreate), then feature-level artifacts for the delta.
 
 **READING ENFORCEMENT**: You MUST read every file listed in Prior Wave Consultation above using the Read tool before proceeding. After reading, output a confirmation checklist (`✓ {file}` for each read, `⊘ {file} (not found)` for missing). Do NOT skip files that exist — skipping causes architectural decisions disconnected from requirements.
 
@@ -97,6 +119,31 @@ Before dispatching the architect agent, read rigor config from `.nwave/des-confi
 
 ## Agent Invocation
 
+### Architect Routing (based on Decision 0)
+
+| Decision 0 | Agent | Focus |
+|-------------|-------|-------|
+| System / infrastructure | @nw-system-designer | Distributed architecture, scalability, caching, load balancing, message queues |
+| Domain / bounded contexts | @nw-ddd-architect | DDD, aggregates, Event Modeling, event sourcing, context mapping |
+| Application / components | @nw-solution-architect | Component boundaries, hexagonal architecture, tech stack, ADRs |
+| Full stack | @nw-system-designer then @nw-ddd-architect then @nw-solution-architect | All three in sequence |
+
+Pass Decision 1 (guide/propose) to the invoked agent via `interaction_mode` parameter in the Task tool config. If the agent is invoked in a direct session (not via Task), it asks the user for the mode.
+
+All agents write to `docs/product/architecture/` (SSOT). Each architect owns its section:
+- @nw-system-designer writes `## System Architecture` in `brief.md`
+- @nw-ddd-architect writes `## Domain Model` in `brief.md`
+- @nw-solution-architect writes `## Application Architecture` in `brief.md`
+
+**Full stack invocation**: The orchestrator (this task file) makes 3 sequential Task calls:
+1. Invoke @nw-system-designer → waits for completion → `brief.md` now has `## System Architecture`
+2. Invoke @nw-ddd-architect → reads `## System Architecture` from brief.md → completes → `brief.md` now has `## Domain Model`
+3. Invoke @nw-solution-architect → reads both prior sections → completes → `brief.md` has all 3 sections
+
+Each agent reads `docs/product/architecture/brief.md` at start. If prior architects' sections exist, build on them without contradicting. If absent, proceed normally.
+
+### Default Invocation (Application scope)
+
 @nw-solution-architect
 
 Execute \*design-architecture for {feature-id}.
@@ -105,6 +152,7 @@ Context files: see Prior Wave Consultation above.
 
 **Configuration:**
 - model: rigor.agent_model (omit if "inherit")
+- interaction_mode: {Decision 1: "guide" or "propose"}
 - interactive: moderate
 - output_format: markdown
 - diagram_format: mermaid (C4)
@@ -158,16 +206,31 @@ Before completing DESIGN, produce `docs/feature/{feature-id}/design/wave-decisio
 
 This summary enables DEVOPS and DISTILL to quickly assess architecture decisions without reading all DESIGN files.
 
+## SSOT Update
+
+After producing feature-level artifacts, update the product-level SSOT:
+
+1. **Architecture SSOT**: Update `docs/product/architecture/brief.md` with new component boundaries, driving ports, and key decisions. Add consumer-labeled sections: `## For Acceptance Designer` (driving ports, test entry points) and `## For Software Crafter` (component boundaries, key decisions). If `brief.md` does not exist, create it.
+2. **ADRs**: Write new ADRs to `docs/product/architecture/adr-*.md`. ADRs are permanent — they accumulate, never replaced.
+3. **C4 diagrams**: Update `docs/product/architecture/c4-diagrams.md` with current component topology.
+
+If `docs/product/architecture/` does not exist, create it. This is SSOT bootstrap for architecture.
+
 ## Expected Outputs
 
+### Feature delta (in `docs/feature/{feature-id}/design/`)
 ```
-docs/feature/{feature-id}/design/
-  architecture-design.md       (includes C4 diagrams in Mermaid)
-  technology-stack.md
-  component-boundaries.md
-  data-models.md
-  wave-decisions.md
-docs/adrs/
-  ADR-NNN-*.md
-CLAUDE.md (project root)   (optional: ## Development Paradigm section)
+  wave-decisions.md              (appends ## DESIGN Decisions section)
+```
+
+### SSOT updates (in `docs/product/architecture/`)
+```
+  brief.md                       (created or updated — includes C4 diagrams, consumer-labeled sections)
+  adr-*.md                       (new ADRs for this feature)
+  c4-diagrams.md                 (current component topology, if separate from brief)
+```
+
+### Optional
+```
+CLAUDE.md (project root)         (optional: ## Development Paradigm section)
 ```

@@ -11,6 +11,7 @@ Conducts UX journey design and requirements gathering with BDD acceptance criter
 
 - [`/nw-discover`](../commands/index.md)
 - [`/nw-discuss`](../commands/index.md)
+- [`/nw-diverge`](../commands/index.md)
 - [`/nw-finalize`](../commands/index.md)
 - [`/nw-roadmap`](../commands/index.md)
 
@@ -20,13 +21,8 @@ Conducts UX journey design and requirements gathering with BDD acceptance criter
 - [nw-design-methodology](../../../nWave/skills/nw-design-methodology/SKILL.md) — Apple LeanUX++ design workflow, journey schema, emotional arc patterns, and CLI UX patterns. Load when transitioning from discovery to visualization or when designing journey artifacts.
 - [nw-discovery-methodology](../../../nWave/skills/nw-discovery-methodology/SKILL.md) — Question-first approach to understanding user journeys. Load when starting a new journey design or when the discovery phase needs deepening.
 - [nw-jtbd-bdd-integration](../../../nWave/skills/nw-jtbd-bdd-integration/SKILL.md) — Translating JTBD analysis to BDD scenarios - job story to Given-When-Then patterns, forces-based test discovery, job-map-based test discovery, and property-shaped criteria
-- [nw-jtbd-core](../../../nWave/skills/nw-jtbd-core/SKILL.md) — Core JTBD theory and job story format - job dimensions, job story template, job stories vs user stories, 8-step universal job map, outcome statements, and forces of progress
-- [nw-jtbd-interviews](../../../nWave/skills/nw-jtbd-interviews/SKILL.md) — JTBD discovery techniques adapted for AI product owner context. Four Forces extraction, job dimension probing, question banks, and anti-patterns for interactive feature discovery conversations.
-- [nw-jtbd-opportunity-scoring](../../../nWave/skills/nw-jtbd-opportunity-scoring/SKILL.md) — JTBD opportunity scoring and prioritization - outcome statement format, opportunity algorithm, scoring interpretation, feature prioritization, and opportunity matrix template
-- [nw-jtbd-workflow-selection](../../../nWave/skills/nw-jtbd-workflow-selection/SKILL.md) — JTBD workflow classification and routing - ODI two-phase framework, five job types with workflow sequences, baseline type selection, workflow anti-patterns, and common recipes
 - [nw-leanux-methodology](../../../nWave/skills/nw-leanux-methodology/SKILL.md) — LeanUX backlog management methodology - user story template, story sizing, story states, task types, Definition of Ready/Done, anti-pattern detection and remediation
 - [nw-outcome-kpi-framework](../../../nWave/skills/nw-outcome-kpi-framework/SKILL.md) — Outcome KPI definition methodology - synthesizes Who Does What By How Much (Gothelf/Seiden), Running Lean (Maurya), and Measure What Matters (Doerr) into a practical framework for measurable outcome KPIs
-- [nw-persona-jtbd-analysis](../../../nWave/skills/nw-persona-jtbd-analysis/SKILL.md) — Structured persona creation and JTBD analysis methodology - persona templates, ODI job step tables, pain point mapping, success metric quantification, and multi-persona segmentation
 - [nw-po-review-dimensions](../../../nWave/skills/nw-po-review-dimensions/SKILL.md) — Requirements quality critique dimensions for peer review - confirmation bias detection, completeness validation, clarity checks, testability assessment, and priority validation
 - [nw-shared-artifact-tracking](../../../nWave/skills/nw-shared-artifact-tracking/SKILL.md) — Shared artifact registry, common artifact patterns, and integration validation. Load when tracking data that flows across journey steps or validating horizontal coherence.
 - [nw-user-story-mapping](../../../nWave/skills/nw-user-story-mapping/SKILL.md) — User story mapping for backlog management and outcome-based prioritization. Load during Phase 2.5 (User Story Mapping) to produce story-map.md and prioritization.md.

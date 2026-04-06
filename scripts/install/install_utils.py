@@ -365,13 +365,13 @@ class BackupManager:
         # Backup agents
         if agents_dir.exists():
             backup_agents = self.backup_dir / "agents"
-            shutil.copytree(agents_dir, backup_agents)
+            shutil.copytree(agents_dir, backup_agents, dirs_exist_ok=True)
             self.logger.info("  ✅ Agents backed up")
 
         # Backup commands
         if commands_dir.exists():
             backup_commands = self.backup_dir / "commands"
-            shutil.copytree(commands_dir, backup_commands)
+            shutil.copytree(commands_dir, backup_commands, dirs_exist_ok=True)
             self.logger.info("  ✅ Commands backed up")
 
         # Backup config files

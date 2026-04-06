@@ -4,23 +4,23 @@ Help choosing the right nWave workflow for your task.
 
 This guide uses the **Outcome Driven Innovation (ODI)** framework to match your job to the right sequence of waves and commands.
 
-## The 6-Wave Pipeline
+## The 7-Wave Pipeline
 
-The framework operates as a sequential pipeline of 6 waves:
+The framework operates as a sequential pipeline of 7 waves:
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│                     THE 6-WAVE SEQUENCE                                 │
-│                                                                         │
-│   discover ──→ discuss ──→ design ──→ devops ──→ distill ──→ deliver    │
-│      │           │           │          │          │           │        │
-│   VALIDATE    WHAT are    HOW should  PLATFORM  WHAT does   BUILD &    │
-│   the problem the needs?  it work?    ready?    "done"      SHIP it    │
-│                                                 look like?             │
-└─────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                     THE 7-WAVE SEQUENCE                                      │
+│                                                                              │
+│   discover ──→ diverge ──→ discuss ──→ design ──→ devops ──→ distill ──→ deliver │
+│      │           │           │          │          │          │           │      │
+│   VALIDATE   EXPLORE    WHAT are    HOW should  PLATFORM  WHAT does   BUILD &  │
+│   the problem design    the needs?  it work?    ready?    "done"      SHIP it  │
+│              options                                      look like?           │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Skip waves you don't need** — brownfield work may start at `deliver`, bug fixes at `root-why` + `execute`.
+**Skip waves you don't need** — brownfield work may start at `diverge`, bug fixes at `root-why` + `execute`.
 
 ### What `/nw-deliver` Automates
 
@@ -86,7 +86,7 @@ Research is not a fixed step in a sequence - it's a capability you invoke **when
 **Sequence**:
 
 ```text
-[discover] → discuss → design → devops → distill → deliver
+[discover] → [diverge] → discuss → design → devops → distill → deliver
 ```
 
 **Why each step**:
@@ -94,6 +94,7 @@ Research is not a fixed step in a sequence - it's a capability you invoke **when
 | Step | Purpose |
 |------|---------|
 | `discover` | (Optional) Validate problem exists, market research |
+| `diverge` | (Optional) Explore multiple design directions, recommend approach |
 | `discuss` | Gather requirements - you don't know what's needed yet |
 | `design` | Make architecture decisions, select technology |
 | `devops` | Platform readiness, CI/CD, infrastructure |
@@ -123,10 +124,10 @@ Research is not a fixed step in a sequence - it's a capability you invoke **when
 **Sequence**:
 
 ```text
-[research] → deliver
+[diverge] → [discuss] → deliver
 ```
 
-**Why skip discovery**: You already understand the system, problem is identified. Go straight to delivery.
+**Why skip discovery**: You already understand the system, problem is identified. Start with design exploration if uncertain about approach, otherwise go straight to delivery.
 
 **Example Commands**:
 
@@ -233,8 +234,8 @@ research → [decision point: which job to pursue next]
 
 | Job | You Know What? | Sequence |
 |-----|---------------|----------|
-| **Greenfield** | No | [discover] → discuss → design → devops → distill → deliver |
-| **Brownfield** | Yes | [research] → deliver |
+| **Greenfield** | No | [discover] → [diverge] → discuss → design → devops → distill → deliver |
+| **Brownfield** | Yes | [diverge] → [discuss] → deliver |
 | **Refactoring** | Partially | [research] → mikado → deliver |
 | **Bug Fix** | Yes (symptom) | [research] → root-why → execute → review |
 | **Research** | No | research → (output informs next job) |
@@ -254,6 +255,13 @@ This section breaks down what specific job each wave command fulfills.
 |-----|---------|---------|
 | Validate problem exists | `/nw-discover` | Evidence-based validation |
 | Market research | `/nw-discover` | Competitive analysis |
+
+### DIVERGE Wave
+
+| Job | Command | Outcome |
+|-----|---------|---------|
+| Explore design directions | `/nw-diverge` | Multiple solution approaches |
+| Choose recommended approach | `/nw-diverge` | Architecture recommendation |
 
 ### DISCUSS Wave
 

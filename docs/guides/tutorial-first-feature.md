@@ -2,11 +2,16 @@
 
 Learn nWave by building a complete feature end-to-end.
 
+> **Note**: This tutorial covers a brownfield feature (adding to an existing project). If you're starting a **new product** or need to **explore multiple approaches**, consider running `/nw-discover` and `/nw-diverge` first. See the [DIVERGE Wave Guide](diverge-wave-guide.md).
+
 **Prerequisites**:
+- **Platform**: Linux, macOS, or Windows (WSL2 required)
 - nWave installed: `pipx install nwave-ai && nwave-ai install` (in terminal, not Claude Code)
 - Claude Code reopened after install
 - A Python project with pytest
 - Basic TDD familiarity
+
+> **Stuck or unsure about nWave?** Type `/nw-buddy` at any point to ask the concierge agent about methodology, commands, or next steps.
 
 ---
 
@@ -19,6 +24,8 @@ You'll build a "user login" feature through four commands. Each command launches
 Requirements    Architecture    Acceptance      TDD
                                 Tests           Implementation
 ```
+
+> **Full wave sequence**: nWave has 7 waves: DISCOVER, DIVERGE, DISCUSS, DESIGN, DEVOPS, DISTILL, DELIVER. This tutorial uses the 4 most common ones for brownfield features. See the [DIVERGE Wave Guide](diverge-wave-guide.md) for design exploration and [Tutorial 4](./tutorial-discovery.md) for product discovery.
 
 At every step, the agent generates — you review and approve.
 
@@ -37,13 +44,15 @@ The `@product-owner` agent will ask you clarifying questions:
 - What happens on invalid credentials?
 - Are there rate limits?
 
-Answer in plain language. The agent produces a requirements document at:
+Answer in plain language. The agent produces user stories and requirements at:
 
 ```
-docs/feature/user-login/discuss/requirements.md
+docs/feature/user-login/discuss/user-stories.md
 ```
 
-**Your checkpoint**: Open the requirements file. Check that it captures what you want. Edit anything that's wrong. The agent works for you — not the other way around.
+> **SSOT model**: Product-level documents (journeys, architecture) are in `docs/product/`. Feature-specific artifacts (user stories, wave decisions) are in `docs/feature/{feature-id}/discuss/`.
+
+**Your checkpoint**: Open the user stories file. Check that it captures what you want. Edit anything that's wrong. The agent works for you -- not the other way around.
 
 ---
 
@@ -52,19 +61,28 @@ docs/feature/user-login/discuss/requirements.md
 With requirements in hand, design how the feature will be built.
 
 ```
-/nw-design --architecture=hexagonal
+/nw-design
 ```
 
-The `@solution-architect` agent reads your requirements and produces:
+The command asks two questions before it starts:
+
+1. **Design scope**: system (infrastructure), domain (DDD/bounded contexts), or application (component boundaries). For most features, pick **application**.
+2. **Interaction mode**: "Guide me" (collaborative Q&A) or "Propose" (autonomous analysis with trade-offs). Pick whichever suits your style.
+
+Based on your scope choice, `/nw-design` routes to the right specialist:
+
+| Scope | Architect | Focus |
+|-------|-----------|-------|
+| System / infrastructure | Titan (`@system-designer`) | Scalability, caching, load balancing, message queues |
+| Domain / bounded contexts | Hera (`@ddd-architect`) | DDD, aggregates, Event Modeling, event sourcing |
+| Application / components | Morgan (`@solution-architect`) | Component boundaries, hexagonal architecture, ADRs |
+
+For a "user login" feature, **application** scope is the right choice. Morgan reads your requirements and produces:
 - An architecture document with component boundaries
 - Architecture Decision Records (ADRs) for key choices
-- A component diagram showing how pieces connect
+- C4 diagrams (Mermaid) showing how pieces connect
 
-Output lands at:
-
-```
-docs/feature/user-login/design/architecture-design.md
-```
+Output lands in `docs/product/architecture/` (SSOT) and `docs/feature/user-login/design/` (feature delta).
 
 **Your checkpoint**: Review the architecture. Does the component structure make sense? Are the technology choices appropriate? Push back on anything that feels wrong.
 
@@ -145,7 +163,7 @@ You typed          Agent produced              You reviewed
 /nw-deliver        Working implementation       ✓ Tests pass?
 ```
 
-Your feature artifacts live in `docs/feature/user-login/` — requirements, architecture, and execution history are all traceable.
+Your feature artifacts live in `docs/feature/user-login/` (feature deltas) and `docs/product/` (SSOT) -- requirements, architecture, and execution history are all traceable.
 
 ---
 
