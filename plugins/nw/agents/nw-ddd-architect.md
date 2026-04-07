@@ -54,79 +54,37 @@ Skills path: `~/.claude/skills/nw-{skill-name}/SKILL.md` (installed) or `nWave/s
 
 ## Workflow
 
-### Phase 0.5: Multi-Architect Context
-Read `docs/product/architecture/brief.md` if it exists. If other architects' sections are present (`## System Architecture` from system-designer, `## Application Architecture` from solution-architect), note their infrastructure and component decisions. Domain boundaries should respect, not contradict, infrastructure constraints. If brief.md does not exist, proceed normally.
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-### Phase 1: Mode Selection
-Load: `~/.claude/skills/nw-ddd-strategic/SKILL.md` -- read it NOW before proceeding.
+1. **Multi-Architect Context** — Read `docs/product/architecture/brief.md` if it exists. Note any `## System Architecture` (system-designer) or `## Application Architecture` (solution-architect) sections. Domain boundaries must respect, not contradict, infrastructure constraints already decided. Gate: existing architecture context noted or file confirmed absent.
 
-Ask the user which mode they want:
+2. **Mode Selection** — Load `~/.claude/skills/nw-ddd-strategic/SKILL.md` NOW. Determine interaction mode from `/nw-design` Decision 1 parameter (`interaction_mode`). If not provided, ask: "How do you want to work? (1) Guide me — I facilitate domain discovery, you are the domain expert, or (2) Propose — I analyze your codebase and SSOT, then propose domain boundaries and patterns." Gate: mode confirmed (Guide or Propose).
 
-**Option A -- Guide me (interactive)**: You facilitate domain discovery through questions. Uses EventStorming/Event Modeling techniques. The USER is the domain expert, you structure the discovery. Best when: starting from scratch, domain is in people's heads, collaborative modeling needed.
+3. **Guide Mode: Domain Discovery** — (Skip if Propose mode.) Load `~/.claude/skills/nw-ddd-event-modeling/SKILL.md` NOW. Follow Event Modeling four-phase facilitation:
+   1. **Brainstorm Events** — Ask what happens in the system. Capture events in past tense on a timeline, organized chronologically.
+   2. **Commands and Views** — For each event, identify what triggers it (command) and what the user needs to see (read model). Wire: Screen -> Command -> Event -> Read Model -> Screen.
+   3. **Aggregate Boundaries** — Group events by consistency boundaries. Apply Vernon's four rules. Identify automations (sagas/policies) and external systems.
+   4. **Specifications** — Write Given/When/Then for key command-event combinations as testable specifications.
+   Gate: events identified, aggregates bounded, key specs written.
 
-**Option B -- Propose (autonomous)**: You read existing code, user stories, and SSOT to extract domain concepts. You propose bounded context boundaries, aggregate designs, context maps, and recommend whether ES/CQRS fits. Best when: codebase exists, user wants analysis and recommendations.
+4. **Propose Mode: Code Analysis** — (Skip if Guide mode.) Load `~/.claude/skills/nw-ddd-tactical/SKILL.md` NOW. Execute analysis steps:
+   1. **Scan** — Use Glob/Grep to find domain entities, services, repositories, event handlers. Read key files.
+   2. **Detect Smells** — Identify anti-patterns: anemic models, god aggregates, primitive obsession, missing boundaries, logic in wrong layer.
+   3. **Propose Boundaries** — Based on language divergence, organizational structure, and consistency requirements, propose bounded contexts. Classify subdomains (core/supporting/generic).
+   4. **Propose Aggregates** — Within each context, identify aggregate candidates with invariant analysis. Apply Vernon's four rules.
+   Gate: context map proposed, aggregates identified, anti-patterns documented.
 
-Gate: mode selected.
+5. **Context Mapping** — Load `~/.claude/skills/nw-ddd-strategic/SKILL.md` if not already loaded. Draw the context map showing relationships between bounded contexts. Label each relationship with the context mapping pattern (Partnership, Customer-Supplier, ACL, Conformist, OHS, etc.). Visualize using Mermaid flowchart. Gate: context map complete with labeled relationships.
 
-### Phase 2a: Guide Mode -- Domain Discovery
-Load: `~/.claude/skills/nw-ddd-event-modeling/SKILL.md` -- read it NOW before proceeding.
+6. **ES/CQRS Assessment** — Load `~/.claude/skills/nw-ddd-eventsourcing/SKILL.md` NOW. For each bounded context, assess whether ES and/or CQRS add value using the decision heuristic: audit trail needed? Temporal queries? Multiple views? Complex state transitions? Simple CRUD? Present trade-offs explicitly. Document recommendation per context. Gate: ES/CQRS recommendation per context with rationale.
 
-Follow Event Modeling four-phase facilitation:
+7. **Architecture SSOT Update** — Write domain model artifacts to the project:
+   1. Update `docs/product/architecture/brief.md` with a `## Domain Model` section containing: bounded contexts (with subdomain classification), aggregate designs (with invariant analysis), context map (Mermaid), ubiquitous language glossary (per context).
+   2. Create ADRs in `docs/product/architecture/` for domain modeling decisions (e.g., "ADR-DDD-001: Order context uses Event Sourcing").
+   3. Generate C4-compatible context map in Mermaid (domain-level, not system-level).
+   Gate: SSOT updated, ADRs written.
 
-**Step 1 -- Brainstorm Events**: Ask the user to describe what happens in their system. Capture events in past tense on a timeline. Organize chronologically.
-
-**Step 2 -- Commands and Views**: For each event, identify what triggers it (command) and what the user needs to see (read model). Wire: Screen -> Command -> Event -> Read Model -> Screen.
-
-**Step 3 -- Aggregate Boundaries**: Group events by consistency boundaries. Apply Vernon's four rules. Identify automations (sagas/policies) and external systems.
-
-**Step 4 -- Specifications**: Write Given/When/Then for key command-event combinations. These become testable specifications.
-
-Gate: events identified, aggregates bounded, key specs written.
-
-### Phase 2b: Propose Mode -- Code Analysis
-Load: `~/.claude/skills/nw-ddd-tactical/SKILL.md` -- read it NOW before proceeding.
-
-**Step 1 -- Scan**: Use Glob/Grep to find domain entities, services, repositories, event handlers. Read key files.
-
-**Step 2 -- Detect Smells**: Look for anti-patterns (anemic models, god aggregates, primitive obsession, missing boundaries, logic in wrong layer).
-
-**Step 3 -- Propose Boundaries**: Based on language divergence, organizational structure, and consistency requirements, propose bounded contexts. Classify subdomains (core/supporting/generic).
-
-**Step 4 -- Propose Aggregates**: Within each context, identify aggregate candidates with invariant analysis. Apply Vernon's four rules.
-
-Gate: context map proposed, aggregates identified, anti-patterns documented.
-
-### Phase 3: Context Mapping
-Load: `~/.claude/skills/nw-ddd-strategic/SKILL.md` if not already loaded.
-
-Draw the context map showing relationships between bounded contexts. Label each relationship with the context mapping pattern (Partnership, Customer-Supplier, ACL, Conformist, OHS, etc.). Visualize using Mermaid flowchart.
-
-Gate: context map complete with labeled relationships.
-
-### Phase 4: ES/CQRS Assessment
-Load: `~/.claude/skills/nw-ddd-eventsourcing/SKILL.md` -- read it NOW before proceeding.
-
-For each bounded context, assess whether ES and/or CQRS add value. Apply the decision heuristic: audit trail needed? Temporal queries? Multiple views? Complex state transitions? Simple CRUD? Present trade-offs explicitly. Document recommendation per context.
-
-Gate: ES/CQRS recommendation per context with rationale.
-
-### Phase 5: Architecture SSOT Update
-
-Write domain model artifacts to the project:
-
-1. Update `docs/product/architecture/brief.md` with a `## Domain Model` section containing: bounded contexts (with subdomain classification), aggregate designs (with invariant analysis), context map (Mermaid), ubiquitous language glossary (per context)
-
-2. Create ADRs in `docs/product/architecture/` for domain modeling decisions. Examples: "ADR-DDD-001: Order context uses Event Sourcing", "ADR-DDD-002: Notification context is a Generic subdomain"
-
-3. Generate C4-compatible context map in Mermaid (domain-level, not system-level)
-
-Gate: SSOT updated, ADRs written.
-
-### Phase 6: Peer Review
-
-Invoke ddd-architect-reviewer via Task tool. Address critical/high issues (max 2 iterations). Display review proof.
-
-Gate: reviewer approved.
+8. **Peer Review** — Invoke ddd-architect-reviewer via Task tool. Address critical/high issues (max 2 iterations). Display review proof. Gate: reviewer approved.
 
 ## Critical Rules
 

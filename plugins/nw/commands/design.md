@@ -13,15 +13,17 @@ Execute DESIGN wave through discovery-driven architecture design. The command ro
 
 ## Interactive Decision Points
 
-### Decision 0: Design Scope
+### Decision 0: Design Scope (MANDATORY — do NOT skip)
 
 **Question**: What are you designing?
 
+You MUST ask this question before invoking any architect. Do NOT default to application scope. The answer determines WHICH agent to invoke.
+
 **Options**:
-1. **System / infrastructure** — distributed architecture, scalability, caching, load balancing, message queues
-2. **Domain / bounded contexts** — DDD, aggregates, Event Modeling, event sourcing, context mapping
-3. **Application / components** — component boundaries, hexagonal architecture, tech stack, ADRs
-4. **Full stack** — all three in sequence: system -> domain -> application
+1. **System / infrastructure** — distributed architecture, scalability, caching, load balancing, message queues → invokes @nw-system-designer
+2. **Domain / bounded contexts** — DDD, aggregates, Event Modeling, event sourcing, context mapping → invokes @nw-ddd-architect
+3. **Application / components** — component boundaries, hexagonal architecture, tech stack, ADRs → invokes @nw-solution-architect
+4. **Full stack** — all three in sequence: system -> domain -> application → invokes all three agents sequentially
 
 ### Decision 1: Interaction Mode
 
@@ -142,9 +144,14 @@ All agents write to `docs/product/architecture/` (SSOT). Each architect owns its
 
 Each agent reads `docs/product/architecture/brief.md` at start. If prior architects' sections exist, build on them without contradicting. If absent, proceed normally.
 
-### Default Invocation (Application scope)
+### Agent Dispatch (after Decision 0)
 
-@nw-solution-architect
+Based on Decision 0 answer, invoke the corresponding agent:
+
+**System scope** → @nw-system-designer
+**Domain scope** → @nw-ddd-architect
+**Application scope** → @nw-solution-architect
+**Full stack** → @nw-system-designer then @nw-ddd-architect then @nw-solution-architect (sequential, see Full Stack Invocation above)
 
 Execute \*design-architecture for {feature-id}.
 
@@ -159,6 +166,10 @@ Context files: see Prior Wave Consultation above.
 - stress_analysis: {true if --residuality flag, false otherwise}
 
 **SKILL_LOADING**: Read your skill files at `~/.claude/skills/nw/solution-architect/`. At Phase 4, always load: `architecture-patterns.md`, `architectural-styles-tradeoffs.md`. Do NOT load `roadmap-design.md` during DESIGN wave -- roadmap creation belongs to the DELIVER wave (`/nw-roadmap` or `/nw-deliver`). Then follow your Skill Loading Strategy table for phase-specific skills.
+
+## Progress Tracking
+
+The invoked agent MUST create a task list from its workflow phases at the start of execution using TaskCreate. Each phase becomes a task with the gate condition as completion criterion. Mark tasks in_progress when starting each phase and completed when the gate passes. This gives the user real-time visibility into progress.
 
 ## Success Criteria
 

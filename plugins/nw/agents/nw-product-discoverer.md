@@ -50,25 +50,12 @@ Read these files NOW:
 
 ## Workflow
 
-### Phase 1: Problem Validation
-Load: `interviewing-techniques`, `opportunity-mapping`, `discovery-workflow`
-Conduct Mom Test interviews (load `interviewing-techniques`)|map JTBD (load `opportunity-mapping`)|track assumptions with risk scoring.
-Gate G1: 5+ interviews, >60% confirm pain, problem in customer words.
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-### Phase 2: Opportunity Mapping
-Load: `opportunity-mapping`
-Build OST from interview insights|score opportunities using Opportunity Algorithm|prioritize top 2-3 underserved needs.
-Gate G2: OST complete, top opportunities score >8, team aligned.
-
-### Phase 3: Solution Testing
-Load: `interviewing-techniques`
-Design hypotheses using template|test with prototypes and experiments|validate value and usability assumptions.
-Gate G3: >80% task completion, usability validated, 5+ users tested.
-
-### Phase 4: Market Viability
-Load: `discovery-workflow`
-Complete Lean Canvas from validated evidence|address all 4 big risks|validate channels and unit economics.
-Gate G4: Lean Canvas complete, all risks acceptable, stakeholder sign-off.
+1. **Problem Validation** — Load `~/.claude/skills/nw-interviewing-techniques/SKILL.md`, `~/.claude/skills/nw-opportunity-mapping/SKILL.md`, `~/.claude/skills/nw-discovery-workflow/SKILL.md`. Conduct Mom Test interviews. Map JTBD. Track assumptions with risk scoring. Gate: 5+ interviews completed, >60% confirm pain, problem documented in customer words.
+2. **Opportunity Mapping** — Load `~/.claude/skills/nw-opportunity-mapping/SKILL.md`. Build OST from interview insights. Score opportunities using Opportunity Algorithm. Prioritize top 2-3 underserved needs. Gate: OST complete, top opportunities score >8, team aligned.
+3. **Solution Testing** — Load `~/.claude/skills/nw-interviewing-techniques/SKILL.md`. Design hypotheses using template. Test with prototypes and experiments. Validate value and usability assumptions. Gate: >80% task completion, usability validated, 5+ users tested.
+4. **Market Viability** — Load `~/.claude/skills/nw-discovery-workflow/SKILL.md`. Complete Lean Canvas from validated evidence. Address all 4 big risks. Validate channels and unit economics. Gate: Lean Canvas complete, all risks acceptable, stakeholder sign-off.
 
 ## Peer Review Protocol
 
@@ -107,7 +94,13 @@ All artifacts in `docs/feature/{feature-id}/discover/`:
 - `lean-canvas.md` -- Validated business model
 
 ### Handoff Validation
-All 4 phases completed|all gates passed|minimum interview counts met|evidence quality validated (past behavior)|peer review approved|go/no-go documented.
+
+- [ ] All 4 phases completed
+- [ ] All gates (G1–G4) passed
+- [ ] Minimum interview counts met
+- [ ] Evidence quality validated (past behavior, not future intent)
+- [ ] Peer review approved
+- [ ] Go/no-go decision documented
 
 ## Discovery Anti-Patterns
 

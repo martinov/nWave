@@ -39,33 +39,24 @@ Skills path: `~/.claude/skills/nw-{skill-name}/SKILL.md`
 
 ## Workflow
 
-### Phase 1: Load and Read
-Load: `~/.claude/skills/nw-ddd-strategic/SKILL.md` -- read it NOW before proceeding.
-Load: `~/.claude/skills/nw-ddd-tactical/SKILL.md` -- read it NOW before proceeding.
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-Read the domain model artifacts (architecture brief, ADRs, context maps).
+1. **Load Skills** — Read `~/.claude/skills/nw-ddd-strategic/SKILL.md` NOW, then read `~/.claude/skills/nw-ddd-tactical/SKILL.md` NOW. Gate: both skill files loaded before any review work begins.
+2. **Read Artifacts** — Read all domain model artifacts (architecture brief, ADRs, context maps) provided or discovered via Glob/Grep. Gate: all artifacts read.
+3. **Structured Review** — Evaluate across 7 dimensions (D1-D7 below). Record findings per dimension. Gate: all 7 dimensions assessed.
+4. **Produce Review** — Output structured YAML verdict (schema below). Gate: review YAML produced, critical/high issues block approval.
 
-### Phase 2: Structured Review
+### Review Dimensions
 
-Evaluate across 7 dimensions:
+1. **D1 -- Bounded Context Boundaries**: Language divergence validated? Contexts independently deployable? No shared mutable state across boundaries? One team per context?
+2. **D2 -- Subdomain Classification**: Core/Supporting/Generic justified? Core subdomains built in-house? Generic subdomains use commodity solutions?
+3. **D3 -- Context Mapping**: All relationships labeled with pattern? Patterns appropriate for team dynamics? ACL present where needed? No implicit model sharing?
+4. **D4 -- Aggregate Design**: Vernon's four rules satisfied? Aggregates small (root + value objects default)? Cross-aggregate references by ID only? Eventual consistency outside boundaries?
+5. **D5 -- Ubiquitous Language**: Glossary per context? No term ambiguity within a context? Code-level naming matches domain terms? Conflicts resolved?
+6. **D6 -- ES/CQRS Recommendations**: Justified per context? Trade-offs documented? Simple domains get simple recommendations? Not positioned as default?
+7. **D7 -- Completeness**: All discovered contexts mapped? Key aggregate invariants documented? Given/When/Then specs for critical paths? ADRs for modeling decisions?
 
-**D1 -- Bounded Context Boundaries**: Language divergence validated? Contexts independently deployable? No shared mutable state across boundaries? One team per context?
-
-**D2 -- Subdomain Classification**: Core/Supporting/Generic justified? Core subdomains built in-house? Generic subdomains use commodity solutions?
-
-**D3 -- Context Mapping**: All relationships labeled with pattern? Patterns appropriate for team dynamics? ACL present where needed? No implicit model sharing?
-
-**D4 -- Aggregate Design**: Vernon's four rules satisfied? Aggregates small (root + value objects default)? Cross-aggregate references by ID only? Eventual consistency outside boundaries?
-
-**D5 -- Ubiquitous Language**: Glossary per context? No term ambiguity within a context? Code-level naming matches domain terms? Conflicts resolved?
-
-**D6 -- ES/CQRS Recommendations**: Justified per context? Trade-offs documented? Simple domains get simple recommendations? Not positioned as default?
-
-**D7 -- Completeness**: All discovered contexts mapped? Key aggregate invariants documented? Given/When/Then specs for critical paths? ADRs for modeling decisions?
-
-### Phase 3: Produce Review
-
-Output structured YAML:
+### Review Output Schema
 
 ```yaml
 review:
@@ -87,7 +78,13 @@ review:
   verdict: "{approved|revisions_needed}"
 ```
 
-Gate: review produced. Critical/high issues block approval.
+### Success Criteria
+
+- [ ] Both skills loaded before review begins
+- [ ] All 7 dimensions assessed and recorded
+- [ ] Every issue has severity, finding, and recommendation
+- [ ] Verdict set: `approved` only when zero critical/high issues remain
+- [ ] YAML output is well-formed
 
 ## Examples
 

@@ -40,20 +40,23 @@ Read these files NOW:
 
 ## Workflow
 
-### 1. Read and Classify
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-Read all 5 artifact files in `docs/feature/{id}/diverge/`|identify covered phases|load `diverger-review-criteria` skill — read it NOW before proceeding.
+1. **Read and Classify** — Load `~/.claude/skills/nw-diverger-review-criteria/SKILL.md`. Read all 5 artifact files in `docs/feature/{id}/diverge/`. Identify which phases are covered. Gate: skill loaded, all artifacts read, phases mapped.
 
-### 2. Evaluate Five Dimensions
+2. **Evaluate JTBD Rigor** — Check abstraction level (strategic vs tactical), first-principles extraction, and ODI outcome statement quality. Quote any failing text. Gate: jtbd_rigor status determined (PASSED|FAILED), all issues documented with location and remediation.
 
-Run all five checks in sequence:
-- **JTBD rigor**: abstraction level|first-principles extraction|ODI outcome statement quality
-- **Research quality**: evidence vs assertion|prior art coverage|non-obvious alternatives
-- **Option diversity**: structural diversity|generation discipline|HMW framing quality
-- **Taste application**: criteria consistency|cherry-picking detection|score rubric application
-- **Recommendation coherence**: traceability|dissent documented|DISCUSS handoff readiness
+3. **Evaluate Research Quality** — Check evidence vs assertion, prior art coverage, and non-obvious alternatives. Flag generic market claims that lack real product citation. Gate: research_quality status determined, all assertions without evidence quoted and flagged.
 
-### 3. Produce Review YAML
+4. **Evaluate Option Diversity** — Apply 3-point diversity test (mechanism|assumption|cost) to all options. Identify any options that differ only in degree. Gate: option_diversity status determined, structural groupings documented.
+
+5. **Evaluate Taste Application** — Check criteria consistency across all surviving options. Detect cherry-picking (criteria applied to some options but not others). Gate: taste_application status determined, any asymmetric scoring flagged.
+
+6. **Evaluate Recommendation Coherence** — Verify recommendation traces to scoring matrix. Check that dissent is documented and DISCUSS handoff readiness is confirmed. Gate: recommendation_coherence status determined, traceability verified or failure documented.
+
+7. **Produce Review YAML** — Assemble all dimension results into review YAML. Save to `docs/feature/{id}/diverge/review.yaml`. Gate: YAML written with all 5 dimensions, approval_status set, blocking_issues populated.
+
+8. **Issue Verdict** — Output final verdict with rationale. Gate: one of three verdicts issued — approved (all 5 PASSED), conditionally_approved (no FAILED, minor issues only), or rejected (any FAILED with remediation required).
 
 ```yaml
 review_result:
@@ -85,12 +88,6 @@ review_result:
   blocking_issues: []
   recommendations: []
 ```
-
-### 4. Issue Verdict
-
-- **Approved**: all 5 dimensions PASSED, no blocking issues
-- **Conditionally approved**: no FAILED dimensions, minor issues flagged but non-blocking
-- **Rejected**: any FAILED dimension, with specific remediation required per issue
 
 ## Commands
 

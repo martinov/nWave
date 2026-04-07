@@ -1,9 +1,19 @@
 # Tutorial: Requirements and UX Journey
 
 **Time**: ~17 minutes (9 steps)
-**Platform**: macOS or Linux (Windows: use WSL)
+**Platform**: macOS, Linux, or Windows
 **Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 4](../tutorial-discovery/) completed (optionally [Tutorial 5: DIVERGE](../diverge-wave-guide/) for greenfield projects)
 **What this is**: An interactive walkthrough of `/nw-discuss` -- nWave's requirements and UX journey command. You will turn a validated problem into structured user stories with acceptance criteria.
+
+---
+
+## Verify you're ready
+
+This tutorial builds on the discovery output from Tutorial 4. Before starting, `cd` into your tutorial project and confirm:
+
+- `docs/feature/<feature-id>/discover/problem-validation.md` (the validated problem from `/nw-discover`)
+
+If it's missing, complete [Tutorial 4: From Idea to Validated Problem](../tutorial-discovery/) first.
 
 ---
 

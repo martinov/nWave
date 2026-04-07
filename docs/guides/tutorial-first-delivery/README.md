@@ -1,10 +1,28 @@
 # Tutorial: Your First Delivery
 
 **Time**: ~13 minutes (5 steps)
-**Platform**: macOS or Linux (Windows: use WSL)
+**Platform**: macOS, Linux, or Windows
 **Prerequisites**: Python 3.10+, Claude Code with nWave installed
 **Dependencies**: None beyond pytest. Pure Python.
 **Important**: Create your project in a permanent directory (not `/tmp`). Later tutorials build on this project's artifacts.
+
+---
+
+## Setup
+
+Run from a directory where you want the tutorial project created (e.g. `~/projects`):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nwave-ai/nwave/main/docs/guides/tutorial-first-delivery/setup.py | python3
+```
+
+Prefer to read first? See [manual-setup.md](./manual-setup.md).
+
+## After setup you should have
+
+- A `tutorial-ascii-art/` directory containing `src/ascii_art/__init__.py`, `tests/test_ascii_art.py`, `tests/fixtures/diagonal.ppm`, and `pyproject.toml`
+- A `.venv/` virtual environment with `pytest` installed
+- Three failing acceptance tests in `tests/test_ascii_art.py` (run `pytest tests/ -v` to confirm)
 
 ---
 
@@ -57,23 +75,13 @@ You define what "done" looks like. nWave writes the code to get there.
 
 ---
 
-## Step 1 of 5: Setup (~2 minutes)
+## Step 1 of 5: Inspect the starter project (~2 minutes)
 
-Clone the starter project:
+After running setup, `cd tutorial-ascii-art` and activate the virtualenv:
 
 ```bash
-git clone https://github.com/nwave-ai/tutorial-ascii-art.git
 cd tutorial-ascii-art
-python3 -m venv .venv && source .venv/bin/activate
-pip install pytest
-```
-
-You should see:
-
-```
-Cloning into 'tutorial-ascii-art'...
-...
-Successfully installed pytest-x.x.x
+source .venv/bin/activate
 ```
 
 > **Windows users**: Replace `source .venv/bin/activate` with `.venv\Scripts\activate`.

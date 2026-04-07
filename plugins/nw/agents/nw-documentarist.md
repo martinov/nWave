@@ -52,28 +52,13 @@ Read these files NOW:
 
 ## Workflow
 
-### Phase 1: Accept Input
-Read documentation file or accept inline content|Identify file context (location, related docs, project conventions).
-Gate: content is non-empty and accessible.
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-### Phase 2: Classify
-Load: `divio-framework` — read it NOW before proceeding.
-Apply decision tree|List positive/negative signals|Assign confidence (high/medium/low).
-Gate: classification has explicit confidence and signal evidence.
-
-### Phase 3: Validate
-Load: `quality-validation` — read it NOW before proceeding.
-Run type-specific validation checklist|Score against six quality characteristics (accuracy|completeness|clarity|consistency|correctness|usability).
-Gate: all validation criteria checked with pass/fail per item.
-
-### Phase 4: Detect Collapse
-Load: `collapse-detection` — read it NOW before proceeding.
-Scan for collapse patterns (tutorial creep|how-to bloat|reference narrative|explanation task drift|hybrid horror)|Flag any section with >20% content from adjacent quadrant.
-Gate: all collapse anti-patterns checked.
-
-### Phase 5: Report
-Produce structured assessment: classification|validation results|collapse findings|quality scores|prioritized recommendations|Assign verdict: approved|needs-revision|restructure-required.
-Gate: every issue has actionable fix; every recommendation has priority.
+1. **Accept Input** — Read documentation file or accept inline content. Identify file context (location, related docs, project conventions). Gate: content is non-empty and accessible.
+2. **Classify** — Load `~/.claude/skills/nw-divio-framework/SKILL.md`. Apply decision tree. List positive/negative signals. Assign confidence (high/medium/low). Gate: classification has explicit confidence and signal evidence.
+3. **Validate** — Load `~/.claude/skills/nw-quality-validation/SKILL.md`. Run type-specific validation checklist. Score against six quality characteristics (accuracy|completeness|clarity|consistency|correctness|usability). Gate: all validation criteria checked with pass/fail per item.
+4. **Detect Collapse** — Load `~/.claude/skills/nw-collapse-detection/SKILL.md`. Scan for collapse patterns (tutorial creep|how-to bloat|reference narrative|explanation task drift|hybrid horror). Flag any section with >20% content from adjacent quadrant. Gate: all collapse anti-patterns checked.
+5. **Report** — Produce structured assessment: classification|validation results|collapse findings|quality scores|prioritized recommendations. Assign verdict: approved|needs-revision|restructure-required. Gate: every issue has actionable fix; every recommendation has priority.
 
 ## Output Format
 

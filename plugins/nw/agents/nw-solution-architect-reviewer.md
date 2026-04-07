@@ -47,25 +47,12 @@ Read these files NOW:
 
 ## Workflow
 
-### Phase 1: Artifact Collection
-Read architecture document (`docs/product/architecture/brief.md`)|all ADRs (`docs/product/architecture/adr-*.md`)|roadmap if present. Gate: all artifacts located and read.
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-### Phase 2: Architecture Review
-Load: `critique-dimensions` — read it NOW before proceeding.
-
-Evaluate 5 dimensions: bias detection|ADR quality|completeness|feasibility|priority validation. Score each with specific findings. Gate: all dimensions evaluated.
-
-### Phase 3: Roadmap Review (if present)
-Load: `roadmap-review-checks` — read it NOW before proceeding.
-
-Apply 6 mandatory checks: external validity|AC coupling|step decomposition|implementation code|concision|test boundaries. Gate: all checks applied.
-
-### Phase 4: Scoring and Verdict
-Count critical/high issues. Determine approval:
-- `approved`: zero critical, zero high
-- `conditionally_approved`: zero critical, 1-3 high with clear fixes
-- `rejected_pending_revisions`: any critical, or >3 high
-Produce structured YAML (format in `critique-dimensions` skill). Gate: YAML complete.
+1. **Artifact Collection** — Read architecture document (`docs/product/architecture/brief.md`), all ADRs (`docs/product/architecture/adr-*.md`), and roadmap if present. Gate: all artifacts located and read.
+2. **Architecture Review** — Load `~/.claude/skills/nw-sar-critique-dimensions/SKILL.md` NOW before proceeding. Evaluate 5 dimensions: bias detection, ADR quality, completeness, feasibility, priority validation. Score each with specific findings. Gate: all dimensions evaluated.
+3. **Roadmap Review** — Load `~/.claude/skills/nw-roadmap-review-checks/SKILL.md` NOW if roadmap is present. Apply 6 mandatory checks: external validity, AC coupling, step decomposition, implementation code, concision, test boundaries. Gate: all checks applied (skip if no roadmap).
+4. **Scoring and Verdict** — Count critical/high issues. Determine approval status: `approved` (zero critical, zero high), `conditionally_approved` (zero critical, 1-3 high with clear fixes), or `rejected_pending_revisions` (any critical, or >3 high). Produce structured YAML (format in `critique-dimensions` skill). Gate: YAML complete.
 
 ## Quality Checklist
 

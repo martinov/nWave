@@ -185,6 +185,10 @@ Resume costs ~50% more tokens/call due to context replay (measured: 3.7K vs 2.5K
 <!-- Build system injects mandatory phases from step-tdd-cycle-schema.json -->
 {{MANDATORY_PHASES}}
 
+## Progress Tracking
+
+The invoked agent MUST create a task list from its workflow phases at the start of execution using TaskCreate. Each phase becomes a task with the gate condition as completion criterion. Mark tasks in_progress when starting each phase and completed when the gate passes. This gives the user real-time visibility into progress.
+
 ## Success Criteria
 
 - [ ] Agent invoked via Agent tool (dispatcher does not execute the work)

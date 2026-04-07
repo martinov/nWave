@@ -1,9 +1,20 @@
 # Tutorial: Production Readiness
 
 **Time**: ~15 minutes (7 steps)
-**Platform**: macOS or Linux (Windows: use WSL)
-**Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 8](../tutorial-deliver-feature/) completed
-**What this is**: A hands-on walkthrough of `/nw-devops` -- nWave's production readiness command. You will take the delivered bookmark CLI from Tutorial 8 and generate CI/CD pipeline design, infrastructure recommendations, deployment strategy, and a production readiness checklist.
+**Platform**: macOS, Linux, or Windows
+**Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 9](../tutorial-deliver-feature/) completed
+**What this is**: A hands-on walkthrough of `/nw-devops` -- nWave's production readiness command. You will take the delivered bookmark CLI from Tutorial 9 and generate CI/CD pipeline design, infrastructure recommendations, deployment strategy, and a production readiness checklist.
+
+---
+
+## Verify you're ready
+
+This tutorial builds on the deliver output from Tutorial 9. Before starting, `cd` into your tutorial project and confirm:
+
+- `docs/feature/<feature-id>/deliver/` directory with completed implementation artifacts
+- `docs/feature/<feature-id>/design/architecture-design.md`
+
+If either is missing, complete [Tutorial 9: Delivering the Feature](../tutorial-deliver-feature/) first.
 
 ---
 

@@ -34,32 +34,23 @@ Each skill MUST be loaded by reading its exact file path.
 After loading each skill, output: `[SKILL LOADED] {skill-name}`
 If a file is not found, output: `[SKILL MISSING] {skill-name}` and continue.
 
-### Phase 1: 1 Load Agent and Context
+### Phase 1: Load Agent and Context
 
 Read these files NOW:
 - `~/.claude/skills/nw-abr-critique-dimensions/SKILL.md`
 
-### Phase 2: 2 Evaluate All Dimensions
+### Phase 2: Evaluate All Dimensions
 
 Read these files NOW:
 - `~/.claude/skills/nw-review-workflow/SKILL.md`
 
 ## Workflow
 
-### Phase 1: Load Agent and Context
-- Read target agent file|Load: `critique-dimensions` — read it NOW before proceeding.|Measure file (count lines, identify sections)
-- Gate: agent file successfully read and measured
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-### Phase 2: Evaluate All Dimensions
-- Assess each of 9 dimensions from critique-dimensions skill
-- For each: pass/fail with specific evidence (line numbers, counts, quotes)
-- Load: `review-workflow` — read it NOW before proceeding.|Apply v2 validation checklist
-- Gate: all 9 dimensions evaluated with evidence
-
-### Phase 3: Produce Verdict
-- Determine verdict using failure conditions from critique-dimensions skill
-- Format as structured YAML|Include prioritized recommendations (high-severity first)
-- Gate: YAML review output is complete and well-formed
+1. **Load Agent and Context** — Load `~/.claude/skills/nw-abr-critique-dimensions/SKILL.md`. Read the target agent file. Measure file (count lines, identify sections). Gate: agent file successfully read, measured, and skill loaded.
+2. **Evaluate All Dimensions** — Load `~/.claude/skills/nw-review-workflow/SKILL.md`. Assess each of the 9 dimensions from the critique-dimensions skill. For each dimension: record pass/fail with specific evidence (line numbers, counts, quotes). Apply v2 validation checklist. Gate: all 9 dimensions evaluated with evidence.
+3. **Produce Verdict** — Determine verdict using failure conditions from critique-dimensions skill. Format output as structured YAML. Include prioritized recommendations (high-severity first). Gate: YAML review output is complete and well-formed.
 
 ## Critical Rules
 

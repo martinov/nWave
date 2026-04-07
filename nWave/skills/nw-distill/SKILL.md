@@ -24,76 +24,57 @@ Without the driving port, a crafter can write correct code that is never wired i
 
 ## Prior Wave Reading
 
-Before writing any scenario, read SSOT and feature delta artifacts:
+Before writing any scenario, read SSOT and feature delta artifacts.
 
-**SSOT (all three dimensions, from `docs/product/`):**
-1. **Journeys** (behavior): Read `docs/product/journeys/{name}.yaml` — extract embedded Gherkin as starting scenarios, identify integration checkpoints and `failure_modes` per step
-2. **Architecture** (structure): Read `docs/product/architecture/brief.md` — identify driving ports (from `## For Acceptance Designer` section) for `@driving_port` tagged scenarios
-3. **KPI contracts** (observability): Read `docs/product/kpi-contracts.yaml` — identify behaviors needing `@kpi` tagged scenarios (soft gate — warn if missing, proceed)
+**READING ENFORCEMENT**: You MUST read every file listed in steps 1-5 below using the Read tool before proceeding. After reading, output a confirmation checklist (`+ {file}` for each read, `- {file} (not found)` for missing). Do NOT skip files that exist.
 
-**Feature delta:**
-4. **DISCUSS**: Read from `docs/feature/{feature-id}/discuss/`:
-   - `user-stories.md` — scope boundary and embedded acceptance criteria
-   - `story-map.md` — drives walking skeleton priority and release slicing
-   - `wave-decisions.md` — quick check for upstream changes
-5. **DEVOPS**: Read from `docs/feature/{feature-id}/devops/`:
-   - `wave-decisions.md` — check for infrastructure constraints affecting tests
-
-**Migration gate**: If `docs/product/` does not exist but `docs/feature/` has existing features, STOP. Guide the user to `docs/guides/migrating-to-ssot-model/README.md` and complete the migration first. If greenfield, prior waves should have bootstrapped `docs/product/` already.
+1. **Read Journeys** — Read `docs/product/journeys/{name}.yaml`. Extract embedded Gherkin as starting scenarios, identify integration checkpoints and `failure_modes` per step. Gate: file read or marked missing.
+2. **Read Architecture Brief** — Read `docs/product/architecture/brief.md`. Identify driving ports (from `## For Acceptance Designer` section) for `@driving_port` tagged scenarios. Gate: file read or marked missing.
+3. **Read KPI Contracts** — Read `docs/product/kpi-contracts.yaml`. Identify behaviors needing `@kpi` tagged scenarios (soft gate — warn if missing, proceed). Gate: file read or marked missing.
+4. **Read DISCUSS Artifacts** — Read `docs/feature/{feature-id}/discuss/user-stories.md` (scope boundary and embedded acceptance criteria), `story-map.md` (walking skeleton priority and release slicing), and `wave-decisions.md` (quick check for upstream changes). Gate: files read or marked missing.
+5. **Read DEVOPS Artifacts** — Read `docs/feature/{feature-id}/devops/wave-decisions.md`. Check for infrastructure constraints affecting tests. Gate: file read or marked missing.
+6. **Check Migration Gate** — If `docs/product/` does not exist but `docs/feature/` has existing features, STOP. Guide the user to `docs/guides/migrating-to-ssot-model/README.md`. If greenfield, prior waves should have bootstrapped `docs/product/` already. Gate: migration confirmed or greenfield confirmed.
+7. **Reconcile Assumptions** — Check whether any acceptance test assumptions contradict prior wave decisions. Use `wave-decisions.md` files to detect upstream changes. Gate: zero contradictions or contradictions listed for user resolution.
 
 DISTILL is the conjunction point — it reads all three SSOT dimensions plus the feature delta to translate prior wave knowledge into executable acceptance tests.
-
-**READING ENFORCEMENT**: You MUST read every file listed above using the Read tool before proceeding. After reading, output a confirmation checklist (`+ {file}` for each read, `- {file} (not found)` for missing). Do NOT skip files that exist.
-
-After reading, check whether any acceptance test assumptions contradict prior wave decisions. Use `wave-decisions.md` files to detect upstream changes.
 
 ## Wave-Decision Reconciliation (Pre-Scenario Gate)
 
 BEFORE writing any scenario, execute this reconciliation procedure:
 
-1. Read ALL wave-decisions.md files from prior waves:
-   - `docs/feature/{feature-id}/discuss/wave-decisions.md`
-   - `docs/feature/{feature-id}/design/wave-decisions.md`
-   - `docs/feature/{feature-id}/devops/wave-decisions.md`
-2. For EACH decision in DISCUSS, check whether DESIGN or DEVOPS contradicts it:
-   - DISCUSS says "email notifications" but DESIGN says "in-app only" = CONTRADICTION
-   - DISCUSS says "REST API" but DESIGN says "gRPC" = CONTRADICTION
-   - DISCUSS says "single-tenant" but DEVOPS says "multi-tenant" = CONTRADICTION
-3. If ANY contradiction is found:
-   a. List ALL contradictions with exact file paths and decision text
-   b. BLOCK scenario writing until the user resolves each contradiction
-   c. Return `{CLARIFICATION_NEEDED: true, questions: [{contradiction details}]}`
-4. If zero contradictions: log "Reconciliation passed -- 0 contradictions" and proceed.
+1. **Read All Wave Decisions** — Read ALL wave-decisions.md files from prior waves: `docs/feature/{feature-id}/discuss/wave-decisions.md`, `docs/feature/{feature-id}/design/wave-decisions.md`, `docs/feature/{feature-id}/devops/wave-decisions.md`. Gate: all files read or marked missing.
+2. **Check Each DISCUSS Decision** — For EACH decision in DISCUSS, check whether DESIGN or DEVOPS contradicts it. Examples: DISCUSS says "email notifications" but DESIGN says "in-app only" = CONTRADICTION; DISCUSS says "REST API" but DESIGN says "gRPC" = CONTRADICTION; DISCUSS says "single-tenant" but DEVOPS says "multi-tenant" = CONTRADICTION. Gate: all decisions checked.
+3. **Handle Contradictions** — If ANY contradiction is found: (a) list ALL contradictions with exact file paths and decision text, (b) BLOCK scenario writing until the user resolves each contradiction, (c) return `{CLARIFICATION_NEEDED: true, questions: [{contradiction details}]}`. Gate: zero contradictions, or user resolution received.
+4. **Log Reconciliation Result** — If zero contradictions: log "Reconciliation passed -- 0 contradictions" and proceed. Gate: log entry written.
 
 Do NOT silently pick one side of a contradiction. Do NOT write scenarios against ambiguous specifications. The cost of blocking is minutes; the cost of implementing the wrong behavior is hours.
 
 ## Graceful Degradation for Missing Upstream Artifacts
 
 **DEVOPS missing** (no `docs/feature/{feature-id}/devops/` directory):
-1. Log warning: "DEVOPS artifacts missing -- using default environment matrix"
-2. Use default environment matrix: clean | with-pre-commit | with-stale-config
-3. Proceed with scenario writing. Do NOT block.
+1. **Log Warning** — Log: "DEVOPS artifacts missing -- using default environment matrix". Gate: warning logged.
+2. **Apply Default Matrix** — Use default environment matrix: clean | with-pre-commit | with-stale-config. Gate: matrix applied.
+3. **Proceed** — Continue with scenario writing. Do NOT block.
 
 **DISCUSS missing** (no `docs/feature/{feature-id}/discuss/` directory):
-1. Log warning: "DISCUSS artifacts missing -- using DESIGN only"
-2. Derive acceptance criteria from DESIGN architecture documents
-3. Skip story-to-scenario traceability -- no stories to trace
-4. Proceed with scenario writing. Do NOT block.
+1. **Log Warning** — Log: "DISCUSS artifacts missing -- using DESIGN only". Gate: warning logged.
+2. **Derive from DESIGN** — Derive acceptance criteria from DESIGN architecture documents. Gate: criteria derived.
+3. **Skip Traceability** — Skip story-to-scenario traceability -- no stories to trace. Gate: traceability skipped.
+4. **Proceed** — Continue with scenario writing. Do NOT block.
 
 **DESIGN missing** (no `docs/feature/{feature-id}/design/` directory):
-1. Log warning: "DESIGN artifacts missing -- driving ports unknown"
-2. Ask user to identify driving ports before writing any scenario
-3. BLOCK until driving ports are identified -- without them, hexagonal boundary is unverifiable
+1. **Log Warning** — Log: "DESIGN artifacts missing -- driving ports unknown". Gate: warning logged.
+2. **BLOCK for Driving Ports** — Ask user to identify driving ports before writing any scenario. BLOCK until driving ports are identified -- without them, hexagonal boundary is unverifiable. Gate: user provides driving ports.
 
 Missing artifacts trigger warnings, not failures -- EXCEPT when the missing artifact makes a design mandate unverifiable (DESIGN for hexagonal boundary). In that case, BLOCK.
 
 ## Document Update (Back-Propagation)
 
 When DISTILL work reveals gaps or contradictions in prior waves:
-1. Document findings in `docs/feature/{feature-id}/distill/upstream-issues.md`
-2. Reference the original prior-wave document and describe the gap
-3. If acceptance criteria from DISCUSS are untestable as written, note the specific criteria and why
-4. Resolve with user before writing tests against ambiguous or contradictory requirements
+
+1. **Document Findings** — Write findings in `docs/feature/{feature-id}/distill/upstream-issues.md`. Reference the original prior-wave document and describe the gap. Gate: file written.
+2. **Flag Untestable Criteria** — If acceptance criteria from DISCUSS are untestable as written, note the specific criteria and explain why. Gate: all untestable criteria flagged.
+3. **Resolve Before Writing** — Resolve contradictions with user before writing tests against ambiguous or contradictory requirements. Gate: user resolution received.
 
 ## Walking Skeleton Strategy Decision (INTERACTIVE)
 
@@ -132,12 +113,10 @@ Team needs different behavior in CI vs local development?
 - Docker Compose (local services)
 - Testcontainers (programmatic, lifecycle managed by test)
 
-**Record the decision** in `distill/wave-decisions.md` as a numbered decision (e.g., DWD-XX: Walking Skeleton Strategy).
-
-**Apply the decision** when writing walking skeleton scenarios:
-- Strategy A: WS scenarios use InMemory fixtures, no @real-io tag
-- Strategy B/D: WS scenarios use @real-io for local resources, @in-memory for costly externals
-- Strategy C: WS scenarios use @real-io for ALL resources
+1. **Auto-Detect Strategy** — Classify feature components against the decision tree. Gate: strategy candidate identified.
+2. **Confirm with User** — Present the auto-detected strategy and ask user to confirm or override. Gate: strategy confirmed.
+3. **Record Decision** — Write the confirmed strategy in `distill/wave-decisions.md` as a numbered decision (e.g., DWD-XX: Walking Skeleton Strategy). Gate: decision recorded.
+4. **Apply Strategy to Scenarios** — Tag WS scenarios per the confirmed strategy: Strategy A uses `@in-memory`, Strategy B/D uses `@real-io` for local and `@in-memory` for costly externals, Strategy C uses `@real-io` for ALL resources. Gate: scenarios tagged correctly.
 
 **Tagging convention:**
 - `@real-io` -- scenario uses real adapters
@@ -149,7 +128,9 @@ Team needs different behavior in CI vs local development?
 
 When designing adapter acceptance scenarios, EVERY driven adapter has at least one scenario with real I/O (or contract smoke for costly externals). This is not optional regardless of WS strategy. Tag adapter real-I/O scenarios with `@real-io @adapter-integration`.
 
-**MANDATORY AUDIT**: Before completing Phase 2, produce an adapter coverage table:
+1. **Inventory Adapters** — List all driven adapters in the feature. Gate: adapter list complete.
+2. **Map Scenarios to Adapters** — For each adapter, identify existing scenarios that exercise it with real I/O. Gate: mapping complete.
+3. **Produce Coverage Table** — Output the adapter coverage table before completing Phase 2:
 
 ```
 | Adapter | @real-io scenario | Covered by |
@@ -160,22 +141,23 @@ When designing adapter acceptance scenarios, EVERY driven adapter has at least o
 | RuffLintRunner | NO — MISSING | Add: "Lint runner checks real ruff output" |
 ```
 
-Every row with "NO — MISSING" MUST have a scenario added. The WS covers SOME adapters; this audit catches the rest. If the adapter is for a costly external (claude -p), a `@requires_external` contract smoke test is acceptable instead.
+4. **Add Missing Scenarios** — Every row with "NO — MISSING" MUST have a scenario added. If the adapter is for a costly external (claude -p), a `@requires_external` contract smoke test is acceptable instead. Gate: zero "NO — MISSING" rows remain.
 
 Cross-references: nw-tdd-methodology Mandate 5 (Walking Skeleton) and Mandate 6 (Real I/O), nw-quality-framework Dimension 9 (Walking Skeleton Integrity).
 
 ## Self-Review Checklist (Dimension 9 + Mandate 7)
 
-Before handing off to reviewers, self-check:
-- [ ] WS strategy declared in wave-decisions.md
-- [ ] WS scenarios tagged correctly (@real-io / @in-memory per strategy)
-- [ ] Every driven adapter has at least one @real-io scenario
-- [ ] For InMemory doubles: documented what they CANNOT model
-- [ ] Container preference documented if applicable
-- [ ] **Mandate 7**: All production modules imported by tests have scaffold files
-- [ ] **Mandate 7**: All scaffolds include `__SCAFFOLD__` marker (or language equivalent)
-- [ ] **Mandate 7**: All scaffold methods raise assertion error (not NotImplementedError)
-- [ ] **Mandate 7**: Tests are RED (not BROKEN) when run against scaffolds
+Before handing off to reviewers, self-check each item:
+
+- [ ] 1. WS strategy declared in wave-decisions.md
+- [ ] 2. WS scenarios tagged correctly (@real-io / @in-memory per strategy)
+- [ ] 3. Every driven adapter has at least one @real-io scenario
+- [ ] 4. For InMemory doubles: documented what they CANNOT model
+- [ ] 5. Container preference documented if applicable
+- [ ] 6. **Mandate 7**: All production modules imported by tests have scaffold files
+- [ ] 7. **Mandate 7**: All scaffolds include `__SCAFFOLD__` marker (or language equivalent)
+- [ ] 8. **Mandate 7**: All scaffold methods raise assertion error (not NotImplementedError)
+- [ ] 9. **Mandate 7**: Tests are RED (not BROKEN) when run against scaffolds
 
 ## Scenario Writing Guidelines
 
@@ -206,11 +188,11 @@ When DISTILL writes acceptance tests that import production modules not yet impl
 ### What to scaffold
 
 For each production module imported in step definitions:
-- Create the module file at the correct path (e.g., `src/app/plugin/installer.py`)
-- Include the scaffold marker (`__SCAFFOLD__ = True` or language equivalent) for machine detection
-- Define the class/function with the correct parameter signature
-- Method bodies MUST raise an assertion error with the scaffold marker message
-- This guarantees RED classification (not BROKEN)
+1. **Create Module File** — Create the module file at the correct path (e.g., `src/app/plugin/installer.py`). Gate: file created.
+2. **Add Scaffold Marker** — Include the scaffold marker (`__SCAFFOLD__ = True` or language equivalent) for machine detection. Gate: marker present.
+3. **Define Signatures** — Define the class/function with the correct parameter signature. Gate: signatures match what step definitions expect.
+4. **Raise Assertion Error** — Method bodies MUST raise an assertion error with the scaffold marker message. Gate: all methods raise AssertionError (not NotImplementedError).
+5. **Verify RED Classification** — Confirm the test runner classifies tests as RED, not BROKEN. Gate: RED confirmed.
 
 ### Language-specific scaffolding
 

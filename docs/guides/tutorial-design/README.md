@@ -1,9 +1,20 @@
 # Tutorial: Architecture Design
 
 **Time**: ~15 minutes (9 steps)
-**Platform**: macOS or Linux (Windows: use WSL)
+**Platform**: macOS, Linux, or Windows
 **Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 6](../tutorial-discuss/) completed
 **What this is**: An interactive walkthrough of `/nw-design` and `/nw-diagram` -- nWave's architecture design commands. You will turn requirements into a technical architecture with visual diagrams.
+
+---
+
+## Verify you're ready
+
+This tutorial builds on the discuss output from Tutorial 6. Before starting, `cd` into your tutorial project and confirm:
+
+- `docs/feature/<feature-id>/discuss/user-stories.md`
+- `docs/feature/<feature-id>/discuss/journey-core.yaml` (or `journey-core-visual.md`)
+
+If either is missing, complete [Tutorial 6: Requirements and UX Journey](../tutorial-discuss/) first.
 
 ---
 

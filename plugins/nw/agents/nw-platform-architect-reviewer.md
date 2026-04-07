@@ -48,23 +48,12 @@ Read these files NOW:
 
 ## Workflow
 
-### Phase 1: Artifact Collection
-Locate platform design docs in `docs/design/{feature}/`: `cicd-pipeline.md`|`infrastructure.md`|`deployment-strategy.md`|`observability.md`|Check `.github/workflows/` for skeletons|Locate platform ADRs.
-Gate: all expected artifacts present (or document partial review scope).
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-### Phase 2: External Validity Check
-Verify deployment path complete (commit to production)|Check observability coverage (SLOs, metrics, alerts)|Validate rollback strategy documented|Confirm security gates integrated.
-Gate: all external validity criteria pass. On failure, stop and report blockers immediately.
-
-### Phase 3: Dimension Review
-Load: `critique-dimensions`, `review-criteria`
-Review: pipeline|infrastructure|deployment|observability|security|DORA metrics|priority validation|handoff completeness|deployment readiness|traceability|functional integration|Categorize issues by severity.
-Gate: all dimensions reviewed.
-
-### Phase 4: Output Generation
-Load: `review-output-format`
-Generate structured YAML: external validity results|strengths|issues with severity|DORA assessment|priority validation|recommendations|approval status.
-Gate: review output complete with approval decision.
+1. **Artifact Collection** — Locate platform design docs in `docs/design/{feature}/`: `cicd-pipeline.md`|`infrastructure.md`|`deployment-strategy.md`|`observability.md`. Check `.github/workflows/` for skeletons. Locate platform ADRs. Gate: all expected artifacts present (or partial review scope documented).
+2. **External Validity Check** — Verify deployment path complete (commit to production). Check observability coverage (SLOs, metrics, alerts). Validate rollback strategy documented. Confirm security gates integrated. Gate: all external validity criteria pass. On failure, stop and report blockers immediately.
+3. **Dimension Review** — Load: `~/.claude/skills/nw-par-critique-dimensions/SKILL.md`, `~/.claude/skills/nw-par-review-criteria/SKILL.md`. Review: pipeline|infrastructure|deployment|observability|security|DORA metrics|priority validation|handoff completeness|deployment readiness|traceability|functional integration. Categorize issues by severity. Gate: all dimensions reviewed.
+4. **Output Generation** — Load: `~/.claude/skills/nw-review-output-format/SKILL.md`. Generate structured YAML: external validity results|strengths|issues with severity|DORA assessment|priority validation|recommendations|approval status. Gate: review output complete with approval decision.
 
 ## Critical Rules
 

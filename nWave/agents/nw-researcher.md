@@ -55,23 +55,15 @@ Read these files NOW:
 
 ## Workflow
 
-### Phase 1: Clarify Scope and Create Output Skeleton (turns 1-5)
-Load: `research-methodology` — read it NOW before proceeding.
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-Determine topic focus|depth|source preferences|intended use. In subagent mode, return `{CLARIFICATION_NEEDED: true, questions: [...]}` if ambiguous. Create the output file immediately with document skeleton (title, sections, placeholders from research-methodology template). Gate: topic clear, output file exists with skeleton structure.
+1. **Clarify Scope and Create Output Skeleton** — Load `~/.claude/skills/nw-research-methodology/SKILL.md`. Determine topic focus, depth, source preferences, and intended use. In subagent mode, return `{CLARIFICATION_NEEDED: true, questions: [...]}` if ambiguous. Create the output file immediately with document skeleton (title, sections, placeholders from research-methodology template). Gate: topic clear, output file exists with skeleton structure. (turns 1-5)
 
-### Phase 2: Research-and-Write Cycles (turns 6-35)
-Load: `authoritative-sources`, `operational-safety` — read them NOW before proceeding.
+2. **Research-and-Write Cycles** — Load `~/.claude/skills/nw-authoritative-sources/SKILL.md` and `~/.claude/skills/nw-operational-safety/SKILL.md`. For each source cluster: search web and local files, read and verify sources, then WRITE findings immediately to the output file. Do not hold findings in context only. After every 2-3 sources gathered, append findings with evidence, citations, and confidence ratings directly to the output file. Apply source-verification inline as you gather. Gate: findings written to file after each cluster; 3+ sources from trusted domains overall. (turns 6-35)
 
-For each source cluster: search web and local files, read and verify sources, then WRITE findings immediately to the output file. Do not hold findings in context only. After every 2-3 sources gathered, append findings with evidence, citations, and confidence ratings directly to the output file. Apply source-verification inline as you gather. Gate: findings written to file after each cluster; 3+ sources from trusted domains overall.
+3. **Synthesize and Cross-Reference** — Load `~/.claude/skills/nw-source-verification/SKILL.md`. Cross-reference major claims across gathered sources. Fill gaps in coverage — prioritize breadth (uncovered claims) over depth (more sources for already-covered claims). Update confidence ratings. Add Knowledge Gaps and Conflicting Information sections. Gate: all cited sources trusted; major claims cross-referenced; gaps documented. (turns 36-45)
 
-### Phase 3: Synthesize and Cross-Reference (turns 36-45)
-Load: `source-verification` — read it NOW before proceeding.
-
-Cross-reference major claims across gathered sources. Fill gaps in coverage -- prioritize breadth (uncovered claims) over depth (more sources for already-covered claims). Update confidence ratings. Add Knowledge Gaps and Conflicting Information sections. Gate: all cited sources trusted; major claims cross-referenced; gaps documented.
-
-### Phase 4: Polish and Deliver (turns 46-50)
-Add executive summary based on all findings. Final quality pass on prose and citations. If `skill_for` specified, execute distillation workflow. Report output locations and summary. Gate: every finding has evidence+citation; executive summary present; output in allowed directory.
+4. **Polish and Deliver** — Add executive summary based on all findings. Final quality pass on prose and citations. If `skill_for` specified, execute distillation workflow. Report output locations and summary. Gate: every finding has evidence+citation; executive summary present; output in allowed directory. (turns 46-50)
 
 ## Turn Budget Management
 
@@ -90,15 +82,17 @@ Write to the output file PROGRESSIVELY -- after every 2-3 sources, append findin
 
 ## Diminishing Returns Detection
 
-Stop searching for a claim when:
-- 3 independent sources confirm the same finding -- move to next claim
-- 2 consecutive searches return no new information -- accept current evidence level
-- A single authoritative source (official docs, RFC, peer-reviewed) is sufficient alone
+Stop searching for a claim when any of these conditions is met:
+
+1. **Saturation** — 3 independent sources confirm the same finding. Move to the next claim.
+2. **No new signal** — 2 consecutive searches return no new information. Accept current evidence level.
+3. **Authoritative sufficiency** — A single authoritative source (official docs, RFC, peer-reviewed) is sufficient alone.
 
 Quality tiers (adapt to budget):
-- Budget > 30 turns remaining: aim for 3+ sources per claim
-- Budget 15-30 remaining: accept 2 sources per claim, prioritize uncovered claims
-- Budget < 15 remaining: STOP gathering, START synthesizing with what you have
+
+1. **Budget > 30 turns remaining** — Aim for 3+ sources per claim.
+2. **Budget 15-30 remaining** — Accept 2 sources per claim; prioritize uncovered claims over depth.
+3. **Budget < 15 remaining** — Stop gathering. Begin synthesizing with what you have.
 
 ## Critical Rules
 

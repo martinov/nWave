@@ -40,18 +40,18 @@ Read these files NOW:
 
 ## Workflow
 
-### 1. Read and Classify
-Read discovery artifact|identify covered phases|load `review-criteria` skill — read it NOW before proceeding.
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-### 2. Evaluate Five Dimensions
-Run all five checks:
-- **Evidence quality**: past behavior ratio|specific examples|customer language
-- **Sample sizes**: interview counts per phase against minimums
-- **Decision gates**: gate criteria met with supporting evidence
-- **Bias detection**: confirmation bias|selection bias|discovery theater|sample size problems
-- **Anti-patterns**: interview|process|strategic anti-patterns
+1. **Read and Classify** — Load `~/.claude/skills/nw-pdr-review-criteria/SKILL.md` NOW before proceeding. Read discovery artifact. Identify which phases are covered. Gate: skill loaded, artifact read, phases identified.
 
-### 3. Produce Review YAML
+2. **Evaluate Five Dimensions** — Run all five checks in sequence. Gate: all five checks complete with findings documented.
+   - **Evidence quality**: past behavior ratio|specific examples|customer language
+   - **Sample sizes**: interview counts per phase against minimums
+   - **Decision gates**: gate criteria met with supporting evidence
+   - **Bias detection**: confirmation bias|selection bias|discovery theater|sample size problems
+   - **Anti-patterns**: interview|process|strategic anti-patterns
+
+3. **Produce Review YAML** — Populate and output the full review structure. Gate: all fields populated, no empty sections.
 
 ```yaml
 review_result:
@@ -85,18 +85,19 @@ review_result:
   recommendations: []
 ```
 
-### 4. Issue Verdict
-- **Approved**: all checks pass, no critical issues
-- **Conditionally approved**: minor issues only (no critical/high)
-- **Rejected**: any critical/high-severity issue, with remediation guidance
+4. **Issue Verdict** — Select verdict based on findings. Gate: verdict issued with supporting rationale.
+   - **Approved**: all checks pass, no critical issues
+   - **Conditionally approved**: minor issues only (no critical/high)
+   - **Rejected**: any critical/high-severity issue, with remediation guidance
 
 ## Meta-Review Protocol
 
-When executing `*approve-handoff`, invoke a second reviewer instance via Task tool before issuing approval:
-1. First review produces YAML feedback
-2. Second instance validates review quality (evidence classification accuracy|bias detection thoroughness)
-3. Discrepancies resolved or escalated to human after 2 iterations
-4. Display complete review proof to user (review YAML|meta-review if performed|quality gate status)
+When executing `*approve-handoff`, create these tasks using TaskCreate and follow them in order:
+
+1. **First Review** — Execute full workflow phases 1-4. Produce YAML feedback. Gate: review YAML complete.
+2. **Second Review** — Invoke second reviewer instance via Task tool. Validate review quality: evidence classification accuracy and bias detection thoroughness. Gate: second instance returns assessment.
+3. **Resolve Discrepancies** — Compare first and second review findings. Resolve discrepancies or escalate to human after 2 iterations. Gate: discrepancies resolved or escalation issued.
+4. **Display Proof** — Output complete review proof: review YAML, meta-review result, quality gate status. Gate: all three artifacts displayed to user.
 
 ## Commands
 

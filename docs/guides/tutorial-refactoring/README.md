@@ -1,9 +1,28 @@
 # Tutorial: Safe Refactoring with Mikado
 
 **Time**: ~20 minutes (8 steps)
-**Platform**: macOS or Linux (Windows: use WSL)
+**Platform**: macOS, Linux, or Windows
 **Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 1](../tutorial-first-delivery/) completed
 **What this is**: An interactive walkthrough of `/nw-refactor` and `/nw-mikado` -- nWave's safe refactoring commands. You will take a working but messy Python project and incrementally clean it up without breaking anything.
+
+---
+
+## Setup
+
+Run from a directory where you want the tutorial project created (e.g. `~/projects`):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nwave-ai/nwave/main/docs/guides/tutorial-refactoring/setup.py | python3
+```
+
+Prefer to read first? See [manual-setup.md](./manual-setup.md).
+
+## After setup you should have
+
+- An `expense-tracker/` directory with `src/expenses.py` (intentionally messy), `tests/test_expenses.py` (9 tests), `conftest.py`, and `.gitignore`
+- A `.venv/` virtual environment with `pytest` installed
+- A clean git repository with one initial commit ("messy expense tracker")
+- 9 passing tests (run `pytest tests/ -v --no-header` to confirm)
 
 ---
 
@@ -19,202 +38,18 @@ A cleanly refactored expense tracker -- extracted from a single messy file into 
 
 ---
 
-## Step 1 of 8: Create the Messy Starter Project (~2 minutes)
+## Step 1 of 8: Open the messy project (~1 minute)
 
-Create a new project directory and move into it:
-
-```bash
-mkdir expense-tracker && cd expense-tracker
-```
-
-Initialize it:
+After running setup, `cd expense-tracker` and activate the virtualenv:
 
 ```bash
-git init && python -m venv .venv && source .venv/bin/activate
-pip install pytest --quiet
+cd expense-tracker
+source .venv/bin/activate
 ```
 
-You should see:
+> **Windows users**: Replace `source .venv/bin/activate` with `.venv\Scripts\activate`.
 
-```
-Initialized empty Git repository in .../expense-tracker/.git/
-```
-
-Now create the source and test directories:
-
-```bash
-mkdir src tests
-```
-
-Create `src/expenses.py` with the code below (copy the entire block). This file works but has intentional code smells -- you will analyze them in Step 2:
-
-```python
-# src/expenses.py -- intentionally messy, do not clean up manually
-import json
-from datetime import datetime
-
-class ExpenseManager:
-
-    def __init__(self):
-        self.expenses = []
-        self.tax_rate = 0.21  # hardcoded tax rate
-        self.currency = "USD"  # hardcoded currency
-
-    def add_expense(self, amount, category, description=""):
-        if amount <= 0:
-            raise ValueError("Amount must be positive")
-        if category not in ["food", "transport", "office", "other"]:
-            raise ValueError("Invalid category")
-        expense = {
-            "amount": amount,
-            "category": category,
-            "description": description,
-            "date": datetime.now().isoformat(),
-            "amount_with_tax": round(amount * (1 + 0.21), 2),  # duplicated tax rate
-        }
-        self.expenses.append(expense)
-        return expense
-
-    def get_total(self):
-        total = 0
-        for e in self.expenses:
-            total += e["amount"]
-        return total
-
-    def get_total_with_tax(self):
-        total = 0
-        for e in self.expenses:
-            total += e["amount"] * (1 + 0.21)  # duplicated tax rate again
-        return round(total, 2)
-
-    def get_report(self):
-        lines = []
-        lines.append("=== Expense Report ===")
-        lines.append(f"Currency: USD")  # hardcoded currency again
-        for e in self.expenses:
-            lines.append(f"  {e['category']:12s} ${e['amount']:.2f}  {e['description']}")
-        lines.append(f"  {'SUBTOTAL':12s} ${self.get_total():.2f}")
-        lines.append(f"  {'TAX (21%)':12s} ${self.get_total() * 0.21:.2f}")  # duplicated
-        lines.append(f"  {'TOTAL':12s} ${self.get_total_with_tax():.2f}")
-        lines.append("=" * 22)
-        return "\n".join(lines)
-
-    def save_to_file(self, path):
-        with open(path, "w") as f:
-            json.dump(self.expenses, f, indent=2)
-
-    def load_from_file(self, path):
-        with open(path) as f:
-            self.expenses = json.load(f)
-
-    def get_by_category(self, category):
-        result = []
-        for e in self.expenses:
-            if e["category"] == category:
-                result.append(e)
-        return result
-
-    def get_category_total(self, category):
-        total = 0
-        for e in self.expenses:
-            if e["category"] == category:
-                total += e["amount"]
-        return total
-
-    def get_category_total_with_tax(self, category):
-        total = 0
-        for e in self.expenses:
-            if e["category"] == category:
-                total += e["amount"] * (1 + 0.21)  # duplicated tax rate yet again
-        return round(total, 2)
-```
-
-Now create the tests in `tests/test_expenses.py`:
-
-```python
-# tests/test_expenses.py
-import pytest
-from src.expenses import ExpenseManager
-
-@pytest.fixture
-def manager():
-    em = ExpenseManager()
-    em.add_expense(10.00, "food", "Lunch")
-    em.add_expense(25.50, "transport", "Taxi")
-    em.add_expense(5.00, "food", "Coffee")
-    return em
-
-def test_add_expense(manager):
-    assert len(manager.expenses) == 3
-
-def test_add_expense_negative_raises():
-    em = ExpenseManager()
-    with pytest.raises(ValueError, match="positive"):
-        em.add_expense(-5, "food")
-
-def test_add_expense_invalid_category():
-    em = ExpenseManager()
-    with pytest.raises(ValueError, match="Invalid category"):
-        em.add_expense(10, "vacation")
-
-def test_get_total(manager):
-    assert manager.get_total() == 40.50
-
-def test_get_total_with_tax(manager):
-    assert manager.get_total_with_tax() == 49.01
-
-def test_get_by_category(manager):
-    food = manager.get_by_category("food")
-    assert len(food) == 2
-
-def test_get_category_total(manager):
-    assert manager.get_category_total("food") == 15.00
-
-def test_get_category_total_with_tax(manager):
-    assert manager.get_category_total_with_tax("food") == 18.15
-
-def test_get_report(manager):
-    report = manager.get_report()
-    assert "Expense Report" in report
-    assert "TOTAL" in report
-    assert "$49.01" in report
-```
-
-Create a `conftest.py` so pytest can find the `src` module:
-
-```bash
-echo 'import sys; sys.path.insert(0, ".")' > conftest.py
-```
-
-Verify the tests pass:
-
-```bash
-pytest tests/ -v --no-header
-```
-
-You should see:
-
-```
-tests/test_expenses.py::test_add_expense PASSED
-tests/test_expenses.py::test_add_expense_negative_raises PASSED
-tests/test_expenses.py::test_add_expense_invalid_category PASSED
-tests/test_expenses.py::test_get_total PASSED
-tests/test_expenses.py::test_get_total_with_tax PASSED
-tests/test_expenses.py::test_get_by_category PASSED
-tests/test_expenses.py::test_get_category_total PASSED
-tests/test_expenses.py::test_get_category_total_with_tax PASSED
-tests/test_expenses.py::test_get_report PASSED
-
-9 passed
-```
-
-Commit the starting state:
-
-```bash
-git add -A && git commit -m "feat: messy expense tracker (starting point for refactoring)"
-```
-
-> **If any test fails**: Double-check you copied the entire `expenses.py` and `test_expenses.py` files. The tax calculation uses `0.21` (21%) -- make sure there are no typos in the amounts.
+Take a look at `src/expenses.py` — it's intentionally messy. Hardcoded tax rates, duplicated logic, a god class, no separation of concerns. The 9 tests in `tests/test_expenses.py` all pass against this messy code, which is exactly the property that makes refactoring safe: any change you make can be validated by re-running `pytest`.
 
 *Next: you will run `/nw-refactor` to analyze the code smells and get a refactoring plan.*
 

@@ -47,29 +47,12 @@ If a file is not found, output: `[SKILL MISSING] {skill-name}` and continue.
 
 ## Workflow
 
-### Phase 1: JTBD Analysis
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-Load: `jtbd-analysis`
-Extract job from raw request|navigate abstraction layers|produce job statements (functional + emotional + social)|generate ODI outcome statements|identify under-served outcomes.
-Gate G1: job at strategic or physical level|no feature references in job statement|minimum 3 ODI outcome statements.
-
-### Phase 2: Competitive Research
-
-Load: `nw-researcher` (invoke via Task tool for evidence-grounded research)
-Map how existing products serve the validated job|identify 3+ solutions including non-obvious alternatives|document what each does well and where it fails the job|note key assumptions each competitor makes about user behavior.
-Gate G2: 3+ real products named|at least one non-obvious alternative (different category, same job)|no generic market claims.
-
-### Phase 3: Brainstorming
-
-Load: `brainstorming`
-Frame HMW question (no embedded solution)|apply all 7 SCAMPER lenses|generate Crazy 8s supplements|curate to 6 structurally diverse options|apply 3-point diversity test.
-Gate G3: 6 curated options|each passes diversity test (different mechanism, assumption, cost)|no evaluation language in options-raw.md.
-
-### Phase 4: Taste Evaluation
-
-Load: `taste-evaluation`
-Apply DVF filter (eliminate < 6 total)|lock weights before scoring|score all surviving options on 4 taste criteria|produce weighted ranking|write recommendation with dissenting case.
-Gate G4: all surviving options scored on all criteria|weights documented|recommendation traceable to scores|dissenting case included|decision statement for DISCUSS wave explicit.
+1. **JTBD Analysis** — Load `~/.claude/skills/nw-jtbd-analysis/SKILL.md`. Extract job from raw request. Navigate abstraction layers. Produce job statements (functional + emotional + social). Generate ODI outcome statements. Identify under-served outcomes. Gate: job at strategic or physical level, no feature references in job statement, minimum 3 ODI outcome statements.
+2. **Competitive Research** — Invoke `nw-researcher` via Task tool for evidence-grounded research. Map how existing products serve the validated job. Identify 3+ solutions including non-obvious alternatives. Document what each does well and where it fails the job. Note key assumptions each competitor makes about user behavior. Gate: 3+ real products named, at least one non-obvious alternative (different category, same job), no generic market claims.
+3. **Brainstorming** — Load `~/.claude/skills/nw-brainstorming/SKILL.md`. Frame HMW question (no embedded solution). Apply all 7 SCAMPER lenses. Generate Crazy 8s supplements. Curate to 6 structurally diverse options. Apply 3-point diversity test. Gate: 6 curated options, each passes diversity test (different mechanism, assumption, cost), no evaluation language in options-raw.md.
+4. **Taste Evaluation** — Load `~/.claude/skills/nw-taste-evaluation/SKILL.md`. Apply DVF filter (eliminate < 6 total). Lock weights before scoring. Score all surviving options on 4 taste criteria. Produce weighted ranking. Write recommendation with dissenting case. Gate: all surviving options scored on all criteria, weights documented, recommendation traceable to scores, dissenting case included, decision statement for DISCUSS wave explicit.
 
 ## Peer Review Protocol
 

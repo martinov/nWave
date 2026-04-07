@@ -1,9 +1,28 @@
 # Tutorial: Debugging with 5 Whys
 
 **Time**: ~13 minutes (7 steps)
-**Platform**: macOS or Linux (Windows: use WSL)
+**Platform**: macOS, Linux, or Windows
 **Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 1](../tutorial-first-delivery/) completed
 **What this is**: An interactive walkthrough of `/nw-root-why` -- nWave's systematic root cause analysis command. You will take a buggy CSV processor, observe the symptom, and trace it to the real root cause using the 5 Whys methodology.
+
+---
+
+## Setup
+
+Run from a directory where you want the tutorial project created (e.g. `~/projects`):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nwave-ai/nwave/main/docs/guides/tutorial-debugging/setup.py | python3
+```
+
+Prefer to read first? See [manual-setup.md](./manual-setup.md).
+
+## After setup you should have
+
+- A `csv-processor/` directory with `src/processor.py` (intentionally buggy), `tests/sample.csv`, `tests/test_processor.py`, `conftest.py`, and `.gitignore`
+- A `.venv/` virtual environment with `pytest` installed
+- A clean git repository with one initial commit
+- A failing test suite — **3 tests fail** by design; that's the bug you'll investigate
 
 ---
 
@@ -19,154 +38,40 @@ A root cause analysis of a subtle CSV processing bug -- traced from symptom to f
 
 ---
 
-## Step 1 of 7: Create the Project (~1 minute)
+## Step 1 of 7: Open the buggy project (~1 minute)
 
-Create a new project directory, initialize it, and install pytest:
-
-```bash
-mkdir csv-processor && cd csv-processor
-```
+After running setup, `cd csv-processor` and activate the virtualenv:
 
 ```bash
-git init && python -m venv .venv && source .venv/bin/activate
-pip install pytest --quiet
+cd csv-processor
+source .venv/bin/activate
 ```
 
-> **Windows users**: Use `.venv\Scripts\activate` instead, or use WSL as noted in the platform requirements.
+> **Windows users**: Replace `source .venv/bin/activate` with `.venv\Scripts\activate`.
+
+The project contains an intentionally buggy `src/processor.py` and a test suite that catches the bug. **Don't read the source code yet** -- the whole point of the tutorial is to investigate the failure systematically rather than guessing from the code.
+
+---
+
+## Step 2 of 7: Run the tests and see them fail (~1 minute)
+
+```bash
+pytest tests/ --no-header
+```
 
 You should see:
 
 ```
-Initialized empty Git repository in .../csv-processor/.git/
-Successfully installed pytest-x.x.x
+FAILED tests/test_processor.py::test_process_csv_row_count
+FAILED tests/test_processor.py::test_summarize_total
+FAILED tests/test_processor.py::test_summarize_count
+
+3 failed, 1 passed
 ```
 
-Create the source and test directories:
+Three tests fail. One passes (`test_process_csv_skips_empty_amount` -- the only behavior that's currently working as intended). This is your starting point: a bug report you can reproduce.
 
-```bash
-mkdir src tests
-```
-
-You now have an empty project with pytest ready. No code yet -- that comes next.
-
-*Next: you will add the buggy code and see the failing tests.*
-
----
-
-## Step 2 of 7: Add the Buggy Code (~2 minutes)
-
-Create `src/processor.py` with the code below -- it has an intentional bug you will investigate in Step 4:
-
-```python
-# src/processor.py
-import csv
-import io
-
-
-def process_csv(input_text: str) -> list[dict]:
-    reader = csv.DictReader(io.StringIO(input_text))
-    results = []
-    for row in reader:
-        cleaned = {k.strip(): v.strip() for k, v in row.items()}
-        if not cleaned.get("amount"):
-            continue
-        cleaned["amount"] = float(cleaned["amount"])
-        results.append(cleaned)
-    return results
-
-
-def summarize(rows: list[dict]) -> dict:
-    return {
-        "count": len(rows),
-        "total": round(sum(r["amount"] for r in rows), 2),
-    }
-```
-
-Now create the test data and test file. First, `tests/sample.csv`:
-
-```bash
-cat > tests/sample.csv << 'EOF'
-name,amount,category
-Alice,50.00,food
-Bob,30.00,transport
-Carol,20.00,food
-Dave,,transport
-Eve,15.00,office
-Frank,10.00,"food, drinks"
-Grace,25.00,transport
-Heidi,40.00,food
-EOF
-```
-
-Create `tests/test_processor.py`:
-
-```python
-# tests/test_processor.py
-import pytest
-from src.processor import process_csv, summarize
-
-
-SAMPLE_CSV = open("tests/sample.csv").read()
-
-
-def test_process_csv_row_count():
-    """8 rows in CSV, 1 has empty amount, so 7 should remain."""
-    rows = process_csv(SAMPLE_CSV)
-    assert len(rows) == 7, f"Expected 7 rows, got {len(rows)}: {[r['name'] for r in rows]}"
-
-
-def test_process_csv_skips_empty_amount():
-    rows = process_csv(SAMPLE_CSV)
-    names = [r["name"] for r in rows]
-    assert "Dave" not in names, "Dave has empty amount and should be skipped"
-
-
-def test_summarize_total():
-    rows = process_csv(SAMPLE_CSV)
-    result = summarize(rows)
-    assert result["total"] == 190.00, f"Expected 190.00, got {result['total']}"
-
-
-def test_summarize_count():
-    rows = process_csv(SAMPLE_CSV)
-    result = summarize(rows)
-    assert result["count"] == 7
-```
-
-Create a `conftest.py` so pytest can find the `src` module:
-
-```bash
-echo 'import sys; sys.path.insert(0, ".")' > conftest.py
-```
-
-Run the tests:
-
-```bash
-pytest tests/ -v --no-header
-```
-
-You should see failures:
-
-```
-tests/test_processor.py::test_process_csv_row_count FAILED
-tests/test_processor.py::test_process_csv_skips_empty_amount PASSED
-tests/test_processor.py::test_summarize_total FAILED
-tests/test_processor.py::test_summarize_count FAILED
-
-2 passed, 3 failed
-```
-
-The row count test tells you how many rows came back, but not *why* rows are missing. That is what you will investigate.
-
-Commit the starting state:
-
-```bash
-git add -A && git commit -m "feat: csv processor with failing tests (starting point for debugging)"
-```
-
-> **If all tests pass**: Double-check the CSV file has the line `Frank,10.00,"food, drinks"` -- the quoted comma is essential to triggering the bug. Also ensure there are no trailing blank lines after the `EOF` marker.
-
-*Next: you will observe the symptom more closely before asking the agent to investigate.*
+*Next: zoom in on one specific failure to see what's actually wrong.*
 
 ---
 

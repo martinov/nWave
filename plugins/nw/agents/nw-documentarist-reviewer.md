@@ -42,30 +42,12 @@ Read these files NOW:
 
 ## Workflow
 
-### Phase 1: Independent Analysis
-Load: `divio-framework` — read it NOW before proceeding.
-Read original document|Classify independently using DIVIO decision tree|Scan for all five collapse anti-patterns independently|Record findings before proceeding.
-Gate: independent classification and collapse scan complete.
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-### Phase 2: Assessment Comparison
-Load: `review-criteria` — read it NOW before proceeding.
-Read documentarist's assessment|Compare classifications — flag mismatches|Compare collapse findings — flag discrepancies|Spot-check 3-5 validation points against original.
-Gate: all major claims verified or flagged.
-
-### Phase 3: Full Review
-Run all six critique dimensions from `review-criteria` skill:
-  1. Classification accuracy
-  2. Validation completeness
-  3. Collapse detection correctness
-  4. Recommendation quality
-  5. Quality score accuracy
-  6. Verdict appropriateness
-Apply verdict decision matrix to determine correct verdict.
-Gate: all dimensions reviewed with issues assigned severity levels.
-
-### Phase 4: Produce Review Report
-Output structured review using format from `review-criteria` skill|Include independent findings alongside comparison|Apply blocking rules to determine approval status|If cycle 2+ and issues persist, set status to `escalate_to_human`.
-Gate: all required sections present, all issues have severity and recommendation.
+1. **Independent Analysis** — Load `~/.claude/skills/nw-divio-framework/SKILL.md`. Read original document. Classify independently using DIVIO decision tree. Scan for all five collapse anti-patterns independently. Record findings before proceeding. Gate: independent classification and collapse scan complete.
+2. **Assessment Comparison** — Load `~/.claude/skills/nw-dr-review-criteria/SKILL.md`. Read documentarist's assessment. Compare classifications and flag mismatches. Compare collapse findings and flag discrepancies. Spot-check 3-5 validation points against original. Gate: all major claims verified or flagged.
+3. **Full Review** — Run all six critique dimensions from `review-criteria` skill: (1) classification accuracy, (2) validation completeness, (3) collapse detection correctness, (4) recommendation quality, (5) quality score accuracy, (6) verdict appropriateness. Apply verdict decision matrix to determine correct verdict. Gate: all dimensions reviewed with issues assigned severity levels.
+4. **Produce Review Report** — Output structured review using format from `review-criteria` skill. Include independent findings alongside comparison. Apply blocking rules to determine approval status. If cycle 2+ and issues persist, set status to `escalate_to_human`. Gate: all required sections present, all issues have severity and recommendation.
 
 ## Critical Rules
 

@@ -176,29 +176,17 @@ Read these files NOW:
 
 ## 5-Phase TDD Workflow
 
-### Phase 0: PREPARE
-Load: `~/.claude/skills/nw-tdd-methodology/SKILL.md`, `~/.claude/skills/nw-quality-framework — read them NOW before proceeding./SKILL.md`
-Remove @skip from target acceptance test. Verify exactly ONE scenario enabled. Gate: one acceptance test active.
+At the start of each step execution, create these tasks using TaskCreate and follow them in order:
 
-### Phase 1: RED (Acceptance)
-Load: `~/.claude/skills/nw-hexagonal-testing — read it NOW before proceeding./SKILL.md`
-If pre-existing distilled test exists (from DISTILL wave): verify @skip removed in PREPARE, run it — must fail for business logic reason (not import/syntax error). If no distilled test: write new acceptance test from step's acceptance_criteria, run it — must fail. Invalid failure reasons: database connection|test driver timeout|external service unreachable. Gate: fails for business logic reason.
+1. **PREPARE** — Load `~/.claude/skills/nw-tdd-methodology/SKILL.md` and `~/.claude/skills/nw-quality-framework/SKILL.md` NOW before proceeding. Remove @skip from target acceptance test. Verify exactly ONE scenario enabled. Gate: one acceptance test active.
 
-### Phase 2: RED (Unit)
-Load: `~/.claude/skills/nw-property-based-testing — read it NOW if AC tagged @property or domain invariants present./SKILL.md`
-Write unit test from driving port that fails on assertion (not setup). Enforce test budget. Parametrize input variations. Gates: fails on assertion|no mocks inside hexagon|count within budget.
+2. **RED (Acceptance)** — Load `~/.claude/skills/nw-hexagonal-testing/SKILL.md` NOW before proceeding. If pre-existing distilled test exists (from DISTILL wave): verify @skip removed in PREPARE, run it — must fail for business logic reason (not import/syntax error). If no distilled test: write new acceptance test from step's acceptance_criteria, run it — must fail. Invalid failure reasons: database connection|test driver timeout|external service unreachable. Gate: fails for business logic reason.
 
-### Phase 3: GREEN
-Implement minimal code to pass unit tests. Verify acceptance test also passes. Do not modify acceptance test during implementation. Gate: all tests green. When green: proceed to COMMIT immediately. Never stop without committing green code.
+3. **RED (Unit)** — Load `~/.claude/skills/nw-property-based-testing/SKILL.md` NOW if AC tagged @property or domain invariants present. Write unit test from driving port that fails on assertion (not setup). Enforce test budget. Parametrize input variations. Gates: fails on assertion|no mocks inside hexagon|count within budget.
 
-**If stuck after 3 attempts**: revert to last green state, document approaches tried, return `{ESCALATION_NEEDED: true, reason: "3 attempts exhausted", test: "<path>", approaches: [...]}`. NEVER weaken the test.
+4. **GREEN** — Implement minimal code to pass unit tests. Verify acceptance test also passes. Do not modify acceptance test during implementation. Gate: all tests green. When green: proceed to COMMIT immediately. Never stop without committing green code. If stuck after 3 attempts: revert to last green state, document approaches tried, return `{ESCALATION_NEEDED: true, reason: "3 attempts exhausted", test: "<path>", approaches: [...]}`. NEVER weaken the test.
 
-### Phase 4: COMMIT
-Commit with detailed message. Pre-commit validates all 5 phases in execution-log.json. No push until `/nw-finalize`.
-
-Note: REVIEW and REFACTOR run at deliver level:
-- Phase 3 (deliver): Complete Refactoring L1-L4 via `/nw-refactor`
-- Phase 4 (deliver): Adversarial Review via `/nw-review` with Testing Theater detection
+5. **COMMIT** — Commit with detailed message. Pre-commit validates all 5 phases in execution-log.json. No push until `/nw-finalize`. Note: REVIEW and REFACTOR run at deliver level — Phase 3 (deliver): Complete Refactoring L1-L4 via `/nw-refactor`; Phase 4 (deliver): Adversarial Review via `/nw-review` with Testing Theater detection. Gate: commit message follows format below, no regressions.
 
 Message format:
 ```
@@ -359,11 +347,12 @@ Beyond the 7 Deadly Patterns above, reject these smells on sight:
 Use `/nw-review @nw-software-crafter-reviewer implementation` at deliver-level Phase 4.
 
 ### Workflow
-1. software-crafter produces implementation
-2. software-crafter-reviewer critiques with structured YAML
-3. software-crafter addresses critical/high issues
-4. Reviewer validates revisions (iteration 2 if needed)
-5. Handoff when approved
+
+1. **Produce** — software-crafter completes implementation and invokes reviewer. Gate: implementation committed.
+2. **Critique** — software-crafter-reviewer returns structured YAML critique. Gate: YAML received.
+3. **Address** — software-crafter resolves all critical/high issues. Gate: zero critical/high issues remain.
+4. **Validate** — reviewer confirms revisions (iteration 2 if needed). Gate: reviewer approved.
+5. **Handoff** — proceed to next deliver phase. Gate: approval status confirmed in review proof.
 
 ### Configuration
 Max iterations: 2|all critical/high resolved|escalate after 2 without approval.
@@ -374,17 +363,18 @@ Display: review YAML|revisions made|approval status|quality gate pass/fail.
 ## Quality Gates
 
 Before committing, all 11 must pass (canonical list in quality-framework skill):
-- [ ] Active acceptance test passes (not skipped/ignored)
-- [ ] All unit tests pass
-- [ ] All integration tests pass
-- [ ] All other enabled tests pass
-- [ ] Code formatting passes
-- [ ] Static analysis passes
-- [ ] Build passes
-- [ ] No test skips in execution
-- [ ] Test count within budget
-- [ ] No mocks inside hexagon
-- [ ] Business language in tests verified
+
+1. Active acceptance test passes (not skipped/ignored)
+2. All unit tests pass
+3. All integration tests pass
+4. All other enabled tests pass
+5. Code formatting passes
+6. Static analysis passes
+7. Build passes
+8. No test skips in execution
+9. Test count within budget
+10. No mocks inside hexagon
+11. Business language in tests verified
 
 Reviewer approval and Testing Theater detection enforced at deliver level (Phase 4), not per step.
 

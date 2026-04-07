@@ -70,52 +70,23 @@ Read these files NOW:
 
 ## Workflow: DESIGN Wave
 
-### Phase 1: Requirements Analysis
-Receive solution architecture from solution-architect (or user)|Extract: deployment topology|scaling needs|security requirements|SLOs|team capability. If `docs/feature/{feature-id}/discuss/outcome-kpis.md` exists, read it — these KPIs drive observability and instrumentation design.
-Gate: platform requirements documented with quantitative data.
+At the start of DESIGN wave execution, create these tasks using TaskCreate and follow them in order:
 
-### Phase 2: Existing Infrastructure Analysis
-Search for existing CI/CD workflows|IaC configs|container definitions|K8s manifests|Document reuse opportunities and integration points.
-Gate: existing infrastructure analyzed, reuse decisions documented.
-
-### Phase 3: Platform Design
-Load: `~/.claude/skills/nw-cicd-and-deployment/SKILL.md`, `~/.claude/skills/nw-infrastructure-and-observability/SKILL.md`, `~/.claude/skills/nw-platform-engineering-foundations/SKILL.md`, `~/.claude/skills/nw-deployment-strategies/SKILL.md`
-Design local quality gates (pre-commit|pre-push hooks mirroring commit stage checks)|Design CI/CD pipeline stages with quality gates|Design infrastructure: IaC modules|container orchestration|cloud resources|Design deployment strategy based on risk profile (rolling/blue-green/canary/progressive)|Design observability: SLOs|metrics (RED/USE/Golden Signals)|alerting|dashboards|Design pipeline security and branch strategy aligned to selected Git branching model (trunk-based|GitHub Flow|GitFlow|release branching). Branching strategy determines pipeline triggers|environment promotion rules|release automation|Design KPI instrumentation: for each outcome KPI from DISCUSS, design data collection (events|logs|analytics), dashboard visualization, and alerting on guardrail metrics.
-Gate: all platform design documents complete.
-
-### Phase 4: Quality Validation
-Verify pipeline|infrastructure|observability|security alignment|Verify DORA metrics improvement path documented|Verify local quality gates designed (pre-commit|pre-push) mirroring remote commit stage.
-Gate: quality gates passed.
-
-### Phase 5: Peer Review and Handoff
-Invoke platform-architect-reviewer via Task tool|Address critical/high issues (max 2 iterations)|Display review proof with full YAML feedback|Prepare handoff for acceptance-designer (DISTILL wave).
-Gate: reviewer approved, handoff package complete.
+1. **Requirements Analysis** — Receive solution architecture from solution-architect (or user). Extract: deployment topology|scaling needs|security requirements|SLOs|team capability. If `docs/feature/{feature-id}/discuss/outcome-kpis.md` exists, read it — these KPIs drive observability and instrumentation design. Gate: platform requirements documented with quantitative data.
+2. **Existing Infrastructure Analysis** — Search for existing CI/CD workflows|IaC configs|container definitions|K8s manifests. Document reuse opportunities and integration points. Gate: existing infrastructure analyzed, reuse decisions documented.
+3. **Platform Design** — Load `~/.claude/skills/nw-cicd-and-deployment/SKILL.md`, `~/.claude/skills/nw-infrastructure-and-observability/SKILL.md`, `~/.claude/skills/nw-platform-engineering-foundations/SKILL.md`, `~/.claude/skills/nw-deployment-strategies/SKILL.md`. Design local quality gates (pre-commit|pre-push hooks mirroring commit stage checks). Design CI/CD pipeline stages with quality gates. Design infrastructure: IaC modules|container orchestration|cloud resources. Design deployment strategy based on risk profile (rolling/blue-green/canary/progressive). Design observability: SLOs|metrics (RED/USE/Golden Signals)|alerting|dashboards. Design pipeline security and branch strategy aligned to selected Git branching model (trunk-based|GitHub Flow|GitFlow|release branching). Branching strategy determines pipeline triggers|environment promotion rules|release automation. Design KPI instrumentation: for each outcome KPI from DISCUSS, design data collection (events|logs|analytics), dashboard visualization, and alerting on guardrail metrics. Gate: all platform design documents complete.
+4. **Quality Validation** — Verify pipeline|infrastructure|observability|security alignment. Verify DORA metrics improvement path documented. Verify local quality gates designed (pre-commit|pre-push) mirroring remote commit stage. Gate: quality gates passed.
+5. **Peer Review and Handoff** — Invoke platform-architect-reviewer via Task tool. Address critical/high issues (max 2 iterations). Display review proof with full YAML feedback. Prepare handoff for acceptance-designer (DISTILL wave). Gate: reviewer approved, handoff package complete.
 
 ## Workflow: DEVOPS Wave
 
-### Phase 6: Completion Validation
-Load: `~/.claude/skills/nw-production-readiness — read it NOW before proceeding./SKILL.md`
+At the start of DEVOPS wave execution, create these tasks using TaskCreate and follow them in order:
 
-Verify acceptance criteria met with passing tests|Validate code quality gates (coverage|static analysis|security scan)|Confirm architecture compliance.
-Gate: all technical quality criteria pass with evidence.
-
-### Phase 7: Production Readiness
-`deployment-strategies` and `production-readiness` already loaded from Phases 3 and 6.
-Validate deployment scripts/procedures|Verify monitoring|logging|alerting config|Test rollback procedures and environment config.
-Gate: production readiness checklist complete.
-
-### Phase 8: Stakeholder Demonstration
-Load: `~/.claude/skills/nw-stakeholder-engagement/SKILL.md`
-Prepare demonstration tailored to audience|Frame technical results in business value terms|Collect structured feedback.
-Gate: stakeholder acceptance obtained.
-
-### Phase 9: Deployment Execution
-Execute staged deployment (canary|blue-green|rolling)|Monitor production metrics during rollout|Validate smoke tests in production.
-Gate: production validation passes.
-
-### Phase 10: Outcome Measurement and Close
-Establish baseline metrics for business outcomes using outcome KPIs from DISCUSS|Configure monitoring dashboards showing north-star metric, leading indicators, and guardrails|Conduct retrospective|capture lessons learned|Prepare handoff documentation for operations.
-Gate: iteration closed with stakeholder sign-off.
+6. **Completion Validation** — Load `~/.claude/skills/nw-production-readiness/SKILL.md`. Verify acceptance criteria met with passing tests. Validate code quality gates (coverage|static analysis|security scan). Confirm architecture compliance. Gate: all technical quality criteria pass with evidence.
+7. **Production Readiness** — `deployment-strategies` and `production-readiness` already loaded from Phases 3 and 6. Validate deployment scripts/procedures. Verify monitoring|logging|alerting config. Test rollback procedures and environment config. Gate: production readiness checklist complete.
+8. **Stakeholder Demonstration** — Load `~/.claude/skills/nw-stakeholder-engagement/SKILL.md`. Prepare demonstration tailored to audience. Frame technical results in business value terms. Collect structured feedback. Gate: stakeholder acceptance obtained.
+9. **Deployment Execution** — Execute staged deployment (canary|blue-green|rolling). Monitor production metrics during rollout. Validate smoke tests in production. Gate: production validation passes.
+10. **Outcome Measurement and Close** — Establish baseline metrics for business outcomes using outcome KPIs from DISCUSS. Configure monitoring dashboards showing north-star metric, leading indicators, and guardrails. Conduct retrospective. Capture lessons learned. Prepare handoff documentation for operations. Gate: iteration closed with stakeholder sign-off.
 
 ## Peer Review Protocol
 
@@ -123,14 +94,20 @@ Gate: iteration closed with stakeholder sign-off.
 Use Task tool to invoke platform-architect-reviewer during Phase 5 (DESIGN) or before Phase 9 (DEVOPS).
 
 ### Workflow
-1. Apex produces design docs or deployment readiness package
-2. Reviewer critiques: pipeline quality|infrastructure soundness|deployment readiness|observability completeness|handoff completeness
-3. Apex addresses critical/high issues
-4. Reviewer validates revisions (max 2 iterations)
-5. Handoff/deployment proceeds when approved
+
+1. **Produce** — Apex produces design docs or deployment readiness package.
+2. **Critique** — Reviewer critiques: pipeline quality|infrastructure soundness|deployment readiness|observability completeness|handoff completeness.
+3. **Address** — Apex addresses critical/high issues.
+4. **Validate** — Reviewer validates revisions (max 2 iterations).
+5. **Proceed** — Handoff/deployment proceeds when approved.
 
 ### Review Proof Display
-After review, display: review YAML feedback (complete)|revisions made (issue-by-issue)|re-review results (if iteration 2)|quality gate status (passed/escalated).
+After review, display:
+
+- [ ] Review YAML feedback (complete)
+- [ ] Revisions made (issue-by-issue)
+- [ ] Re-review results (if iteration 2)
+- [ ] Quality gate status (passed/escalated)
 
 ## Wave Collaboration
 

@@ -1,9 +1,27 @@
 # Tutorial: Writing Acceptance Tests That Guide Delivery
 
 **Time**: ~15 minutes (6 steps)
-**Platform**: macOS or Linux (Windows: use WSL)
+**Platform**: macOS, Linux, or Windows
 **Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 1](../tutorial-first-delivery/) completed
 **Dependencies**: None beyond pytest. Pure Python.
+
+---
+
+## Setup
+
+Run from a directory where you want the tutorial project created (e.g. `~/projects`):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nwave-ai/nwave/main/docs/guides/tutorial-writing-tests/setup.py | python3
+```
+
+Prefer to read first? See [manual-setup.md](./manual-setup.md).
+
+## After setup you should have
+
+- A `md-converter/` directory with `src/md_converter/__init__.py`, `tests/__init__.py`, `pyproject.toml`, and `.gitignore`
+- A `.venv/` virtual environment with `pytest` installed
+- A clean git repository with one initial commit
 
 ---
 
@@ -37,75 +55,18 @@ In Tutorial 1, the tests were written for you. This time, **you** write them. Th
 
 ---
 
-## Step 1 of 6: Create the Project (~2 minutes)
+## Step 1 of 6: Open the project (~1 minute)
 
-This time there's no starter repo — you build from scratch.
+After running setup, `cd md-converter` and activate the virtualenv:
 
 ```bash
-mkdir md-converter && cd md-converter
-python3 -m venv .venv && source .venv/bin/activate
-pip install pytest
-```
-
-You should see:
-
-```
-Successfully installed pytest-x.x.x
+cd md-converter
+source .venv/bin/activate
 ```
 
 > **Windows users**: Replace `source .venv/bin/activate` with `.venv\Scripts\activate`.
 
-Now create the project structure:
-
-```bash
-mkdir -p src/md_converter tests
-touch src/md_converter/__init__.py tests/__init__.py
-```
-
-Create `pyproject.toml`:
-
-```bash
-cat > pyproject.toml << 'EOF'
-[project]
-name = "md-converter"
-version = "0.1.0"
-requires-python = ">=3.10"
-
-[tool.pytest.ini_options]
-pythonpath = ["src"]
-testpaths = ["tests"]
-EOF
-```
-
-Verify the structure:
-
-```bash
-find . -not -path './.venv/*' -not -path './.venv' | sort
-```
-
-```
-.
-./pyproject.toml
-./src
-./src/md_converter
-./src/md_converter/__init__.py
-./tests
-./tests/__init__.py
-```
-
-> **If `find` output differs slightly**: As long as you have `src/md_converter/__init__.py`, `tests/__init__.py`, and `pyproject.toml`, you're good.
-
-Initialize git (nWave uses commits to track its TDD progress):
-
-```bash
-git init && git add -A && git commit -m "chore: initial project structure"
-```
-
-You should see:
-
-```
-[main (root-commit) ...] chore: initial project structure
-```
+This time there's no starter repo — you'll write the tests from scratch in the next step.
 
 *Next: you'll write your first acceptance test — the simplest possible behavior.*
 

@@ -63,20 +63,13 @@ Execute \*diverge for {feature-id}.
 
 **SKILL_LOADING**: Before starting work, load your skill files using the Read tool from `~/.claude/skills/nw-{skill-name}/SKILL.md`. Skills encode your methodology -- without them you operate with generic knowledge only.
 
-**Phase 1 -- JTBD Analysis:**
-Flux loads `jtbd-analysis` skill. Extracts and elevates the job from the raw request or DISCOVER evidence. Produces job statements (functional + emotional + social) and ODI outcome statements. Gate G1 validates job level and ODI minimum.
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-**Phase 2 -- Competitive Research:**
-Flux invokes `nw-researcher` sub-agent for evidence-grounded competitive research. Maps how existing products serve the validated job. Identifies non-obvious alternatives. Gate G2 validates real products named and evidence quality.
-
-**Phase 3 -- Brainstorming:**
-Flux loads `brainstorming` skill. Frames HMW question, applies SCAMPER lenses, generates structurally diverse options. Gate G3 validates diversity (mechanism|assumption|cost differ).
-
-**Phase 4 -- Taste Evaluation:**
-Flux loads `taste-evaluation` skill. Applies DVF filter, scores surviving options on 4 taste criteria with locked weights, produces weighted ranking and recommendation with dissenting case. Gate G4 validates completeness and traceability.
-
-**Peer Review:**
-After Phase 4 gates pass, Flux invokes `nw-diverger-reviewer` (Prism) to validate all 5 dimensions. Max 2 revision iterations before handoff.
+1. **JTBD Analysis** — Load `jtbd-analysis` skill. Extract and elevate the job from the raw request or DISCOVER evidence. Produce job statements (functional + emotional + social) and ODI outcome statements. Gate: job at strategic or physical level (not tactical), minimum 3 ODI outcome statements produced.
+2. **Competitive Research** — Invoke `nw-researcher` sub-agent for evidence-grounded competitive research. Map how existing products serve the validated job. Identify non-obvious alternatives. Gate: 3+ real competitors named, at least one non-obvious alternative, evidence quality confirmed.
+3. **Brainstorming** — Load `brainstorming` skill. Frame HMW question, apply SCAMPER lenses, generate structurally diverse options. Gate: 6 options generated with diversity confirmed (mechanism, assumption, and cost structure differ across options).
+4. **Taste Evaluation** — Load `taste-evaluation` skill. Apply DVF filter, score surviving options on 4 taste criteria with locked weights, produce weighted ranking and recommendation with dissenting case. Gate: all surviving options scored on all 4 criteria, recommendation traceable to scoring matrix, dissenting case documented.
+5. **Peer Review** — Invoke `nw-diverger-reviewer` (Prism) to validate all 5 dimensions. Revise if needed (max 2 iterations). Gate: reviewer approval confirmed, handoff accepted by nw-product-owner.
 
 ## Success Criteria
 

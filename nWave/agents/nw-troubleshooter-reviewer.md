@@ -40,14 +40,11 @@ Read these files NOW:
 
 ## Workflow
 
-### Phase 1: Intake
-Read RCA document|Load: `review-criteria` — read it NOW before proceeding.|Identify all causal branches and WHY levels. Gate: document loaded, skill loaded, branch structure understood.
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-### Phase 2: Dimension Review
-Evaluate 6 dimensions from review-criteria|score each 1-10|document issues with severity and actionable recommendations. Gate: all 6 scored with evidence for each issue.
-
-### Phase 3: Verdict
-Calculate overall score (average)|determine approval: approved (overall >= 7, no dimension below 5) or revisions_required. Produce YAML output. Gate: follows output schema from skill.
+1. **Intake** — Load `~/.claude/skills/nw-tr-review-criteria/SKILL.md`. Read the RCA document. Identify all causal branches and WHY levels. Gate: document loaded, skill loaded, branch structure understood.
+2. **Dimension Review** — Evaluate all 6 dimensions from review-criteria. Score each 1-10. Document every issue with severity and actionable recommendation. Gate: all 6 dimensions scored with evidence cited for each issue.
+3. **Verdict** — Calculate overall score (average of 6 dimensions). Determine approval status: `approved` (overall >= 7, no dimension below 5) or `revisions_required`. Produce YAML output matching schema from skill. Gate: output follows schema exactly.
 
 ## Critical Rules
 

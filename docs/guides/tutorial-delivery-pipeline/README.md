@@ -1,9 +1,21 @@
 # Tutorial: Understanding the Delivery Pipeline
 
 **Time**: ~16 minutes hands-on (12 steps)
-**Platform**: macOS or Linux (Windows: use WSL)
+**Platform**: macOS, Linux, or Windows
 **Prerequisites**: [Tutorial 1](../tutorial-first-delivery/) completed (or Tutorial 2). You should have seen `/nw-deliver` run at least once.
 **What this is**: A conceptual walkthrough, not a hands-on coding tutorial. You will explore artifacts that already exist in your completed project.
+
+---
+
+## Verify you're ready
+
+This tutorial reads artifacts produced by `/nw-deliver` in Tutorial 1 (or 2). Before starting, `cd` into the project from that tutorial and confirm the following exist (replace `<feature-id>` with your feature ID, e.g. `image-to-ascii-art`):
+
+- `docs/feature/<feature-id>/roadmap.json`
+- `docs/feature/<feature-id>/mutation/mutation-report.md`
+- The `docs/feature/<feature-id>/` directory with completed wave outputs
+
+If any are missing, complete [Tutorial 1](../tutorial-first-delivery/) first — `/nw-deliver` must have run end-to-end.
 
 ---
 

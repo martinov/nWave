@@ -1,9 +1,20 @@
 # Tutorial: Generating Acceptance Tests
 
 **Time**: ~12 minutes (7 steps)
-**Platform**: macOS or Linux (Windows: use WSL)
+**Platform**: macOS, Linux, or Windows
 **Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 7](../tutorial-design/) completed
 **What this is**: An interactive walkthrough of `/nw-distill` -- nWave's acceptance test generation command. You will turn user stories and architecture documents into executable BDD (Behavior-Driven Development) acceptance tests.
+
+---
+
+## Verify you're ready
+
+This tutorial reads both the discuss output from Tutorial 6 and the design output from Tutorial 7. Before starting, `cd` into your tutorial project and confirm:
+
+- `docs/feature/<feature-id>/discuss/user-stories.md`
+- `docs/feature/<feature-id>/design/architecture-design.md`
+
+If either is missing, complete [Tutorial 7: Architecture Design](../tutorial-design/) first (which itself depends on Tutorial 6).
 
 ---
 

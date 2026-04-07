@@ -53,26 +53,13 @@ Read these files NOW:
 
 ## Workflow
 
-### Phase 1: Load Artifacts
-Read journey files from `docs/feature/{feature-id}/discuss/`: `journey-{name}.yaml`|`journey-{name}-visual.md`|`shared-artifacts-registry.md`. Read requirements from same directory: user stories|acceptance criteria|DoR checklist. Gate: artifacts exist and are readable. If missing, report which files were not found.
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-### Phase 2: Journey Review
-Load: `product-owner-reviewer/review-criteria` — read it NOW before proceeding.
-
-Journey coherence: trace flow from start to goal, mark orphans/dead ends | Emotional arc: check arc definition, annotations, jarring transitions | Shared artifacts: list all ${variables}, verify single source of truth | Example data quality: trace data across steps for consistency and realism | Bug pattern scan: version mismatch, hardcoded URLs, path inconsistency, missing commands. Gate: all five journey dimensions reviewed with severity ratings.
-
-### Phase 3: DoR and Antipattern Review
-Load: `product-owner-reviewer/dor-validation` — read it NOW before proceeding.
-
-Check each of the 8 DoR items against the artifact with quoted evidence | Scan for all 8 antipattern types | Check UAT scenario quality (format, real data, coverage) | Check domain language (technical jargon, generic language). Gate: all items assessed with evidence.
-
-### Phase 4: Requirements Quality Review
-Load: `product-owner/review-dimensions` — read it NOW before proceeding.
-
-Confirmation bias detection (technology, happy path, availability) | Completeness gaps (missing stakeholders, scenarios, NFRs) | Clarity issues (vague terms, ambiguous requirements) | Testability concerns (non-testable acceptance criteria) | Priority validation. Gate: all dimensions reviewed.
-
-### Phase 5: Verdict
-Compute approval from combined journey + requirements assessment. If any DoR item failed|any critical journey issue|any critical antipattern: rejected_pending_revisions. Produce final combined YAML. Gate: structured YAML produced.
+1. **Load Artifacts** — Read journey files from `docs/feature/{feature-id}/discuss/`: `journey-{name}.yaml`, `journey-{name}-visual.md`, `shared-artifacts-registry.md`. Read requirements from same directory: user stories, acceptance criteria, DoR checklist. Gate: artifacts exist and are readable; report any missing files.
+2. **Journey Review** — Load `~/.claude/skills/nw-por-review-criteria/SKILL.md` NOW before proceeding. Trace flow from start to goal (mark orphans/dead ends). Check emotional arc definition, annotations, jarring transitions. List all `${variables}`, verify single source of truth. Trace example data across steps for consistency and realism. Scan for bug patterns: version mismatch, hardcoded URLs, path inconsistency, missing commands. Gate: all five journey dimensions reviewed with severity ratings.
+3. **DoR and Antipattern Review** — Load `~/.claude/skills/nw-dor-validation/SKILL.md` NOW before proceeding. Check each of the 8 DoR items against the artifact with quoted evidence. Scan for all 8 antipattern types. Check UAT scenario quality (format, real data, coverage). Check domain language (technical jargon, generic language). Check scenario titles: must describe business outcomes, never implementation mechanisms (reject titles containing class names, method names, file names, or protocol details — e.g. "FileWatcher triggers refresh" must become "Dashboard updates in real-time"). Gate: all items assessed with evidence.
+4. **Requirements Quality Review** — Load `~/.claude/skills/nw-po-review-dimensions/SKILL.md` NOW before proceeding. Check confirmation bias (technology, happy path, availability). Check completeness gaps (missing stakeholders, scenarios, NFRs). Check clarity issues (vague terms, ambiguous requirements). Check testability concerns (non-testable acceptance criteria). Validate priority. Gate: all dimensions reviewed.
+5. **Verdict** — Compute approval from combined journey + requirements assessment. Apply rule: if any DoR item failed, any critical journey issue, or any critical antipattern found, set status to `rejected_pending_revisions`. Produce final combined YAML. Gate: structured YAML produced.
 
 ## Review Output Format
 

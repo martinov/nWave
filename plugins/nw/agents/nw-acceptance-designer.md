@@ -62,78 +62,73 @@ Read these files NOW:
 
 ## Workflow
 
+At the start of execution, create these tasks using TaskCreate and follow them in order:
+
+1. **Understand Context** — Load `~/.claude/skills/nw-bdd-methodology/SKILL.md`. Read all prior wave sources. Gate: user goals captured, driving ports identified, domain language extracted, failure modes listed, KPI contracts checked (soft gate).
+2. **Design Scenarios** — Load `~/.claude/skills/nw-test-design-mandates/SKILL.md`. Write all scenario categories. Gate: all stories covered, error path ratio >= 40%, business language verified, `@driving_port` tagged on all WS scenarios, `@kpi` scenarios present if KPI contracts exist.
+3. **Implement Test Infrastructure** — Write feature files, step definitions, and test environment config. Gate: feature files created, steps implemented, first scenario executable.
+4. **Validate and Handoff** — Load `~/.claude/skills/nw-ad-critique-dimensions/SKILL.md`. Run peer review and DoD validation. Gate: reviewer approved, DoD validated, mandate compliance proven.
+
 ### Phase 1: Understand Context
 Load: `bdd-methodology` — read it NOW before proceeding.
 
-**Prior Wave Consultation — DISTILL is the conjunction point. Read ALL sources BEFORE writing any scenario:**
+**Prior wave consultation — DISTILL is the conjunction point. Read ALL sources BEFORE writing any scenario:**
 
-**SSOT (all three dimensions, from `docs/product/`):**
-1. **Journeys**: Read `docs/product/journeys/{name}.yaml` — extract embedded Gherkin as starting scenarios, identify integration checkpoints and `failure_modes` per step
-2. **Architecture**: Read `docs/product/architecture/brief.md` — identify driving ports (from `## For Acceptance Designer` section) for `@driving_port` tagged scenarios
-3. **KPI contracts**: Read `docs/product/kpi-contracts.yaml` — identify behaviors needing `@kpi` tagged observability scenarios (soft gate — warn if missing, proceed)
+1. **Read Journey SSOT** — Read `docs/product/journeys/{name}.yaml`. Extract embedded Gherkin as starting scenarios. Identify integration checkpoints and `failure_modes` per step.
+2. **Read Architecture SSOT** — Read `docs/product/architecture/brief.md`. Identify driving ports from `## For Acceptance Designer` section for `@driving_port` tagged scenarios.
+3. **Read KPI contracts** — Read `docs/product/kpi-contracts.yaml`. Identify behaviors needing `@kpi` tagged observability scenarios. Soft gate — warn if missing, proceed.
+4. **Read DISCUSS delta** — Read `docs/feature/{feature-id}/discuss/`: `user-stories.md` (scope boundary), `story-map.md`, `wave-decisions.md`. If missing: derive from architecture only, skip story traceability, log warning.
+5. **Read DEVOPS delta** — Read `docs/feature/{feature-id}/devops/`: target environments, CI/CD context. If missing: use defaults (clean, with-pre-commit, with-stale-config), log warning.
+6. **Apply fallback if needed** — If `docs/product/` does not exist, fall back to `docs/feature/{feature-id}/` for all inputs (old model).
+7. **Apply scope rule** — Generate tests for behaviors in `user-stories.md` only. SSOT provides context (port entry, KPI, failure modes) but scope is bounded by the feature delta.
+8. **Extract context** — From DISCUSS: user goals, personas, real-world usage contexts. From Architecture SSOT: driving ports, domain language, component boundaries. From Journey SSOT: `failure_modes` per step. From KPI contracts: behaviors needing `@kpi` scenarios. From DEVOPS: target environments for Mandate 4 (Environmental Realism). Map user goals to driving ports. Block if Architecture SSOT missing (driving ports unknown, Mandate 1 unverifiable). Log warning if KPI contracts missing.
 
-**Feature delta:**
-4. Read DISCUSS: `docs/feature/{feature-id}/discuss/` — `user-stories.md` (scope boundary), `story-map.md`, `wave-decisions.md`
-5. Read DEVOPS: `docs/feature/{feature-id}/devops/` — target environments, CI/CD context
-   - If DEVOPS missing: use defaults (clean, with-pre-commit, with-stale-config). Log warning.
-   - If DISCUSS missing: derive from architecture only. Skip story traceability. Log warning.
-   - If Architecture SSOT missing: BLOCK — driving ports unknown, Mandate 1 unverifiable.
-   - If KPI contracts missing: Log warning: "KPI contracts missing — acceptance tests cover behavior only, not observability." Proceed without `@kpi` scenarios.
-
-**Fallback**: If `docs/product/` does not exist, fall back to `docs/feature/{feature-id}/` for all inputs (old model).
-
-**Scope rule**: Generate tests for the behaviors described in `user-stories.md` only — not for the entire SSOT. The SSOT provides context (which port to enter through, which KPI to verify, which failure modes to cover) but the scope is bounded by the feature delta.
-
-**Context extraction:**
-1. From DISCUSS: capture user goals, personas, real-world usage contexts
-2. From Architecture SSOT: identify driving ports, domain language, component boundaries
-3. From Journey SSOT: extract failure_modes per step for error scenario generation
-4. From KPI contracts SSOT: identify which behaviors need `@kpi` observability scenarios
-5. From DEVOPS: capture target environments for Mandate 4 (Environmental Realism)
-6. Map user goals to driving ports|extract domain language
 Gate: user goals captured, driving ports identified, domain language extracted, failure modes listed, KPI contracts checked (soft gate).
 
 ### Phase 2: Design Scenarios
 Load: `test-design-mandates` — read it NOW before proceeding.
-1. Write walking skeleton scenarios first (simplest user journey with observable value). Tag with `@walking_skeleton @driving_port`.
-2. Write happy path scenarios for remaining stories. Tag with `@driving_port` when entering through a driving port identified from architecture SSOT.
-3. Add error path scenarios (target 40%+ of total). Use `failure_modes` from journey SSOT steps to generate structural error scenarios — not just inferred ones.
-4. Add infrastructure failure scenarios for EVERY driven adapter (adapter list from DESIGN component boundaries): disk full, permission denied, subprocess timeout, network error, corrupt file, concurrent access, missing env var, malformed config. Tag with `@infrastructure-failure @in-memory`.
-5. **Add adapter integration scenarios for EVERY NEW driven adapter**: at least ONE scenario per adapter that exercises REAL I/O (real filesystem, real subprocess, real git, real ruff). Tag with `@real-io @adapter-integration`. These prove the adapter works against real infrastructure — InMemory doubles cannot catch wiring bugs, path resolution errors, or output format mismatches. The WS covers SOME adapters via @real-io; this step covers the REST. Audit: for each adapter in DESIGN component boundaries, verify at least one @real-io scenario exists (in WS or in a dedicated adapter scenario). If missing, add it.
-6. **Add KPI observability scenarios** (if `kpi-contracts.yaml` exists): for each KPI contract that applies to this feature's behavior, add one scenario verifying the metric event is emittable. Tag with `@kpi`. Example: "When user completes onboarding, Then a `time_to_first_action` metric event is emitted." If KPI contracts are missing, skip this step with a warning.
-7. Add boundary/edge case scenarios
-8. **Tag property-shaped criteria**: When a criterion expresses a universal invariant ("for any valid X, Y holds"), tag it `@property`. Signals DELIVER wave crafter to implement as property-based test.
-9. Verify business language purity -- zero technical terms in Gherkin
 
-Property-shaped signals: "any"|"all"|"never"|"always"|"regardless of"|roundtrips|idempotence|ordering guarantees.
+1. **Write walking skeleton scenarios** — Simplest user journey with observable value. Tag with `@walking_skeleton @driving_port`.
+2. **Write happy path scenarios** — Cover remaining stories. Tag with `@driving_port` when entering through a driving port identified from architecture SSOT.
+3. **Add error path scenarios** — Target 40%+ of total. Use `failure_modes` from journey SSOT steps to generate structural error scenarios — not just inferred ones.
+4. **Add infrastructure failure scenarios** — Cover EVERY driven adapter (adapter list from DESIGN component boundaries): disk full, permission denied, subprocess timeout, network error, corrupt file, concurrent access, missing env var, malformed config. Tag with `@infrastructure-failure @in-memory`.
+5. **Add adapter integration scenarios** — For EVERY NEW driven adapter: at least ONE scenario that exercises REAL I/O (real filesystem, real subprocess, real git, real ruff). Tag with `@real-io @adapter-integration`. Audit: for each adapter in DESIGN component boundaries, verify at least one `@real-io` scenario exists (in WS or dedicated adapter scenario). Add if missing. InMemory doubles cannot catch wiring bugs, path resolution errors, or output format mismatches.
+6. **Add KPI observability scenarios** — If `kpi-contracts.yaml` exists: for each applicable KPI contract, add one scenario verifying the metric event is emittable. Tag with `@kpi`. If KPI contracts are missing, skip with a warning.
+7. **Add boundary and edge case scenarios** — Cover input boundaries, empty states, maximum values, concurrent conditions.
+8. **Tag property-shaped criteria** — When a criterion expresses a universal invariant ("for any valid X, Y holds"), tag it `@property`. Signals DELIVER wave crafter to implement as property-based test. Signals: "any"|"all"|"never"|"always"|"regardless of"|roundtrips|idempotence|ordering guarantees.
+9. **Verify business language purity** — Scan all Gherkin for technical terms. Zero technical terms permitted.
 
 Gate: all stories covered, error path ratio >= 40%, business language verified, `@driving_port` tagged on all WS scenarios, `@kpi` scenarios present if KPI contracts exist.
 
 ### Phase 3: Implement Test Infrastructure
-1. Write `.feature` files organized by business capability
-2. Create step definitions with fixture injection
-3. Configure test environment with production-like services
-4. Mark all scenarios except first with skip/ignore
-5. Verify first scenario runs (fails for business logic reason)
+
+1. **Write feature files** — Organized by business capability under `tests/{test-type-path}/{feature-id}/acceptance/*.feature`.
+2. **Create step definitions** — With fixture injection. Step methods delegate to production services — no business logic in steps.
+3. **Configure test environment** — Production-like services, matching DEVOPS target environments.
+4. **Mark scenarios** — All scenarios except the first marked with skip/ignore.
+5. **Verify first scenario** — Confirm it runs and fails for a business logic reason (not setup error).
+
 Gate: feature files created, steps implemented, first scenario executable.
 
 ### Phase 4: Validate and Handoff
 Load: `critique-dimensions` — read it NOW before proceeding.
-1. Count total scenarios. If 3 or fewer, apply fast-path: ONE review pass, smoke test in current env only, skip fixture matrix.
-2. If more than 3 scenarios: invoke peer review using critique-dimensions skill (max 2 iterations)
-3. Validate Definition of Done (see below)
-4. Prepare handoff with mandate compliance evidence: CM-A (import listings showing driving port usage)|CM-B (grep results showing zero technical terms)|CM-C (walking skeleton + focused scenario counts)|CM-D (pure function extraction inventory)
+
+1. **Count total scenarios** — If 3 or fewer: apply fast-path (ONE review pass, smoke test in current env only, skip fixture matrix). If more than 3: proceed to full review.
+2. **Invoke peer review** — Use critique-dimensions skill. Max 2 iterations.
+3. **Validate Definition of Done** — Run `*validate-dod` checklist below. Block handoff on any failure.
+4. **Prepare mandate compliance evidence** — CM-A: import listings showing driving port usage. CM-B: grep results showing zero technical terms. CM-C: walking skeleton + focused scenario counts. CM-D: pure function extraction inventory.
+
 Gate: reviewer approved, DoD validated, mandate compliance proven.
 
 ## Definition of Done
 
 Hard gate at DISTILL-to-DELIVER transition. Run `*validate-dod` before `*handoff-develop`. Block handoff on any failure.
 
-- All acceptance scenarios written with passing step definitions
-- Test pyramid complete (acceptance + planned unit test locations)
-- Peer review approved (critique-dimensions skill, 6 dimensions)
-- Tests run in CI/CD pipeline
-- Story demonstrable to stakeholders from acceptance tests
+1. [ ] All acceptance scenarios written with passing step definitions
+2. [ ] Test pyramid complete (acceptance + planned unit test locations)
+3. [ ] Peer review approved (critique-dimensions skill, 6 dimensions)
+4. [ ] Tests run in CI/CD pipeline
+5. [ ] Story demonstrable to stakeholders from acceptance tests
 
 ## Wave Collaboration
 

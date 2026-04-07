@@ -60,6 +60,10 @@ Execute \*discover for {product-concept-name}.
 - interactive: high | output_format: markdown
 - interview_depth: comprehensive | evidence_standard: past_behavior
 
+## Progress Tracking
+
+The invoked agent MUST create a task list from its workflow phases at the start of execution using TaskCreate. Each phase becomes a task with the gate condition as completion criterion. Mark tasks in_progress when starting each phase and completed when the gate passes. This gives the user real-time visibility into progress.
+
 ## Success Criteria
 
 Refer to Scout's quality gates in ~/.claude/agents/nw/nw-product-discoverer.md.

@@ -128,6 +128,10 @@ Luna crafts LeanUX stories informed by JTBD + journey artifacts. Every story tra
 | DoR Validation | `docs/feature/{feature-id}/discuss/dor-validation.md` |
 | Outcome KPIs | `docs/feature/{feature-id}/discuss/outcome-kpis.md` |
 
+## Progress Tracking
+
+The invoked agent MUST create a task list from its workflow phases at the start of execution using TaskCreate. Each phase becomes a task with the gate condition as completion criterion. Mark tasks in_progress when starting each phase and completed when the gate passes. This gives the user real-time visibility into progress.
+
 ## Success Criteria
 
 - [ ] (when DIVERGE artifacts present) DIVERGE recommendation read and direction confirmed before journey design

@@ -1,9 +1,20 @@
 # Tutorial: Delivering the Feature
 
 **Time**: ~20 minutes (9 steps)
-**Platform**: macOS or Linux (Windows: use WSL)
+**Platform**: macOS, Linux, or Windows
 **Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 8](../tutorial-distill/) completed
 **What this is**: A hands-on walkthrough of `/nw-deliver` on a real multi-component feature. You will watch the delivery pipeline implement your bookmark CLI against the acceptance tests from Tutorial 8, guided by the hexagonal architecture from Tutorial 7.
+
+---
+
+## Verify you're ready
+
+This tutorial reads both the design output from Tutorial 7 and the distill output from Tutorial 8. Before starting, `cd` into your tutorial project and confirm:
+
+- `docs/feature/<feature-id>/design/architecture-design.md`
+- `docs/feature/<feature-id>/distill/` directory with at least one `.feature` file
+
+If either is missing, complete [Tutorial 8: Generating Acceptance Tests](../tutorial-distill/) first (which itself depends on Tutorial 7).
 
 ---
 

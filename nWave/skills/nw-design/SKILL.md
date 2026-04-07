@@ -20,82 +20,36 @@ All architects write to `docs/product/architecture/brief.md` (SSOT), each in its
 
 ## Prior Wave Consultation
 
-Before beginning DESIGN work, read SSOT and prior wave artifacts:
+Before beginning DESIGN work, read SSOT and prior wave artifacts in this order:
 
-1. **SSOT** (if `docs/product/` exists):
-   - `docs/product/architecture/brief.md` — existing architecture to extend (if exists)
-   - `docs/product/architecture/adr-*.md` — existing architectural decisions
-   - `docs/product/journeys/{name}.yaml` — journey schema for port identification
-2. **DISCUSS** (primary input): Read from `docs/feature/{feature-id}/discuss/`:
-   - `wave-decisions.md` — decision summary
-   - `user-stories.md` — scope, requirements, and embedded acceptance criteria
-   - `story-map.md` — walking skeleton and release slicing
-   - `outcome-kpis.md` — quality attributes informing architecture
+1. **Read SSOT architecture** (if `docs/product/` exists) — read `docs/product/architecture/brief.md` (extend, not recreate), `docs/product/architecture/adr-*.md` (existing decisions), `docs/product/journeys/{name}.yaml` (journey schema for port identification). Gate: all existing files read or confirmed missing.
+2. **Read DISCUSS artifacts** (primary input) — read from `docs/feature/{feature-id}/discuss/`: `wave-decisions.md` (decision summary), `user-stories.md` (scope, requirements, acceptance criteria), `story-map.md` (walking skeleton and release slicing), `outcome-kpis.md` (quality attributes). Gate: all four files read or confirmed missing.
+3. **Output confirmation checklist** — after reading, output `✓ {file}` for each read, `⊘ {file} (not found)` for each missing. Gate: checklist produced before any architecture work begins.
+4. **Check for contradictions** — identify any DESIGN decisions that would contradict DISCUSS requirements. Flag contradictions and resolve with user before proceeding. Example: DISCUSS requires "real-time updates" but DESIGN chooses batch processing. Gate: zero unresolved contradictions.
+5. **Migration gate check** — if `docs/product/` does not exist but `docs/feature/` has existing features, STOP. Guide the user to `docs/guides/migrating-to-ssot-model/README.md`. If greenfield, proceed — DESIGN will bootstrap `docs/product/architecture/`. Gate: migration status confirmed.
 
-**Migration gate**: If `docs/product/` does not exist but `docs/feature/` has existing features, STOP. Guide the user to `docs/guides/migrating-to-ssot-model/README.md` and complete the migration first. If greenfield, DESIGN will bootstrap `docs/product/architecture/`.
-
-DESIGN reads SSOT architecture first (to extend, not recreate), then feature-level DISCUSS artifacts for the delta. DISCOVER evidence is already synthesized into DISCUSS — read DISCOVER only if wave-decisions.md flags something architecturally significant.
-
-**READING ENFORCEMENT**: You MUST read every file listed in Prior Wave Consultation above using the Read tool before proceeding. After reading, output a confirmation checklist (`✓ {file}` for each read, `⊘ {file} (not found)` for missing). Do NOT skip files that exist — skipping causes architectural decisions disconnected from requirements.
-
-After reading, check whether any DESIGN decisions would contradict DISCUSS requirements. Flag contradictions and resolve with user before proceeding. Example: DISCUSS requires "real-time updates" but DESIGN chooses batch processing — this must be resolved.
+Note: DISCOVER evidence is already synthesized into DISCUSS — read DISCOVER only if wave-decisions.md flags something architecturally significant.
 
 ## Document Update (Back-Propagation)
 
 When DESIGN decisions change assumptions from prior waves:
-1. Document the change in a `## Changed Assumptions` section at the end of the affected DESIGN artifact
-2. Reference the original prior-wave document and quote the original assumption
-3. State the new assumption and the rationale for the change
-4. If architecture constraints require changes to user stories or acceptance criteria, note them in `docs/feature/{feature-id}/design/upstream-changes.md` for the product owner to review
+
+1. **Document the change** — add a `## Changed Assumptions` section at the end of the affected DESIGN artifact. Gate: section present in artifact.
+2. **Reference the original** — quote the original assumption from the prior-wave document, with file path. Gate: original quoted verbatim with source.
+3. **State the new assumption** — write the replacement assumption and its rationale. Gate: new assumption and rationale present.
+4. **Propagate upstream if needed** — if architecture constraints require changes to user stories or acceptance criteria, write them to `docs/feature/{feature-id}/design/upstream-changes.md` for the product owner to review. Gate: upstream-changes.md created if any story/criteria changes needed.
 
 ## Discovery Flow
 
-Architecture decisions driven by quality attributes, not pattern shopping:
+Architecture decisions are driven by quality attributes, not pattern shopping. Execute these steps in order:
 
-### Step 1: Understand the Problem
-Review JTBD artifacts from DISCUSS to understand which jobs the architecture must serve. Morgan asks: What are we building? For whom? Which quality attributes matter most? (scalability|maintainability|testability|time-to-market|fault tolerance|auditability)
-
-### Step 2: Understand Constraints
-Morgan asks: Team size/experience? Timeline? Existing systems to integrate? Regulatory requirements? Operational maturity (CI/CD, monitoring)?
-
-### Step 3: Team Structure (Conway's Law)
-Morgan asks: How many teams? Communication patterns? Does proposed architecture match org chart?
-
-### Step 3.5: Development Paradigm Selection
-
-Morgan identifies primary language(s) from constraints, then applies:
-
-- **FP-native** (Haskell|F#|Scala|Clojure|Elixir): recommend Functional
-- **OOP-native** (Java|C#|Go): recommend OOP
-- **Multi-paradigm** (TypeScript|Kotlin|Python|Rust|Swift): present both, let user choose based on team experience and domain fit
-
-After confirmation, ask user permission to write paradigm to project CLAUDE.md:
-- FP: `This project follows the **functional programming** paradigm. Use @nw-functional-software-crafter for implementation.`
-- OOP: `This project follows the **object-oriented** paradigm. Use @nw-software-crafter for implementation.`
-
-Default if user declines/unsure: OOP. User can override later.
-
-### Step 4: Recommend Architecture Based on Drivers
-Recommend based on quality attribute priorities|constraints|paradigm from Steps 1-3.5. Default: modular monolith with dependency inversion (ports-and-adapters). Overrides require evidence.
-
-If functional paradigm selected, Morgan adapts architectural strategy:
-- Types-first design: define algebraic data types and domain models before components
-- Composition pipelines: data flows through transformation chains, not method dispatch
-- Pure core / effect shell: domain logic is pure, IO lives at boundaries (adapters are functions)
-- Effect boundaries replace port interfaces: function signatures serve as ports
-- Immutable state: state changes produce new values, no mutation in the domain
-These are strategic guidance items for the architecture document — no code snippets.
-
-### Step 5: Advanced Architecture Stress Analysis (HIDDEN -- `--residuality` flag only)
-When activated: apply complexity-science-based stress analysis — stressors|attractors|residues|incidence matrix|resilience modifications. See `stress-analysis` skill.
-When not activated: skip entirely, do not mention.
-
-### Step 6: Produce Deliverables
-- Architecture document with component boundaries|tech stack|integration patterns
-- C4 System Context diagram (Mermaid) -- MANDATORY
-- C4 Container diagram (Mermaid) -- MANDATORY
-- C4 Component diagrams (Mermaid) -- only for complex subsystems
-- ADRs for significant decisions
+1. **Understand the Problem** — review JTBD artifacts from DISCUSS. Ask: What are we building? For whom? Which quality attributes matter most? (scalability|maintainability|testability|time-to-market|fault tolerance|auditability). Gate: quality attribute priorities ranked.
+2. **Understand Constraints** — ask: Team size/experience? Timeline? Existing systems to integrate? Regulatory requirements? Operational maturity (CI/CD, monitoring)? Gate: constraints list documented.
+3. **Map Team Structure (Conway's Law)** — ask: How many teams? Communication patterns? Does proposed architecture match org chart? Gate: team-architecture alignment confirmed.
+4. **Select Development Paradigm** — identify primary language(s) from constraints, then: FP-native (Haskell|F#|Scala|Clojure|Elixir) → recommend Functional; OOP-native (Java|C#|Go) → recommend OOP; Multi-paradigm (TypeScript|Kotlin|Python|Rust|Swift) → present both, let user choose. After confirmation, ask user permission to write paradigm to project CLAUDE.md: FP: `This project follows the **functional programming** paradigm. Use @nw-functional-software-crafter for implementation.` OOP: `This project follows the **object-oriented** paradigm. Use @nw-software-crafter for implementation.` Default if user declines/unsure: OOP. Gate: paradigm selected and optionally written to CLAUDE.md.
+5. **Recommend Architecture Based on Drivers** — recommend based on quality attribute priorities|constraints|paradigm from steps 1-4. Default: modular monolith with dependency inversion (ports-and-adapters). Overrides require evidence. If functional paradigm: apply types-first design, composition pipelines, pure core / effect shell, effect boundaries as ports, immutable state — in architecture document only, no code snippets. Gate: architecture pattern selected with written rationale.
+6. **Stress Analysis** (HIDDEN — `--residuality` flag only) — when activated: apply complexity-science-based stress analysis (stressors|attractors|residues|incidence matrix|resilience modifications) using the `stress-analysis` skill. When not activated: skip entirely, do not mention. Gate: activated only when flag present.
+7. **Produce Deliverables** — write architecture document with component boundaries|tech stack|integration patterns. Produce C4 System Context diagram (Mermaid) — mandatory. Produce C4 Container diagram (Mermaid) — mandatory. Produce C4 Component diagrams (Mermaid) — only for complex subsystems. Write ADRs for significant decisions. Gate: mandatory C4 diagrams present, ADRs written.
 
 ## Rigor Profile Integration
 
@@ -107,15 +61,17 @@ Before dispatching the architect agent, read rigor config from `.nwave/des-confi
 
 ## Interactive Decision Points
 
-### Decision 0: Design Scope
+### Decision 0: Design Scope (MANDATORY — do NOT skip)
 
 **Question**: What are you designing?
 
+You MUST ask this question before invoking any architect. Do NOT default to application scope. The answer determines WHICH agent to invoke.
+
 **Options**:
-1. **System / infrastructure** — distributed architecture, scalability, caching, load balancing, message queues
-2. **Domain / bounded contexts** — DDD, aggregates, Event Modeling, event sourcing, context mapping
-3. **Application / components** — component boundaries, hexagonal architecture, tech stack, ADRs
-4. **Full stack** — all three in sequence: system -> domain -> application
+1. **System / infrastructure** → invokes @nw-system-designer
+2. **Domain / bounded contexts** → invokes @nw-ddd-architect
+3. **Application / components** → invokes @nw-solution-architect
+4. **Full stack** → invokes all three agents sequentially
 
 ### Decision 1: Interaction Mode
 
@@ -145,9 +101,14 @@ All agents write to `docs/product/architecture/` (SSOT). Each architect owns its
 
 For **Full stack** mode, each agent reads the prior architect's output before starting its own work.
 
-### Default Invocation (Application scope)
+### Agent Dispatch (after Decision 0 — no default)
 
-@nw-solution-architect
+Based on Decision 0 answer, invoke the corresponding agent. Do NOT default to application scope without asking.
+
+**System scope** → @nw-system-designer
+**Domain scope** → @nw-ddd-architect
+**Application scope** → @nw-solution-architect
+**Full stack** → @nw-system-designer then @nw-ddd-architect then @nw-solution-architect
 
 Execute \*design-architecture for {feature-id}.
 

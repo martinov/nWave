@@ -406,6 +406,10 @@ Same as Mode 1 Steps 6 and 7. Uses `{target_file}` from Step 1.5. Save with `"pr
 | Unknown profile name | "Unknown profile '{name}'. Available: lean, standard, thorough, exhaustive, custom, inherit" |
 | inherit with undetectable session model | Fallback to sonnet with notice: "Could not detect session model. Defaulting agent_model to sonnet." |
 
+## Progress Tracking
+
+The invoked agent MUST create a task list from its workflow phases at the start of execution using TaskCreate. Each phase becomes a task with the gate condition as completion criterion. Mark tasks in_progress when starting each phase and completed when the gate passes. This gives the user real-time visibility into progress.
+
 ## Success Criteria
 
 - [ ] Current profile displayed (or "none set")

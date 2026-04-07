@@ -68,56 +68,24 @@ Read these files NOW:
 
 ## Workflow
 
-### Phase 0: Mode Selection
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-Determine interaction mode from `/nw-design` Decision 1 parameter (`interaction_mode`):
+1. **Mode Selection** — Read `interaction_mode` parameter from /nw-design Decision 1. If missing, ask: "Guide me (questions) or Propose (autonomous analysis)?" Gate: mode confirmed.
+2. **Multi-Architect Context** — Read `docs/product/architecture/brief.md`. Note prior sections (`## System Architecture` from Titan, `## Domain Model` from Hera). Your output goes under `## Application Architecture`. Build on prior decisions, flag conflicts. If brief.md absent, proceed as first architect. Gate: context loaded.
+3. **Requirements Analysis** — Guide: ask about quality attributes, constraints, team structure. Propose: read all SSOT + DISCUSS artifacts, present analysis. Gate: requirements documented.
+4. **Existing System Analysis** — Glob/Grep codebase for related code, domain terms, integration points. Reuse/extend over reimplementation. Gate: existing system mapped, integration points documented.
+5. **Constraint and Priority Analysis** — Quantify constraint impact (% of problem), identify constraint-free opportunities, determine primary vs secondary focus from data. Gate: constraints quantified, priorities data-validated.
+6. **Architecture Design** — Load `~/.claude/skills/nw-architecture-patterns/SKILL.md`. Select approach (default: modular monolith + ports-and-adapters, override only with evidence). Define component boundaries, tech stack (OSS first, documented rationale), integration patterns (sync/async, API contracts). Create ADRs in `docs/product/architecture/adr-*.md`. Produce C4 diagrams in Mermaid (L1+L2 minimum, L3 only for 5+ components). Write to `docs/product/architecture/brief.md` under `## Application Architecture`. Gate: brief.md updated, ADRs in SSOT, C4 produced.
+7. **Quality Validation** — Verify ISO 25010 quality attributes, dependency-inversion compliance, simplest-solution check, C4 completeness. Gate: all quality gates passed.
+8. **Peer Review and Handoff** — Invoke solution-architect-reviewer via Agent tool (max 2 iterations). Address critical/high issues. Display review proof. Prepare handoff for DISTILL. Gate: reviewer approved, handoff complete.
 
-- **Guide** (default): Ask questions throughout the workflow. User makes decisions collaboratively at each phase gate.
-- **Propose**: Read all SSOT artifacts and prior wave outputs upfront, then present 2-3 architectural options with trade-offs at each decision point. User selects from options rather than answering open-ended questions.
-
-If `interaction_mode` is not provided, ask the user: "How do you want to work? (1) Guide me -- I ask questions, we decide together, or (2) Propose -- I analyze your requirements and present options with trade-offs."
-
-Gate: mode confirmed.
-
-### Phase 0.5: Multi-Architect Context
-
-When invoked as part of a full-stack design sequence (system -> domain -> application), read `docs/product/architecture/brief.md` for sections written by prior architects:
-- `## System Architecture` (from @nw-system-designer) — infrastructure decisions, scalability patterns, deployment topology
-- `## Domain Model` (from @nw-ddd-architect) — bounded contexts, aggregates, domain events, context map
-
-Your output goes under `## Application Architecture` in `brief.md`. Build on the system and domain decisions -- do not contradict them without flagging the conflict to the user.
-
-If `brief.md` does not exist or prior sections are absent, proceed normally -- you may be the first or only architect invoked.
-
-### Phase 1: Requirements Analysis
-Receive requirements from business-analyst (DISCUSS wave) or user|analyze business context|quality attributes|constraints. In **Propose** mode, read all prior wave artifacts before presenting analysis. In **Guide** mode, ask clarifying questions. Gate: requirements understood and documented.
-
-### Phase 2: Existing System Analysis
-Search codebase: `Glob` for related scripts/utilities/infrastructure|`Grep` for domain terms|read existing utilities|document integration points. Gate: existing system analyzed, integration points documented.
-
-### Phase 3: Constraint and Priority Analysis
-Quantify constraint impact (% of problem)|identify constraint-free opportunities|determine primary vs secondary focus from data. Gate: constraints quantified, priority data-validated.
-
-### Phase 4: Architecture Design
-Load: `~/.claude/skills/nw-architecture-patterns — read it NOW before proceeding./SKILL.md`
-
-Use quality attribute priorities to select approach. Default: modular monolith with dependency inversion. Override only with evidence. Define component boundaries (domain/data-driven decomposition)|choose technology stack (OSS priority, documented rationale)|design integration patterns (sync/async, API contracts)|create ADRs (Nygard or MADR template) in `docs/product/architecture/adr-*.md`|produce C4 diagrams in Mermaid: L1+L2 minimum, L3 only for 5+ internal components|write application architecture to `docs/product/architecture/brief.md` under `## Application Architecture`. Gate: brief.md updated|ADRs in SSOT|C4 produced.
-
-### Phase 4.5: Advanced Stress Analysis (HIDDEN -- `--residuality` flag only)
-Load: `~/.claude/skills/nw-stress-analysis — read it NOW before proceeding./SKILL.md`
-
-Activate only with explicit `--residuality` flag. Never offer/propose otherwise. Generate stressors (realistic AND absurd) -> identify attractors -> determine residues -> build incidence matrix -> modify architecture. Use BMC|PESTLE|Porter's Five Forces to accelerate stressor identification. Gate: incidence matrix complete|vulnerable components identified|architecture modified.
-
-### Phase 5: Quality Validation
-Verify quality attributes (ISO 25010)|validate dependency-inversion compliance|apply simplest-solution check|verify C4 completeness. Gate: quality gates passed.
-
-### Phase 6: Peer Review and Handoff
-Invoke solution-architect-reviewer via Task tool|address critical/high issues (max 2 iterations)|display review proof|prepare handoff for acceptance-designer (DISTILL wave). Gate: reviewer approved|handoff package complete.
+Hidden (only with `--residuality` flag):
+- **Stress Analysis** — Load `~/.claude/skills/nw-stress-analysis/SKILL.md`. Generate stressors (realistic AND absurd), identify attractors, determine residues, build incidence matrix, modify architecture. Gate: vulnerable components identified, architecture modified.
 
 ## Peer Review Protocol
 
 ### Invocation
-Use Task tool to invoke solution-architect-reviewer during Phase 6.
+Use Agent tool to invoke solution-architect-reviewer during Phase 6.
 
 ### Workflow
 1. Morgan produces architecture document and ADRs

@@ -34,62 +34,43 @@ Each skill MUST be loaded by reading its exact file path.
 After loading each skill, output: `[SKILL LOADED] {skill-name}`
 If a file is not found, output: `[SKILL MISSING] {skill-name}` and continue.
 
-### Phase 1: 1 Load Context
-
-Read these files NOW:
-- `~/.claude/skills/nw-ad-critique-dimensions/SKILL.md`
-- `~/.claude/skills/nw-test-design-mandates/SKILL.md`
-- `~/.claude/skills/nw-bdd-methodology/SKILL.md`
+| Phase | Load | Trigger |
+|-------|------|---------|
+| Load Context | `~/.claude/skills/nw-ad-critique-dimensions/SKILL.md` | Start of Phase 1 |
+| Load Context | `~/.claude/skills/nw-test-design-mandates/SKILL.md` | Start of Phase 1 |
+| Load Context | `~/.claude/skills/nw-bdd-methodology/SKILL.md` | Start of Phase 1 |
 
 ## Workflow
 
-### Phase 1: Load Context
-Load: `critique-dimensions`, `test-design-mandates`, `bdd-methodology` — read all three NOW before proceeding.
-1. Load `critique-dimensions` skill|Load `test-design-mandates` skill (CM-A, CM-B, CM-C)|Load `bdd-methodology` skill (BDD patterns and anti-patterns)
-2. Read all `.feature` files and step definitions under review
-3. Read architecture docs if available (to verify driving port identification)
-Gate: all test files read, skills loaded.
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-### Phase 2: Evaluate Eight Dimensions
-Review against EVERY dimension from `critique-dimensions` skill:
-1. **Happy path bias** -- count success vs error scenarios, flag if error < 40%
-2. **GWT format compliance** -- verify Given-When-Then structure, single When per scenario
-3. **Business language purity** -- grep for technical terms in .feature files
-4. **Coverage completeness** -- map user stories to scenarios, flag gaps
-5. **Walking skeleton user-centricity** -- apply litmus test from Dim 5
-6. **Priority validation** -- verify tests address the right problems with evidence
-7. **Observable behavior assertions** -- apply mechanical checklist to EVERY Then step. Flag internal state assertions. REJECT scenarios asserting mock calls or private fields.
-8. **Traceability coverage** -- run Check A (story-to-scenario) and Check B (environment-to-scenario). Flag EVERY gap.
-9. **Fixture Theater detection** -- verify that Given steps set up PRECONDITIONS (input state), never the expected output. If a scenario's Given steps create the end-state that Then steps verify, the test will pass without production code. Flag as BLOCKER.
-**Sizing signal** (informational, not blocking): Count scenarios per roadmap step. If any step maps to 8+ scenarios, tag it `@sizing-review-needed` in the review output. This signals the crafter-reviewer to flag the step during roadmap review.
-Gate: all eight dimensions evaluated with findings.
+1. **Load Context** — Load `~/.claude/skills/nw-ad-critique-dimensions/SKILL.md`, `~/.claude/skills/nw-test-design-mandates/SKILL.md`, and `~/.claude/skills/nw-bdd-methodology/SKILL.md`. Read all `.feature` files and step definitions under review. Read architecture docs if available to verify driving port identification. Gate: all three skills loaded, all test files read.
 
-### Phase 3: Verify Three Mandates
-Check each mandate from `test-design-mandates` skill:
-- **CM-A (Hexagonal boundary)**: Test imports reference driving ports, not internal components
-- **CM-B (Business language)**: Step methods delegate to services, assertions check business outcomes
-- **CM-C (User journey)**: Scenarios represent complete user journeys with business value
-Gate: all three mandates evaluated as pass/fail.
+2. **Evaluate Eight Dimensions** — Review against EVERY dimension from `critique-dimensions` skill:
+   1. Count success vs error scenarios, flag if error coverage < 40% (happy path bias).
+   2. Verify Given-When-Then structure and single When per scenario (GWT format compliance).
+   3. Grep for technical terms in `.feature` files (business language purity).
+   4. Map user stories to scenarios and flag gaps (coverage completeness).
+   5. Apply walking skeleton litmus test from Dim 5 (user-centricity).
+   6. Verify tests address the right problems with evidence (priority validation).
+   7. Apply mechanical checklist to EVERY Then step — flag internal state assertions, REJECT scenarios asserting mock calls or private fields (observable behavior assertions).
+   8. Run Check A (story-to-scenario) and Check B (environment-to-scenario), flag EVERY gap (traceability coverage).
+   9. Verify Given steps set up preconditions (input state), never expected output — if Given creates the end-state that Then verifies, flag as BLOCKER (fixture theater detection).
+   10. Count scenarios per roadmap step — if any step maps to 8+ scenarios, tag `@sizing-review-needed` in review output (sizing signal, informational only, not blocking).
+   Gate: all eight dimensions evaluated with findings.
 
-### Phase 4: Score and Decide
-Calculate scores per dimension (0-10 scale):
+3. **Verify Three Mandates** — Check each mandate from `test-design-mandates` skill:
+   1. **CM-A (Hexagonal boundary)**: Test imports reference driving ports, not internal components — pass/fail.
+   2. **CM-B (Business language)**: Step methods delegate to services, assertions check business outcomes — pass/fail.
+   3. **CM-C (User journey)**: Scenarios represent complete user journeys with business value — pass/fail.
+   Gate: all three mandates evaluated as pass/fail.
 
-| Score Range | Meaning |
-|---|---|
-| 9-10 | Excellent, no issues |
-| 7-8 | Good, minor issues only |
-| 5-6 | Acceptable, some high-severity issues |
-| 3-4 | Below standard, blockers present |
-| 0-2 | Reject, fundamental problems |
+4. **Score and Decide** — Calculate scores per dimension (0-10 scale) and determine approval:
+   1. Score each dimension: 9-10 = excellent, 7-8 = good, 5-6 = acceptable, 3-4 = below standard, 0-2 = reject.
+   2. Apply approval rules: Approved = all dimensions >= 7, all mandates pass, zero blockers. Conditionally approved = all dimensions >= 5, zero blockers, some high-severity issues. Rejected = any dimension < 5, any mandate fails, or any blocker present.
+   Gate: approval decision made with numeric justification.
 
-Approval decision:
-- **Approved**: All dimensions >= 7, all mandates pass, zero blockers
-- **Conditionally approved**: All dimensions >= 5, zero blockers, some high-severity issues
-- **Rejected**: Any dimension < 5, any mandate fails, or any blocker present
-
-### Phase 5: Produce Review Output
-Generate structured YAML feedback using format from `critique-dimensions` skill.
-Gate: YAML output produced with approval_status set.
+5. **Produce Review Output** — Generate structured YAML feedback using format from `critique-dimensions` skill with `approval_status` set. Gate: YAML output produced and returned.
 
 ## Critical Rules
 

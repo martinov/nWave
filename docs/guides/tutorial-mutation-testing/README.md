@@ -1,9 +1,28 @@
 # Tutorial: Validating Your Test Suite with Mutation Testing
 
 **Time**: ~12 minutes (6 steps)
-**Platform**: macOS or Linux (Windows: use WSL)
+**Platform**: macOS, Linux, or Windows
 **Prerequisites**: Python 3.10+, Claude Code with nWave installed, [Tutorial 1](../tutorial-first-delivery/) completed
 **What this is**: A hands-on walkthrough of `/nw-mutation-test` -- nWave's mutation testing command. You will build a calculator with tests that have 100% code coverage but miss real bugs, then use mutation testing to expose the gaps.
+
+---
+
+## Setup
+
+Run from a directory where you want the tutorial project created (e.g. `~/projects`):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nwave-ai/nwave/main/docs/guides/tutorial-mutation-testing/setup.py | python3
+```
+
+Prefer to read first? See [manual-setup.md](./manual-setup.md).
+
+## After setup you should have
+
+- A `mutation-demo/` directory with `src/calc.py`, `tests/test_calc.py`, `conftest.py`, `.gitignore`
+- A `.venv/` virtual environment with `pytest` installed
+- A clean git repository with one initial commit
+- 8 passing tests (every function tested, every line covered) — the catch is that several assertions are too weak
 
 ---
 
@@ -19,150 +38,36 @@ A test suite that actually catches bugs -- not just one that looks green.
 
 ---
 
-## Step 1 of 6: Create the Project (~1 minute)
+## Step 1 of 6: Open the project (~1 minute)
 
-Create a new project directory, initialize it, and install pytest:
-
-```bash
-mkdir mutation-demo && cd mutation-demo && mkdir src tests
-```
+After running setup, `cd mutation-demo` and activate the virtualenv:
 
 ```bash
-git init && python -m venv .venv && source .venv/bin/activate
-pip install pytest --quiet
+cd mutation-demo
+source .venv/bin/activate
 ```
 
-> **Windows users**: Use `.venv\Scripts\activate` instead, or use WSL as noted in the platform requirements.
+> **Windows users**: Replace `source .venv/bin/activate` with `.venv\Scripts\activate`.
 
-You should see:
-
-```
-Initialized empty Git repository in .../mutation-demo/.git/
-Successfully installed pytest-x.x.x
-```
-
-You now have an empty project with pytest ready. No code yet -- that comes next.
-
-*Next: you will add a calculator with tests that look perfect but have a hidden weakness.*
+Take a look at `src/calc.py` (a 5-function calculator) and `tests/test_calc.py` (8 tests covering every function). Several of those tests are intentionally weak — that's the lesson.
 
 ---
 
-## Step 2 of 6: Add the Calculator and Weak Tests (~2 minutes)
-
-Create `src/calc.py` -- a small calculator module:
-
-```python
-# src/calc.py
-
-def add(a: float, b: float) -> float:
-    return a + b
-
-
-def subtract(a: float, b: float) -> float:
-    return a - b
-
-
-def multiply(a: float, b: float) -> float:
-    return a * b
-
-
-def divide(a: float, b: float) -> float:
-    if b == 0:
-        raise ValueError("Cannot divide by zero")
-    return a / b
-
-
-def discount_price(price: float, percent: float) -> float:
-    """Apply a percentage discount. Returns the discounted price."""
-    if percent < 0 or percent > 100:
-        raise ValueError("Percent must be between 0 and 100")
-    return price * (1 - percent / 100)
-```
-
-Now create the test file. These tests pass and cover every line -- but several assertions are too weak:
-
-```python
-# tests/test_calc.py
-from src.calc import add, subtract, multiply, divide, discount_price
-import pytest
-
-
-def test_add():
-    result = add(2, 3)
-    assert result is not None  # weak: only checks existence
-
-
-def test_subtract():
-    result = subtract(10, 4)
-    assert isinstance(result, float)  # weak: only checks type
-
-
-def test_multiply():
-    result = multiply(3, 4)
-    assert result > 0  # weak: many wrong answers are also > 0
-
-
-def test_divide():
-    result = divide(10, 2)
-    assert result == 5.0  # strong: checks exact value
-
-
-def test_divide_by_zero():
-    with pytest.raises(ValueError):
-        divide(10, 0)  # strong: checks error is raised
-
-
-def test_discount_price():
-    result = discount_price(100, 20)
-    assert result is not None  # weak: does not check actual price
-
-
-def test_discount_price_full():
-    result = discount_price(100, 100)
-    assert result >= 0  # weak: 0 is correct, but so is 50 or 99
-
-
-def test_discount_invalid_percent():
-    with pytest.raises(ValueError):
-        discount_price(100, -10)  # strong: checks validation
-```
-
-Create a `conftest.py` so pytest can find the `src` module:
+## Step 2 of 6: Confirm the tests look fine (~1 minute)
 
 ```bash
-echo 'import sys; sys.path.insert(0, ".")' > conftest.py
-```
-
-Run the tests:
-
-```bash
-pytest tests/ -v --no-header
+pytest tests/ --no-header
 ```
 
 You should see:
 
 ```
-tests/test_calc.py::test_add PASSED
-tests/test_calc.py::test_subtract PASSED
-tests/test_calc.py::test_multiply PASSED
-tests/test_calc.py::test_divide PASSED
-tests/test_calc.py::test_divide_by_zero PASSED
-tests/test_calc.py::test_discount_price PASSED
-tests/test_calc.py::test_discount_price_full PASSED
-tests/test_calc.py::test_discount_invalid_percent PASSED
+tests/test_calc.py ........
 
 8 passed
 ```
 
-All green. Every function is tested. Looks great -- but is it?
-
-Commit the starting state:
-
-```bash
-git add -A && git commit -m "feat: calculator with passing tests (starting point for mutation testing)"
-```
-
-> **If any test fails**: Make sure you copied both files exactly. Check that `conftest.py` exists in the project root (not inside `tests/`).
+All green. 100% coverage. Looks great. **Is it?**
 
 *Next: you will run mutation testing and discover that "all green" does not mean "well tested."*
 

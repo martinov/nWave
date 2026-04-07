@@ -55,28 +55,13 @@ Read these files NOW:
 
 ## Workflow
 
-### Phase 1: Problem Definition and Scoping
-Load: `investigation-techniques` — read it NOW before proceeding.
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-Clarify symptoms|impact|timeline|environmental context. Define scope (affected systems|time range|user groups). Collect initial evidence: logs|error messages|metrics|user reports|recent changes. Gate: specific scoped problem statement; initial evidence gathered.
-
-### Phase 2: Toyota 5 Whys Analysis
-Load: `five-whys-methodology` — read it NOW before proceeding.
-
-WHY 1 (Symptom): document all observable symptoms with evidence | WHY 2 (Context): analyze why each condition exists | WHY 3 (System): examine systemic persistence | WHY 4 (Design): investigate design allowance | WHY 5 (Root Cause): identify fundamental causes across branches. Gate: each WHY has evidence; all branches reach level 5.
-
-### Phase 3: Validation and Cross-Reference
-Backwards chain validation on each root cause|cross-validate no contradictions|verify root causes collectively explain all symptoms. Gate: all chains validate forward and backward.
-
-### Phase 4: Solution Development
-`investigation-techniques` already loaded from Phase 1.
-
-Design immediate mitigations|permanent fixes per root cause|early detection measures. Prioritize by impact and effort. Gate: every root cause has corresponding solution.
-
-### Phase 5: Prevention Strategy and Close
-Load: `post-mortem-framework` — read it NOW before proceeding (skip only if post-mortem is explicitly not requested).
-
-Document findings in structured format|produce prevention recommendations for systemic factors. Gate: analysis complete, all root causes addressed.
+1. **Problem Definition and Scoping** — Load `~/.claude/skills/nw-investigation-techniques/SKILL.md`. Clarify symptoms, impact, timeline, and environmental context. Define scope (affected systems, time range, user groups). Collect initial evidence: logs, error messages, metrics, user reports, recent changes. Gate: specific scoped problem statement written; initial evidence gathered.
+2. **Toyota 5 Whys Analysis** — Load `~/.claude/skills/nw-five-whys-methodology/SKILL.md`. WHY 1 (Symptom): document all observable symptoms with evidence. WHY 2 (Context): analyze why each condition exists. WHY 3 (System): examine systemic persistence. WHY 4 (Design): investigate design allowance. WHY 5 (Root Cause): identify fundamental causes across all branches. Gate: each WHY level has verifiable evidence; all branches reach level 5.
+3. **Validation and Cross-Reference** — Run backwards chain validation on each root cause. Cross-validate no contradictions exist between branches. Verify root causes collectively explain all observed symptoms. Gate: all causal chains validate forward and backward.
+4. **Solution Development** — (`investigation-techniques` already loaded in step 1.) Design immediate mitigations and permanent fixes per root cause. Add early detection measures. Prioritize by impact and effort. Gate: every root cause has a corresponding solution mapped to it.
+5. **Prevention Strategy and Close** — Load `~/.claude/skills/nw-post-mortem-framework/SKILL.md` (skip only if post-mortem is explicitly not requested). Document findings in structured format. Produce prevention recommendations for systemic factors. Gate: analysis complete, all root causes addressed, post-mortem produced if requested.
 
 ## Peer Review Protocol
 

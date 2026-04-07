@@ -23,11 +23,11 @@ Run mutation testing against implementation files from the current feature. Extr
 
 Orchestrator performs before delegating:
 
-1. Read `execution-log.json`, extract implementation files from `completed_steps[].files_modified.implementation`
-2. Verify all extracted files exist on disk
-3. Detect project language from config files (pyproject.toml, pom.xml, package.json, etc.)
-4. Confirm test suite passes: run `pytest -x {test_scope}` (or equivalent)
-5. Ensure mutation venv exists for Python: `.venv-mutation/` with cosmic-ray installed
+1. **Extract files** — Read `execution-log.json`, extract implementation files from `completed_steps[].files_modified.implementation`. Gate: file list non-empty.
+2. **Verify on disk** — Check all extracted files exist on disk. Gate: zero missing files.
+3. **Detect language** — Scan config files (pyproject.toml, pom.xml, package.json, etc.) to select tool. Gate: language identified.
+4. **Confirm tests pass** — Run `pytest -x {test_scope}` (or equivalent). Gate: exit code 0, no failures.
+5. **Ensure mutation venv** — For Python, verify `.venv-mutation/` exists with cosmic-ray installed. Gate: `cosmic-ray --version` succeeds.
 
 ## Agent Invocation
 
@@ -80,17 +80,28 @@ Detects `package.json`, selects Stryker, delegates with Stryker-specific instruc
 
 ## Post-Mutation Safety (mandatory)
 
-After EVERY mutation run (success, failure, or interruption), restore source files:
+After EVERY mutation run (success, failure, or interruption):
 
-    git checkout -- src/ tests/
+1. **Restore source files** — Run `git checkout -- src/ tests/`. Gate: working tree clean (no mutations remain).
+2. **Verify no corruption** — Confirm test suite still passes after restore. Gate: `pytest -x {test_scope}` exits 0.
 
-Mutation tools apply mutations directly to source files. An interrupted run can leave corrupted code (e.g. `is not None` -> `is  None`). Agent MUST restore source files even if the run errors out.
+Mutation tools apply mutations directly to source files. An interrupted run can leave corrupted code (e.g. `is not None` -> `is  None`). Agent MUST execute these steps even if the run errors out.
 
 ## Quality Gate
 
-Kill rate thresholds: >= 80% PASS (proceed)|70-80% WARN (review surviving mutants)|< 70% FAIL (add tests first).
+Kill rate thresholds:
 
-Skip conditions: no mutation tool for language|project opts out via `.mutation-config.yaml`|test suite broken. Python projects require mutation testing; all skips need documented justification.
+1. **>= 80% PASS** — Proceed to next wave.
+2. **70-80% WARN** — Review surviving mutants, document findings, proceed with caution.
+3. **< 70% FAIL** — Add tests targeting surviving mutants before proceeding.
+
+Skip conditions (each requires documented justification in mutation-report.md):
+
+1. **No tool for language** — No mutation framework available for detected language.
+2. **Project opt-out** — `.mutation-config.yaml` has `skip: true` with justification.
+3. **Broken test suite** — Pre-invocation step 4 fails; fix tests before mutation testing.
+
+Note: Python projects require mutation testing. All skips need documented justification.
 
 ## Next Wave
 

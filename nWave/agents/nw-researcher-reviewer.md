@@ -40,21 +40,11 @@ Read these files NOW:
 
 ## Workflow
 
-### Phase 1: Ingest Research Document
-Load: `researcher-reviewer/critique-dimensions` — read it NOW before proceeding.
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-Read document|identify structure (findings|sources|citations|knowledge gaps). Gate: document readable with identifiable sections.
-
-### Phase 2: Evaluate Across Dimensions
-- **Source Bias**: Source diversity? Contradictory viewpoints? Truly independent?
-- **Evidence Quality**: All claims cited? Reputable and recent? Primary sources used?
-- **Replicability**: Methodology documented? Reproducible by another researcher?
-- **Priority Validation**: Right problem addressed? Simpler alternatives considered?
-- **Completeness**: Knowledge gaps documented? Conflicts acknowledged?
-Gate: all dimensions evaluated with specific findings.
-
-### Phase 3: Score and Verdict
-Assign quality scores (0.0-1.0) per dimension|determine approval (`approved` or `rejected_pending_revisions`)|list blocking issues (critical only). Gate: YAML feedback complete and parseable.
+1. **Ingest Research Document** — Load `~/.claude/skills/nw-rr-critique-dimensions/SKILL.md`. Read the document. Identify structure: findings, sources, citations, knowledge gaps. Gate: document readable with identifiable sections.
+2. **Evaluate Across Dimensions** — Apply critique across all five dimensions: (a) Source Bias: source diversity, contradictory viewpoints, independence; (b) Evidence Quality: all claims cited, reputable and recent, primary sources; (c) Replicability: methodology documented, reproducible; (d) Priority Validation: right problem addressed, simpler alternatives considered; (e) Completeness: knowledge gaps documented, conflicts acknowledged. Gate: all dimensions evaluated with specific findings.
+3. **Score and Verdict** — Assign quality scores (0.0-1.0) per dimension. Determine approval (`approved` or `rejected_pending_revisions`). List blocking issues (critical only). Gate: YAML feedback complete and parseable.
 
 ## Critical Rules
 

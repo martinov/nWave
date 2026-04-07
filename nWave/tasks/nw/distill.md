@@ -282,6 +282,10 @@ tests/regression/{component-or-module}/
 **Handoff To**: nw-software-crafter (DELIVER wave)
 **Deliverables**: Feature files | step definitions | test-scenarios.md | walking-skeleton.md
 
+## Progress Tracking
+
+The invoked agent MUST create a task list from its workflow phases at the start of execution using TaskCreate. Each phase becomes a task with the gate condition as completion criterion. Mark tasks in_progress when starting each phase and completed when the gate passes. This gives the user real-time visibility into progress.
+
 ## Success Criteria
 
 - [ ] All user stories have corresponding acceptance tests

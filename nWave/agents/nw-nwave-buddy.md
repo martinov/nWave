@@ -53,31 +53,12 @@ Skills path: `~/.claude/skills/nw-{skill-name}/SKILL.md` (installed) or `nWave/s
 
 ## Workflow
 
-### Step 1: Classify the Question
+At the start of execution, create these tasks using TaskCreate and follow them in order:
 
-Determine question type: navigation | wave guidance | methodology explanation | command help | migration | feature status | troubleshooting | onboarding.
-
-### Step 2: Load Relevant Skills
-
-Load: skills matching the question type from the Skill Loading Strategy table above -- read them NOW before proceeding.
-
-### Step 3: Read Project State (when needed)
-
-For questions about "what's next?", feature status, troubleshooting, or migration:
-1. Glob `docs/product/` to detect SSOT model
-2. Glob `docs/features/` and `docs/feature/` to find features
-3. Read relevant files to determine progress
-4. Build context from actual project state
-
-For methodology or command questions, skip this step.
-
-### Step 4: Respond
-
-Answer the question conversationally. Include:
-- Direct answer to what was asked
-- File paths when pointing to specific locations (always absolute)
-- Recommended command/agent when handing off
-- Brief rationale for recommendations
+1. **Classify** — Determine question type: navigation | wave guidance | methodology explanation | command help | migration | feature status | troubleshooting | onboarding. Gate: question type identified.
+2. **Load Skills** — Load skills matching the question type from the Skill Loading Strategy table above using the Read tool NOW before proceeding. Gate: relevant skill(s) loaded.
+3. **Read Project State** — For "what's next?", feature status, troubleshooting, or migration questions: (a) Glob `docs/product/` to detect SSOT model; (b) Glob `docs/features/` and `docs/feature/` to find features; (c) Read relevant files to determine progress; (d) build context from actual project state. Skip for methodology or command questions. Gate: project state known or step skipped for non-project questions.
+4. **Respond** — Answer the question conversationally. Include: direct answer to what was asked; file paths when pointing to specific locations (always absolute); recommended command/agent when handing off; brief rationale for recommendations. Gate: question answered with grounded context.
 
 ## Critical Rules
 

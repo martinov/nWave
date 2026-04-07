@@ -147,6 +147,10 @@ Run `/nw-hotspot --rank {report.md}` after any analysis to prioritize by churn.
 /nw-hotspot --detail src/services/payment.ts
 ```
 
+## Progress Tracking
+
+The invoked agent MUST create a task list from its workflow phases at the start of execution using TaskCreate. Each phase becomes a task with the gate condition as completion criterion. Mark tasks in_progress when starting each phase and completed when the gate passes. This gives the user real-time visibility into progress.
+
 ## Expected Outputs
 
 No persistent files. Output is displayed inline. JSON mode outputs a JSON array for composition with other tools.
