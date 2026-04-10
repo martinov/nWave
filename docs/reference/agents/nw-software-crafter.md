@@ -20,6 +20,7 @@ DELIVER wave - Outside-In TDD and progressive refactoring. Research-optimized co
 - [`/nw-refactor`](../commands/index.md)
 - [`/nw-review`](../commands/index.md)
 - [`/nw-roadmap`](../commands/index.md)
+- [`/nw-spike`](../commands/index.md)
 
 ## Skills
 

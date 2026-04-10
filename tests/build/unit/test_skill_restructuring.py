@@ -198,7 +198,7 @@ BULK_HASHES = {
     "nw-cognitive-load-theory": "3f710887e887cdea6555b301b104902b",
     "nw-collaboration-and-handoffs": "88a1f50ed559281ac672f784253eb843",
     "nw-collapse-detection": "d9d627bef17d03649583302e18482570",
-    "nw-command-design-patterns": "27f547b5725eaf55b1faa6288411b398",
+    "nw-command-design-patterns": "ed39642cc074ad30d53cf345a915c45d",
     "nw-command-optimization-workflow": "c9152d7ea4b3c1657ebcac9a439fcdee",
     "nw-competitive-analysis": "ec05866d4429c42ea27d84aad891f719",
     "nw-compliance-framework": "5574d1c462405437898f603dce12340e",

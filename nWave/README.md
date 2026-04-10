@@ -4,18 +4,20 @@
 
 ## Overview
 
-The nWave framework implements the comprehensive DISCOVER→DISCUSS→DESIGN→DEVOPS→DISTILL→DELIVER methodology. This framework provides a streamlined, integrated workflow with complete knowledge preservation for critical technical execution agents and comprehensive 5-layer testing framework.
+The nWave framework implements the comprehensive DISCOVER→DIVERGE→DISCUSS→SPIKE→DESIGN→DEVOPS→DISTILL→DELIVER methodology. This framework provides a streamlined, integrated workflow with complete knowledge preservation for critical technical execution agents and comprehensive 5-layer testing framework.
 
 ## nWave Methodology
 
-The nWave methodology implements a systematic approach to software development through six distinct waves:
+The nWave methodology implements a systematic approach to software development through eight distinct waves:
 
 1. **DISCOVER**: Evidence-based product discovery and market validation
-2. **DISCUSS**: Requirements gathering and business analysis
-3. **DESIGN**: Architecture design with visual representation
-4. **DEVOPS**: Platform readiness, CI/CD, infrastructure, and deployment design
-5. **DISTILL**: Acceptance test creation and business validation scenarios
-6. **DELIVER**: Outside-In TDD implementation with production readiness validation
+2. **DIVERGE**: Structured divergent option generation (JTBD, competitive research, brainstorming)
+3. **DISCUSS**: Requirements gathering and business analysis
+4. **SPIKE**: Timeboxed assumption validation before committing to design
+5. **DESIGN**: Architecture design with visual representation
+6. **DEVOPS**: Platform readiness, CI/CD, infrastructure, and deployment design
+7. **DISTILL**: Acceptance test creation and business validation scenarios
+8. **DELIVER**: Outside-In TDD implementation with production readiness validation
 
 ## Core and Specialist Agents (10 Total)
 
@@ -40,11 +42,13 @@ The nWave methodology implements a systematic approach to software development t
 ### nWave Core Commands (DW Prefix)
 
 - `/nw-discover [product-concept]` - Wave 1: Evidence-based product discovery
-- `/nw-discuss [requirements]` - Wave 2: Business analysis
-- `/nw-design [system-context]` - Wave 3: Architecture design
-- `/nw-devops [deployment-target]` - Wave 4: Platform readiness and infrastructure
-- `/nw-distill [acceptance-criteria]` - Wave 5: Test scenarios
-- `/nw-deliver [feature-description]` - Wave 6: Outside-In TDD implementation
+- `/nw-diverge [feature-id]` - Wave 2: Divergent option generation
+- `/nw-discuss [requirements]` - Wave 3: Business analysis
+- `/nw-spike [feature-description]` - Wave 4: Timeboxed assumption validation
+- `/nw-design [system-context]` - Wave 5: Architecture design
+- `/nw-devops [deployment-target]` - Wave 6: Platform readiness and infrastructure
+- `/nw-distill [acceptance-criteria]` - Wave 7: Test scenarios
+- `/nw-deliver [feature-description]` - Wave 8: Outside-In TDD implementation
 
 ### Specialist Commands
 

@@ -287,21 +287,36 @@ def extract_all(paths: dict[str, list[Path]]) -> dict[str, list]:
 _WAVE_PATTERNS: list[tuple[re.Pattern, str]] = [
     (re.compile(r"\bDISCOVER(?:Y)?\s+wave\b", re.IGNORECASE), "DISCOVER"),
     (re.compile(r"\bDISCUSS\s+wave\b", re.IGNORECASE), "DISCUSS"),
+    (re.compile(r"\bSPIKE\s+wave\b", re.IGNORECASE), "SPIKE"),
     (re.compile(r"\bDISTILL\s+wave\b", re.IGNORECASE), "DISTILL"),
     (re.compile(r"\bDESIGN\s+wave\b", re.IGNORECASE), "DESIGN"),
     (re.compile(r"\bDELIVER\s+wave\b", re.IGNORECASE), "DELIVER"),
     (re.compile(r"\bDEVOPS?\s+wave\b", re.IGNORECASE), "DEVOPS"),
 ]
 
-_WAVE_ORDER = [
-    "DISCOVER",
-    "DISCUSS",
-    "DESIGN",
-    "DISTILL",
-    "DELIVER",
-    "DEVOPS",
-    "Other",
-]
+
+def _load_wave_order(root: Path | None = None) -> list[str]:
+    """Read wave_phases from framework-catalog.yaml (SSOT) and append 'Other'."""
+    if root is None:
+        root = Path(__file__).resolve().parent.parent
+    catalog_path = root / "nWave" / "framework-catalog.yaml"
+    text = catalog_path.read_text(encoding="utf-8")
+    phases: list[str] = []
+    in_wave_phases = False
+    for line in text.splitlines():
+        if line.startswith("wave_phases:"):
+            in_wave_phases = True
+            continue
+        if in_wave_phases:
+            item_match = re.match(r"^-\s+(\S+)$", line)
+            if item_match:
+                phases.append(item_match.group(1))
+            else:
+                break
+    if not phases:
+        raise DocgenError(f"Could not parse wave_phases from {catalog_path}")
+    phases.append("Other")
+    return phases
 
 
 def _infer_wave(description: str) -> str:
@@ -423,7 +438,7 @@ def render_agents_index(agents: list[Agent], skills: list[Skill]) -> str:
     by_wave: dict[str, list[Agent]] = {}
     for a in agents:
         by_wave.setdefault(a.get("wave", "Other"), []).append(a)
-    for wave in _WAVE_ORDER:
+    for wave in _load_wave_order():
         wave_agents = by_wave.get(wave, [])
         if not wave_agents:
             continue

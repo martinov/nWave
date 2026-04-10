@@ -16,6 +16,7 @@ Use for DESIGN wave - collaborates with user to define system architecture, comp
 - [`/nw-finalize`](../commands/index.md)
 - [`/nw-review`](../commands/index.md)
 - [`/nw-roadmap`](../commands/index.md)
+- [`/nw-spike`](../commands/index.md)
 
 ## Skills
 

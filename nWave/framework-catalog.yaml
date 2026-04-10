@@ -1,7 +1,8 @@
 name: nWave
-version: 3.7.0
-description: "Comprehensive DISCOVER\u2192DIVERGE\u2192DISCUSS\u2192DESIGN\u2192DEVOPS\u2192\
-  DISTILL\u2192DELIVER methodology with visual architecture lifecycle management"
+version: 3.7.1
+description: "Comprehensive DISCOVER\u2192DIVERGE\u2192DISCUSS\u2192SPIKE\u2192DESIGN\u2192\
+  DEVOPS\u2192DISTILL\u2192DELIVER methodology with visual architecture lifecycle\
+  \ management"
 author: nWave Team
 license: MIT
 documentation_url: https://github.com/nWave-ai/nWave
@@ -10,6 +11,7 @@ wave_phases:
 - DISCOVER
 - DIVERGE
 - DISCUSS
+- SPIKE
 - DESIGN
 - DEVOPS
 - DISTILL
@@ -258,6 +260,19 @@ commands:
     - shared_artifacts
     - requirements_document
     - user_stories
+  spike:
+    description: Runs a timeboxed spike to validate one core assumption before DESIGN.
+      Use after DISCUSS when the feature involves a new mechanism, performance requirement,
+      or external integration.
+    argument_hint: '[feature-description] - Example: "wave-matrix -- derive feature
+      status from pytest + filesystem"'
+    agents:
+    - software-crafter
+    - functional-software-crafter
+    wave: SPIKE
+    outputs:
+    - spike_report
+    - validated_assumption
   design:
     description: Designs system architecture with C4 diagrams and technology selection.
       Use when defining component boundaries, choosing tech stacks, or creating architecture

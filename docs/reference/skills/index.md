@@ -684,6 +684,14 @@
 
 - [nw-source-verification](../../../nWave/skills/nw-source-verification/SKILL.md) — Source reputation tiers, cross-referencing methodology, bias detection, and citation format requirements
 
+## nw-spike
+
+- [nw-spike](../../../nWave/skills/nw-spike/SKILL.md) — Runs a timeboxed spike to validate one core assumption before DESIGN. Use after DISCUSS when the feature involves a new mechanism, performance requirement, or external integration.
+
+## nw-spike-methodology
+
+- [nw-spike-methodology](../../../nWave/skills/nw-spike-methodology/SKILL.md) — Teaches agents how to run a timeboxed spike - throwaway code that validates one assumption before DESIGN
+
 ## nw-stakeholder-engagement
 
 - [nw-stakeholder-engagement](../../../nWave/skills/nw-stakeholder-engagement/SKILL.md) — Demonstration preparation, audience-tailored presentations, feedback collection, and business outcome measurement. Load when preparing demos or measuring business value delivery.
