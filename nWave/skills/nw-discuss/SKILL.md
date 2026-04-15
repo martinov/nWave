@@ -136,13 +136,22 @@ Luna loads `user-story-mapping` skill before this phase.
 1. **Load Skill** — Load `user-story-mapping` skill. Gate: skill loaded.
 2. **Backbone** — Map user activities (big steps) horizontally across the top of the story map. Gate: all major activities identified and ordered.
 3. **Walking Skeleton** — Identify minimum slice that delivers end-to-end value. Gate: walking skeleton slice defined.
-4. **Release Slices** — Group stories into outcome-based releases. Gate: stories grouped into at least two release slices.
-5. **Prioritization** — Suggest priority order based on outcome impact and dependencies. Gate: prioritization rationale documented per slice.
+4. **Elephant Carpaccio Slicing** — Decompose stories into **thin vertical slices**, each shipping end-to-end in ≤1 day (≤6 hours of crafter dispatch), each with a named learning hypothesis. This supersedes the old "group into at least two releases" gate. The discipline and its rationale are documented below. Gate: every slice has (a) end-to-end value, (b) ≤1 day ship estimate, (c) a named learning hypothesis of the form "disproves X if it fails", (d) production data (not synthetic), (e) a dogfood moment within the same day, (f) explicit IN/OUT scope lists.
+5. **Slice Taste Tests** — Apply the carpaccio taste tests to each slice before committing:
+   - If a slice lists "ship 4+ new components" → it is NOT thin. Split further.
+   - If every slice depends on a new abstraction → ship the abstraction FIRST as its own slice (or postpone it).
+   - If no slice disproves any pre-commitment → the slicing is decoration, not discipline. Rethink.
+   - If a slice uses only synthetic data → it proves plumbing, not value. Require a production-data acceptance criterion.
+   - If 2+ slices are identical except for scale → merge them.
+   Gate: all taste tests pass OR the failures are documented with a reason.
+6. **Slice Briefs** — Produce one brief per slice at `docs/feature/{feature-id}/slices/slice-NN-name.md` with: goal (one sentence), IN scope, OUT scope, learning hypothesis (what this disproves if it fails, what it confirms if it succeeds), acceptance criteria, dependencies, effort estimate, reference class, pre-slice SPIKE if uncertainty is high. Each brief is ≤100 lines. Gate: brief exists for each slice listed in the story map.
+7. **Prioritization** — Suggest slice execution order based on (a) learning leverage (highest-uncertainty slices first, so failures cost less), (b) dependency chain, (c) dogfood cadence. Gate: prioritization rationale documented per slice, NOT just per release bucket.
 
 | Artifact | Path |
 |----------|------|
 | Story Map | `docs/feature/{feature-id}/discuss/story-map.md` |
 | Prioritization | `docs/feature/{feature-id}/discuss/prioritization.md` |
+| Slice Briefs | `docs/feature/{feature-id}/slices/slice-NN-*.md` (one per slice) |
 
 ### Phase 3: Requirements and User Stories
 
@@ -174,7 +183,7 @@ Luna crafts LeanUX stories informed by JTBD + journey artifacts. Every story tra
 8. - [ ] Happy path defined: all steps start-to-goal with expected outputs
 9. - [ ] Emotional arc coherent: confidence builds progressively
 10. - [ ] Shared artifacts tracked: every ${variable} has single documented source
-11. - [ ] Story map created with backbone, walking skeleton, and release slices
+11. - [ ] Story map created with backbone, walking skeleton, and **elephant carpaccio slices** (≤1 day each, each with a named learning hypothesis, each with its own slice brief at `docs/feature/{id}/slices/slice-NN-*.md`, all carpaccio taste tests passed)
 12. - [ ] Outcome KPIs defined with measurable targets
 13. - [ ] Prioritization suggestions based on outcome impact
 14. - [ ] Requirements completeness score > 0.95
