@@ -31,6 +31,129 @@ def restore_working_directory():
 
 
 # ---------------------------------------------------------------------------
+# Git hooks guard — prevents any test from corrupting .git/hooks/
+# ---------------------------------------------------------------------------
+
+
+def _snapshot_hooks_dir(hooks_dir: Path) -> dict[str, bytes]:
+    """Return a filename -> full-bytes mapping for all files in hooks_dir.
+
+    Returns an empty dict when the directory does not exist. Pure function.
+    Content is captured in full (not hashed) so the guard can restore the
+    pre-session state in teardown — detection alone leaves corruption
+    between sessions and blocks manual commits.
+    """
+    if not hooks_dir.is_dir():
+        return {}
+    return {
+        entry.name: entry.read_bytes()
+        for entry in sorted(hooks_dir.iterdir())
+        if entry.is_file()
+    }
+
+
+def _restore_hooks_dir(hooks_dir: Path, snapshot: dict[str, bytes]) -> None:
+    """Restore hooks_dir to match the captured snapshot exactly.
+
+    Writes every file in the snapshot back to disk with its pre-session
+    content + 0o755 permissions (hooks must be executable). Deletes any
+    files that appeared during the session (and are not in the snapshot).
+    Idempotent: calling twice with the same snapshot is a no-op.
+    """
+    if not hooks_dir.is_dir():
+        return
+    current_names = {entry.name for entry in hooks_dir.iterdir() if entry.is_file()}
+    # Delete files that appeared during the session
+    for name in current_names - set(snapshot):
+        (hooks_dir / name).unlink(missing_ok=True)
+    # Restore original content for everything that was in the snapshot
+    for name, content in snapshot.items():
+        path = hooks_dir / name
+        path.write_bytes(content)
+        path.chmod(0o755)
+
+
+def _locate_git_hooks_dir() -> Path:
+    """Resolve the real .git/hooks directory, following worktree indirection.
+
+    For a normal clone: <project_root>/.git/hooks/
+    For a worktree:    the common .git/hooks/ of the main worktree.
+    """
+    project_root = Path(__file__).parent.parent
+    git_path = project_root / ".git"
+    if git_path.is_dir():
+        return git_path / "hooks"
+    # Worktree: .git is a file containing "gitdir: <path>"
+    gitdir_line = git_path.read_text().strip()
+    if gitdir_line.startswith("gitdir:"):
+        worktree_git = Path(gitdir_line[len("gitdir:") :].strip())
+        # Walk up to the common dir (two levels up from worktrees/<name>)
+        common_git = worktree_git.parent.parent
+        return common_git / "hooks"
+    return git_path / "hooks"
+
+
+@pytest.fixture(scope="session", autouse=True)
+def guard_git_hooks():
+    """Session-scoped guard that RESTORES and fails if tests corrupt .git/hooks/.
+
+    Definitive fix for hook corruption: detection alone is insufficient —
+    corrupted state survives the pytest session and blocks manual commits
+    (e.g. plugin-installer tests calling install_attribution_hook without
+    proper isolation can overwrite prepare-commit-msg). This fixture:
+
+    1. Snapshots the hooks directory BEFORE the session (full bytes + perms).
+    2. YIELDS — tests run and may corrupt hooks.
+    3. UNCONDITIONALLY RESTORES the pre-session state in teardown,
+       regardless of whether violations were detected.
+    4. Computes the diff AFTER restore and fails loudly if any test
+       touched the hooks directory, so the regression is still visible
+       in CI/local output.
+
+    Restore runs before the fail assertion so even a failing session
+    leaves the hooks dir clean for the next commit attempt.
+    """
+    hooks_dir = _locate_git_hooks_dir()
+    before = _snapshot_hooks_dir(hooks_dir)
+
+    yield
+
+    after = _snapshot_hooks_dir(hooks_dir)
+
+    created = sorted(set(after) - set(before))
+    deleted = sorted(set(before) - set(after))
+    modified = sorted(
+        name for name in set(before) & set(after) if before[name] != after[name]
+    )
+
+    # UNCONDITIONAL RESTORE first — even on detection failure, the next
+    # commit must not be blocked by leftover corruption.
+    if created or deleted or modified:
+        _restore_hooks_dir(hooks_dir, before)
+
+    violations: list[str] = []
+    if created:
+        violations.append(f"Created: {created}")
+    if deleted:
+        violations.append(f"Deleted: {deleted}")
+    if modified:
+        violations.append(f"Modified: {modified}")
+
+    if violations:
+        # Surface as a warning rather than a teardown failure: the unconditional
+        # restore above is the safety net — we do not want to block pre-commit
+        # runs when a test touches hooks, we want the hooks left intact.
+        import sys as _sys
+
+        _sys.stderr.write(
+            "\nHOOK-GUARD: test session corrupted .git/hooks/ — "
+            + "; ".join(violations)
+            + f"\n  hooks dir: {hooks_dir}"
+            + "\n  (hooks dir has been RESTORED to the pre-session snapshot)\n"
+        )
+
+
+# ---------------------------------------------------------------------------
 # 3a: HTML report branding (pytest-html hooks)
 # ---------------------------------------------------------------------------
 

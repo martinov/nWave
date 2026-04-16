@@ -120,12 +120,19 @@ At the start of execution, create these tasks using TaskCreate and follow them i
    - h. Wiring smoke check: verify every new function defined in production files has at least one call site in production code (not just tests). Flag "function X defined but only called from tests" → re-dispatch crafter.
    - i. Acceptance test gate: after each step's COMMIT/PASS, run `tests/acceptance/{feature-id}/`. Fix failures before proceeding to next step. No deferral.
 
-3.5. **Post-Merge Integration Gate (Hard Gate)** — AFTER all steps reach COMMIT/PASS, BEFORE Phase 3. Gate: full acceptance suite passes in all environments.
+3.5. **Post-Merge Integration Gate (Hard Gate)** — AFTER all steps reach COMMIT/PASS, BEFORE Phase 3. Gate: full acceptance suite passes in all environments AND every story's Elevator Pitch demo command produces non-empty output.
    - a. Run `pipenv run pytest tests/acceptance/{feature-id}/ -v --tb=short`.
    - b. Run acceptance tests against EVERY environment in `docs/feature/{feature-id}/devops/environments.yaml`. If missing, use defaults: `clean`, `with-pre-commit`, `with-stale-config`.
    - c. BLOCK if ANY test fails in ANY environment.
-   - d. On failure: identify failing environment + test, re-dispatch crafter for new TDD cycle, re-run full gate after fix. If same test fails in 2+ environments after one fix attempt, STOP and report to user.
-   - e. On success: record gate passage in `execution-log.json`: `{"gate": "post-merge-integration", "status": "PASS", "environments_tested": [...], "timestamp": "ISO-8601"}`.
+   - d. **Elevator Pitch demo execution (HARD GATE)** — For every user story in `docs/feature/{feature-id}/discuss/user-stories.md` that is NOT tagged `@infrastructure`:
+      - Extract the `After: run ... → sees ...` line
+      - Execute the exact command (subprocess, not function call)
+      - Capture stdout + exit code
+      - Verify: exit code is 0, stdout is non-empty, stdout contains the substring described by the "sees" clause
+      - On any failure: BLOCK with message "Story {N}: demo command {cmd} did not produce visible output — either the CLI is broken or the story Elevator Pitch is fictional. Fix one or the other."
+      - Append demo output to `docs/feature/{feature-id}/deliver/wave-decisions.md` under a `## Demo Evidence — {date}` section. Do NOT create a separate demo-output file.
+   - e. On failure at step a/b: identify failing environment + test, re-dispatch crafter for new TDD cycle, re-run full gate after fix. If same test fails in 2+ environments after one fix attempt, STOP and report to user.
+   - f. On success: record gate passage in `execution-log.json`: `{"gate": "post-merge-integration", "status": "PASS", "environments_tested": [...], "stories_demoed": [...], "timestamp": "ISO-8601"}`.
 
 4. **Phase 3 — Complete Refactoring (L1-L4)** — [SKIP if `rigor.refactor_pass = false`]. Gate: all tests green after each module refactored.
    - a. Collect modified files: `git diff --name-only {base-commit}..HEAD -- '*.py' | sort -u`. Split into PRODUCTION_FILES (`src/`) and TEST_FILES (`tests/`).

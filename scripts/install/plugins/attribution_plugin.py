@@ -4,7 +4,6 @@ Prompts the developer to opt in to Co-Authored-By trailer in commits.
 Runs LAST (priority 200) -- never blocks core installation.
 """
 
-import sys
 from pathlib import Path
 
 from scripts.install.attribution_utils import (
@@ -17,11 +16,11 @@ from scripts.install.attribution_utils import (
 from .base import InstallationPlugin, InstallContext, PluginResult
 
 
-_PROMPT = (
-    "Would you like to credit nWave in your commits? (Co-Authored-By trailer) [Y/n] "
+_MSG_FIRST_TIME_ENABLED = (
+    "nWave attribution enabled. Your commits will include a "
+    "`Co-Authored-By` trailer. "
+    "Run `nwave-ai attribution off` to disable."
 )
-_MSG_ENABLED = "Attribution enabled. Change anytime: nwave-ai attribution off"
-_MSG_DISABLED = "No problem. nWave works exactly the same either way."
 
 
 class AttributionPlugin(InstallationPlugin):
@@ -55,7 +54,13 @@ class AttributionPlugin(InstallationPlugin):
             )
 
     def _do_install(self, context: InstallContext) -> PluginResult:
-        """Core install logic, may raise."""
+        """Core install logic, may raise.
+
+        Install is always non-blocking: it never prompts. A new install
+        defaults to opt-in (enabled=True) with a helpful first-time
+        message pointing users at `nwave-ai attribution off` to disable.
+        Existing preferences (True or False) are preserved unchanged.
+        """
         existing = read_attribution_preference(self._config_dir)
 
         if existing is not None:
@@ -72,34 +77,14 @@ class AttributionPlugin(InstallationPlugin):
                 message=f"Attribution preference preserved ({state})",
             )
 
-        if not sys.stdin.isatty():
-            write_attribution_preference(self._config_dir, enabled=True)
-            install_attribution_hook(self._config_dir)
-            context.logger.info(
-                "  Non-interactive install: attribution defaults to on."
-                " Disable anytime: nwave-ai attribution off"
-            )
-            return PluginResult(
-                success=True,
-                plugin_name="attribution",
-                message="Attribution enabled (non-interactive, default on)",
-            )
-
-        response = input(_PROMPT).strip().lower()
-        enabled = response in ("", "y", "yes")
-
-        write_attribution_preference(self._config_dir, enabled=enabled)
-
-        if enabled:
-            install_attribution_hook(self._config_dir)
-            context.logger.info(f"  {_MSG_ENABLED}")
-        else:
-            context.logger.info(f"  {_MSG_DISABLED}")
-
+        # First install: opt-in default, never prompt.
+        write_attribution_preference(self._config_dir, enabled=True)
+        install_attribution_hook(self._config_dir)
+        context.logger.info(f"  {_MSG_FIRST_TIME_ENABLED}")
         return PluginResult(
             success=True,
             plugin_name="attribution",
-            message=_MSG_ENABLED if enabled else _MSG_DISABLED,
+            message=_MSG_FIRST_TIME_ENABLED,
         )
 
     def verify(self, context: InstallContext) -> PluginResult:

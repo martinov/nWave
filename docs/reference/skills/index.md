@@ -686,7 +686,7 @@
 
 ## nw-spike
 
-- [nw-spike](../../../nWave/skills/nw-spike/SKILL.md) — Runs a timeboxed spike to validate one core assumption before DESIGN. Use after DISCUSS when the feature involves a new mechanism, performance requirement, or external integration.
+- [nw-spike](../../../nWave/skills/nw-spike/SKILL.md) — Runs a timeboxed PROBE to validate one core assumption, then optionally PROMOTES the probe into a walking skeleton — the first e2e thin slice of the feature, committed and demo-able. Use after DISCUSS when the feature involves a new mechanism, performance requirement, or external integration.
 
 ## nw-spike-methodology
 
@@ -738,6 +738,10 @@
 ## nw-tutorial-structure
 
 - [nw-tutorial-structure](../../../nWave/skills/nw-tutorial-structure/SKILL.md) — Tutorial structure blueprint — section ordering, step templates, and progressive disclosure patterns for evidence-based tutorial design
+
+## nw-update
+
+- [nw-update](../../../nWave/skills/nw-update/SKILL.md) — Queues a deferred self-update of nwave-ai. Writes a PendingUpdateFlag that the SessionStart hook replays on the next Claude Code launch, so the current session is not interrupted. Falls back to manual instructions when the package manager cannot be detected.
 
 ## nw-usability-engineering
 

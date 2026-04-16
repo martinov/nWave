@@ -1,5 +1,5 @@
 name: nWave
-version: 3.10.0
+version: 3.10.1
 description: "Comprehensive DISCOVER\u2192DIVERGE\u2192DISCUSS\u2192SPIKE\u2192DESIGN\u2192\
   DEVOPS\u2192DISTILL\u2192DELIVER methodology with visual architecture lifecycle\
   \ management"
@@ -457,6 +457,18 @@ commands:
     outputs:
     - contextual_answer
     - command_recommendation
+  update:
+    description: Queues a deferred self-update of nwave-ai. Writes a PendingUpdateFlag
+      that the SessionStart hook replays on the next Claude Code launch, so the current
+      session is not interrupted. Falls back to manual instructions when the package
+      manager cannot be detected.
+    argument_hint: '[target-version] - Optional explicit version (e.g. 1.4.2). Defaults
+      to the latest version discovered by the periodic update check.'
+    agents: []
+    wave: CROSS_WAVE
+    outputs:
+    - pending_update_flag
+    - user_confirmation
 quality_gates:
   knowledge_preservation:
     software-crafter: 925_lines_methodology

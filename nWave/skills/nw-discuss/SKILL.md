@@ -158,7 +158,24 @@ Luna loads `user-story-mapping` skill before this phase.
 Luna crafts LeanUX stories informed by JTBD + journey artifacts. Every story traces to at least one job story. Validates against DoR, invokes peer review, prepares handoff.
 
 1. **Story Drafting** — Craft user stories in LeanUX format. Each story traces to at least one job story from Phase 1 (or states "JTBD skipped" if Decision 4 = No). Gate: every story has a job traceability reference.
-2. **Acceptance Criteria** — Embed testable acceptance criteria in each story. Gate: every AC is verifiable without ambiguity.
+1b. **Elevator Pitch Test (MANDATORY, per-story)** — Every user story MUST contain an `### Elevator Pitch` subsection immediately after the story narrative, with exactly these three lines:
+
+```markdown
+### Elevator Pitch
+Before: {one sentence — what the user cannot do today}
+After: run `{exact command / endpoint / UI action}` → sees `{exact observable output}`
+Decision enabled: {one sentence — what the user decides with that output}
+```
+
+Rules:
+- The "After" line MUST reference a real user-invocable entry point (CLI subcommand, HTTP endpoint path, UI action name) — not a service function or internal API
+- The "sees" portion MUST describe concrete observable output (stdout text, HTTP response body, screen element) — not internal state or "tests green"
+- The "Decision enabled" line is the Job-to-be-Done connection: if the user cannot make any decision with the output, the story is infrastructure, not value — merge it into the story that DOES enable a decision
+- If a story legitimately has no user-visible output (pure infra migration), it MUST be labelled `@infrastructure` and BLOCK the slice — a slice containing only `@infrastructure` stories cannot be released
+
+Gate: every non-`@infrastructure` story has a complete Elevator Pitch. Slices with only `@infrastructure` stories are flagged for re-slicing.
+
+2. **Acceptance Criteria** — Embed testable acceptance criteria in each story. Gate: every AC is verifiable without ambiguity. AC MUST verify the Elevator Pitch's "After" command produces the "sees" output end-to-end.
 3. **Requirements Completeness** — Calculate requirements completeness score. Gate: score > 0.95.
 4. **Outcome KPIs** — Define measurable outcome KPIs with targets. Gate: each KPI has a numeric target and measurement method.
 5. **DoR Validation** — Validate all 9 DoR items with evidence. Gate: DoR passed with evidence for all 9 items.

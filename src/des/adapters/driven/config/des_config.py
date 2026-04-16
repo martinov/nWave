@@ -15,9 +15,13 @@ Hexagonal Architecture:
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from des.domain.nwave_dir_gitignore import ensure_nwave_gitignore
+
+
+if TYPE_CHECKING:
+    from des.domain.pending_update_flag import PendingUpdateFlag
 
 
 class DESConfig:
@@ -290,3 +294,42 @@ class DESConfig:
         self._config_path.write_text(
             json.dumps(current_data, indent=2), encoding="utf-8"
         )
+
+    # --- Pending update flag I/O (deferred self-update) ---
+
+    @property
+    def pending_update_path(self) -> Path:
+        """Path to the pending-update flag file (~/.nwave/pending-update.json)."""
+        return Path.home() / ".nwave" / "pending-update.json"
+
+    def save_pending_update_state(self, flag: "PendingUpdateFlag") -> None:
+        """Persist PendingUpdateFlag to pending_update_path as JSON.
+
+        Creates the parent directory and the runtime ``.gitignore`` sentinel
+        (invariant: every time we touch ``~/.nwave/`` we ensure it is ignored).
+        """
+        path = self.pending_update_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        ensure_nwave_gitignore(path.parent)
+        path.write_text(json.dumps(flag.to_dict(), indent=2), encoding="utf-8")
+
+    def read_pending_update(self) -> "PendingUpdateFlag | None":
+        """Read pending-update flag. Returns None if missing or invalid JSON."""
+        from des.domain.pending_update_flag import PendingUpdateFlag
+
+        path = self.pending_update_path
+        if not path.exists():
+            return None
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            return PendingUpdateFlag.from_dict(payload)
+        except (json.JSONDecodeError, OSError, KeyError, ValueError):
+            return None
+
+    def clear_pending_update(self) -> None:
+        """Remove the pending-update flag file. Idempotent (no error if absent)."""
+        path = self.pending_update_path
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass

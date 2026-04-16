@@ -15,6 +15,12 @@ from __future__ import annotations
 
 import json
 import sys
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from des.adapters.driven.config.des_config import DESConfig
+    from des.ports.driven_ports.package_manager_port import PackageManagerPort
 
 
 def _get_local_version() -> str:
@@ -22,6 +28,64 @@ def _get_local_version() -> str:
     from des.application.update_check_service import _detect_local_version
 
     return _detect_local_version()
+
+
+def _select_package_manager_adapter(pm: str) -> PackageManagerPort:
+    """Return the adapter for the given package manager name.
+
+    For ``pm == "unknown"`` returns a ``NullPackageManager`` no-op adapter; the
+    service exits via its own ``flag.pm == "unknown"`` branch before invoking
+    ``upgrade()`` on it. Always returning a real ``PackageManagerPort`` keeps
+    the type contract honest and removes the need for ``# type: ignore`` at
+    the call site.
+    """
+    if pm == "pipx":
+        from des.adapters.driven.package_managers.pipx_package_manager_adapter import (
+            PipxPackageManagerAdapter,
+        )
+
+        return PipxPackageManagerAdapter()
+    if pm == "uv":
+        from des.adapters.driven.package_managers.uv_package_manager_adapter import (
+            UvPackageManagerAdapter,
+        )
+
+        return UvPackageManagerAdapter()
+    # pm == "unknown": service handles via its existing branch.
+    from des.adapters.driven.package_managers.null_package_manager import (
+        NullPackageManager,
+    )
+
+    return NullPackageManager()
+
+
+def _apply_pending_update_if_any(des_config: DESConfig, current_version: str) -> None:
+    """Early-phase apply of any pending deferred nWave self-update.
+
+    Reads the pending-update flag via DESConfig; when present, composes a
+    PendingUpdateService with the adapter matching ``flag.pm`` and invokes
+    ``apply()``. For ``flag.pm == "unknown"`` the service handles the branch
+    internally (no adapter invoked) and emits a warning banner.
+
+    Fail-open: all exceptions are swallowed so the session is never blocked.
+    """
+    try:
+        flag = des_config.read_pending_update()
+        if flag is None:
+            return
+
+        from des.application.pending_update_service import PendingUpdateService
+
+        adapter = _select_package_manager_adapter(flag.pm)
+
+        service = PendingUpdateService(
+            config=des_config,
+            pm=adapter,
+            current_version=current_version,
+        )
+        service.apply()
+    except Exception as e:
+        sys.stderr.write(f"[nwave] pending-update apply error (fail-open): {e}\n")
 
 
 def _run_housekeeping(des_config) -> None:
@@ -73,6 +137,11 @@ def handle_session_start() -> int:
     from des.adapters.driven.config.des_config import DESConfig
 
     des_config = DESConfig()
+
+    # Early phase: apply any pending deferred self-update BEFORE housekeeping
+    # and update-check. A just-upgraded session must not run update-check with
+    # a stale current_version comparison.
+    _apply_pending_update_if_any(des_config, _get_local_version())
 
     try:
         _run_housekeeping(des_config)

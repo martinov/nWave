@@ -55,32 +55,27 @@ DISTILL → DELIVER is always the terminal pair. See the [Wave Routing Guide](ht
 
 - **Python 3.10+** — nWave's DES hooks use `match/case` statements and `X | Y` union type syntax introduced in Python 3.10. Verify with `python3 --version`.
 
-### CLI Installer (Recommended)
+### CLI Installer
 
-Full feature support. Install from PyPI:
+Install from PyPI with `pipx` or `uv`:
 
 ```bash
-pipx install nwave-ai
+pipx install nwave-ai        # or: uv tool install nwave-ai
 nwave-ai install
 ```
 
 Agents and commands go to `~/.claude/`.
 
-> **Don't have pipx?** Install with: `pip install pipx && pipx ensurepath`, then restart your terminal.
+> **Don't have pipx?** Install with: `pip install pipx && pipx ensurepath`, then restart your terminal. Alternatively, [install `uv`](https://docs.astral.sh/uv/getting-started/installation/).
 > **Windows users**: Use WSL (Windows Subsystem for Linux). Install with: `wsl --install`
 
 Full setup details: **[Installation Guide](https://github.com/nWave-ai/nWave/blob/main/docs/guides/installation-guide/README.md)**
 
-### Plugin (Limited)
+### Plugin marketplace (not recommended)
 
-Quick setup, but does not support all features (DES enforcement, hook customization, rigor profiles). Use the CLI installer for full functionality.
-
-```
-/plugin marketplace add nwave-ai/nwave
-/plugin install nw@nwave-marketplace
-```
-
-Restart Claude Code and type `/nw-` to see available commands.
+> ⚠️ **DES enforcement does not work via the plugin marketplace and never will.** The plugin marketplace install path is blocked on an upstream Claude Code limitation ([anthropics/claude-code#24529](https://github.com/anthropics/claude-code/issues/24529)) where `${CLAUDE_PLUGIN_ROOT}` is not populated in plugin hook execution contexts. Without DES hooks, you lose phase enforcement, TDD validation, rigor profiles, and audit logging — the core of what nWave does.
+>
+> **Use the CLI installer above.** The plugin marketplace ships agents, commands, and skills only; consider it a degraded preview, not a supported install method.
 
 ### OpenCode Support (Alternative IDE)
 
@@ -89,7 +84,7 @@ nWave also works with [OpenCode](https://github.com/opencode-dev/opencode), an o
 **Install prerequisites:**
 ```bash
 npm install -g opencode-ai
-pipx install nwave-ai
+pipx install nwave-ai        # or: uv tool install nwave-ai
 ```
 
 **Configure OpenCode:**
@@ -118,10 +113,9 @@ nwave-ai install
 
 | Scenario | Use | Why |
 |----------|-----|-----|
-| First time | CLI | Full features, recommended path |
+| First time | CLI | Full features, full DES enforcement |
 | Team rollout | CLI | Automation, full DES enforcement |
 | Contributing | CLI | Dev scripts, internals access |
-| Quick trial | Plugin | Fast setup, but limited features |
 
 ### Use (inside Claude Code, after reopening it)
 
@@ -151,25 +145,9 @@ Full walkthrough: **[Your First Feature](https://github.com/nWave-ai/nWave/tree/
 
 nWave checks for new versions when you open Claude Code. When available, you'll see a note in your context with version details and changes.
 
-**Plugin (self-hosted marketplace):**
-```
-/plugin marketplace update nwave-marketplace
-```
-
-Available immediately after release — no review delay.
-
-**Plugin (official Anthropic directory):**
-
-The official directory pins plugins to reviewed versions. Updates go through Anthropic's review before reaching users. If you want the latest sooner, switch to the self-hosted marketplace:
-
-```
-/plugin marketplace add nwave-ai/nwave
-/plugin install nw@nwave-marketplace
-```
-
-**CLI method:**
+**CLI:**
 ```bash
-pipx upgrade nwave-ai
+pipx upgrade nwave-ai        # or: uv tool upgrade nwave-ai
 nwave-ai install
 ```
 
@@ -180,15 +158,9 @@ nwave-ai install
 
 ## Uninstalling
 
-**Plugin method:**
-```
-/plugin uninstall nw
-```
-
-**CLI method:**
 ```bash
 nwave-ai uninstall              # Remove agents, commands, config, DES hooks
-pipx uninstall nwave-ai        # Remove the Python package
+pipx uninstall nwave-ai         # or: uv tool uninstall nwave-ai
 ```
 
 Both methods remove agents, commands, and configuration from `~/.claude/`. Your project files are unaffected.
@@ -274,7 +246,7 @@ These messages protect code quality but never prevent your work — they guide y
 
 **Why?** Commands migrated from Claude Code's dynamic `commands/` directory to the stable `skills/` system to prevent commands from disappearing during long sessions.
 
-**To upgrade**: Run `pipx upgrade nwave-ai && nwave-ai install` (CLI) or `/plugin marketplace update nwave-marketplace` (plugin). Old `/nw:` commands are automatically removed.
+**To upgrade**: Run `pipx upgrade nwave-ai && nwave-ai install` (or `uv tool upgrade nwave-ai && nwave-ai install`). Old `/nw:` commands are automatically removed.
 
 ## Privacy
 

@@ -68,22 +68,27 @@ class TestAttributionPluginInstall:
             config["attribution"]["trailer"] == "Co-Authored-By: nWave <nwave@nwave.ai>"
         )
 
-    def test_interactive_decline(self, tmp_path: Path) -> None:
-        """TTY present, input 'n' -> attribution disabled."""
+    def test_install_never_prompts(self, tmp_path: Path) -> None:
+        """Install MUST be non-blocking -- never calls input() (Fabio RCA).
+
+        Replaces the legacy interactive_decline test: install no longer
+        prompts. Users opt out post-install via `nwave-ai attribution off`.
+        """
         context = _make_context(tmp_path)
         nwave_dir = tmp_path / ".nwave"
         plugin = AttributionPlugin(config_dir=nwave_dir)
 
         with (
             patch("sys.stdin") as mock_stdin,
-            patch("builtins.input", return_value="n"),
+            patch("builtins.input") as mock_input,
         ):
             mock_stdin.isatty.return_value = True
             result = plugin.install(context)
 
         assert result.success is True
+        mock_input.assert_not_called()
         config = _read_global_config(nwave_dir)
-        assert config["attribution"]["enabled"] is False
+        assert config["attribution"]["enabled"] is True
 
     def test_non_interactive_defaults_on(self, tmp_path: Path) -> None:
         """No TTY -> attribution defaults to on, no prompt issued."""

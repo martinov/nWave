@@ -189,7 +189,7 @@ BULK_HASHES = {
     "nw-brainstorming": "e1b52438744b39ae52c37c89d7b4b338",
     "nw-buddy": "de628ca01961c8a99e191b789b7dd21d",
     "nw-buddy-command-catalog": "403ff4bf5cc44e73183e6021e0e3147d",
-    "nw-buddy-project-reading": "239f764ac3b8b27feae1aa0c0be9bf3f",
+    "nw-buddy-project-reading": "be990dabaac7ca5b8492283fc5abdd1f",
     "nw-buddy-ssot-knowledge": "7a801cc1b1ab7379a258f621a08a71f5",
     "nw-buddy-wave-knowledge": "a6ac94dcca543dc426e22d47dffcdb28",
     "nw-cialdini-outreach": "90aea943d1a2eb313561ecbd0f2c5915",
