@@ -14,12 +14,13 @@ packages = ["nwave_ai"]
 "nWave/framework-catalog.yaml" = "nWave/framework-catalog.yaml"
 "nWave/VERSION" = "nWave/VERSION"
 "nWave/README.md" = "nWave/README.md"
-"scripts" = "scripts"
-"src/des" = "src/des"
+"scripts/install" = "scripts/install"
+"scripts/shared" = "scripts/shared"
+"lib/python/des" = "nWave/lib/python/des"
 
 [project]
 name = "nwave-ai"
-version = "3.11.0"
+version = "3.12.0"
 description = "Modern CLI installer for nwave with rich terminal UI"
 readme = "README.md"
 license = {text = "MIT"}
@@ -98,7 +99,10 @@ dev = [
     "fpdf2>=2.7.0",
     "click>=8.0.0",
     "colorama>=0.4.0",
-    "tqdm>=4.64.0"
+    "tqdm>=4.64.0",
+    # E2E container testing
+    "testcontainers>=4.0.0",
+    "docker>=7.0.0"
 ]
 test = [
     "pytest>=8.0.0",
@@ -116,7 +120,11 @@ Repository = "https://github.com/nWave-ai/nWave"
 Issues = "https://github.com/nWave-ai/nWave/issues"
 
 [project.scripts]
-nwave-ai = "nwave_ai.cli:main"
+des-log-phase = "des.cli.log_phase:main"
+des-init-log = "des.cli.init_log:main"
+des-verify-integrity = "des.cli.verify_deliver_integrity:main"
+des-roadmap = "des.cli.roadmap:main"
+des-health-check = "des.cli.health_check:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -135,6 +143,9 @@ markers = [
     "e2e: End-to-end acceptance tests",
     "slow: Tests that take longer to run",
     "canary: Canary skill injection detection tests (ADR-006)",
+    "probe_test: Tests that exercise substrate probe wiring (opt-out from _silence_probe autouse)",
+    "fast_gate: Fast source-level regression guards run pre-commit/pre-push",
+    "live_api: Tests that call paid external APIs (e.g. OpenAI); skipped unless relevant API key env var is set",
 ]
 norecursedirs = [
     ".venv",
@@ -283,7 +294,7 @@ line-ending = "auto"
 [tool.commitizen]
 # WARNING: the tool.commitizen.version is tracking the LAST STABLE version and is updated by the pipeline!
 # DON'T TOUCH IT!
-version = "3.11.0"
+version = "3.12.0"
 version_scheme = "pep440"
 version_files = [
     "nWave/VERSION",

@@ -11,6 +11,7 @@ import json
 import sys
 from pathlib import Path
 
+from des.adapters.drivers.hooks.execution_log_resolver import resolve_execution_log_path
 from des.adapters.drivers.hooks.subagent_stop_handler import (
     extract_des_context_from_transcript,
 )
@@ -27,12 +28,23 @@ REMAINING_PHASES_REMINDER = (
 
 
 def _resolve_deliver_paths(cwd: str, project_id: str) -> tuple[Path, Path, Path]:
-    """Resolve paths for roadmap, execution-log, and progress files."""
-    base = Path(cwd) / "docs" / "feature" / project_id / "deliver"
+    """Resolve paths for roadmap, execution-log, and progress files.
+
+    Uses wave-agnostic resolution: checks deliver/ first, then scans for any
+    single wave subdir containing execution-log.json. Falls back to deliver/
+    on error so downstream missing-file handling is preserved.
+    """
+    base = Path(cwd) / "docs" / "feature"
+    try:
+        exec_log_path = resolve_execution_log_path(project_id, base=base)
+        wave_dir = exec_log_path.parent
+    except (FileNotFoundError, ValueError):
+        wave_dir = base / project_id / "deliver"
+        exec_log_path = wave_dir / "execution-log.json"
     return (
-        base / "roadmap.json",
-        base / "execution-log.json",
-        base / ".develop-progress.json",
+        wave_dir / "roadmap.json",
+        exec_log_path,
+        wave_dir / ".develop-progress.json",
     )
 
 

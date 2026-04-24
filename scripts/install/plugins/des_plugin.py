@@ -27,6 +27,21 @@ class DESPlugin(InstallationPlugin):
         "scope_boundary_check.py",
     ]
 
+    # DES shims installed to ~/.claude/bin/
+    DES_SHIMS = [
+        "des-log-phase",
+        "des-init-log",
+        "des-verify-integrity",
+        "des-roadmap",
+        "des-health-check",
+    ]
+
+    # Minimal POSIX system directories written as fallback when settings.json
+    # has no prior env.PATH. Claude Code REPLACES env.PATH entirely (no merge
+    # with the inherited shell PATH), so omitting these makes system tools
+    # (python3, grep, git) unreachable by bare name after install.
+    SYSTEM_PATH_FALLBACK = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
     # DES templates installed to ~/.claude/templates/
     DES_TEMPLATES = [
         ".pre-commit-config-nwave.yaml",
@@ -84,6 +99,18 @@ class DESPlugin(InstallationPlugin):
                 errors.append(
                     f"Missing DES scripts: {', '.join(missing_scripts)}. "
                     f"Required scripts: {', '.join(self.DES_SCRIPTS)}"
+                )
+
+            # Check for required shim files in the same scripts/des/ directory
+            missing_shims = []
+            for shim_name in self.DES_SHIMS:
+                shim_path = scripts_dir / shim_name
+                if not shim_path.exists():
+                    missing_shims.append(shim_name)
+            if missing_shims:
+                errors.append(
+                    f"Missing DES shims: {', '.join(missing_shims)}. "
+                    f"Required shims: {', '.join(self.DES_SHIMS)}"
                 )
 
         # Check for DES templates (use framework_source for dist/ or nWave/)
@@ -165,6 +192,11 @@ class DESPlugin(InstallationPlugin):
             if not hooks_result.success:
                 return hooks_result
 
+            # Install DES shims to ~/.claude/bin/ and update PATH
+            shims_result = self._install_des_shims(context)
+            if not shims_result.success:
+                return shims_result
+
             # Bootstrap project-level DES config
             config_result = self._bootstrap_des_config(context)
             if not config_result.success:
@@ -173,7 +205,7 @@ class DESPlugin(InstallationPlugin):
             return PluginResult(
                 success=True,
                 plugin_name="des",
-                message="DES installed successfully (module, scripts, templates, hooks, config)",
+                message="DES installed successfully (module, scripts, templates, hooks, shims, config)",
             )
 
         except Exception as e:
@@ -753,6 +785,117 @@ class DESPlugin(InstallationPlugin):
                     fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
         context.logger.info(f"  ✅ Settings updated at {settings_file}")
+
+    def _install_des_shims(self, context: InstallContext) -> PluginResult:
+        """Copy 5 DES CLI shims to ~/.claude/bin/ with mode 0o755.
+
+        Also prepends $HOME/.claude/bin to settings.json env.PATH so the
+        shim command names are resolvable from the Bash tool without an
+        env-var-prefix first token.
+
+        Idempotent: repeated invocations overwrite shims (shutil.copy2) and
+        skip the PATH entry if already present.
+        """
+        try:
+            # Resolve source: framework_source/scripts/des or project nWave/scripts/des
+            if context.framework_source:
+                source_dir = context.framework_source / "scripts" / "des"
+                if not source_dir.exists() and context.project_root:
+                    source_dir = context.project_root / "nWave" / "scripts" / "des"
+            elif context.project_root:
+                source_dir = context.project_root / "nWave" / "scripts" / "des"
+            else:
+                source_dir = Path("nWave/scripts/des")
+
+            if not source_dir.exists():
+                return PluginResult(
+                    success=False,
+                    plugin_name="des",
+                    message=f"DES shims source not found: {source_dir}",
+                )
+
+            target_bin = context.claude_dir / "bin"
+            target_bin.mkdir(parents=True, exist_ok=True)
+
+            for shim_name in self.DES_SHIMS:
+                src = source_dir / shim_name
+                if not src.exists():
+                    return PluginResult(
+                        success=False,
+                        plugin_name="des",
+                        message=f"DES shim not found in source: {shim_name}",
+                    )
+                dst = target_bin / shim_name
+                if not context.dry_run:
+                    shutil.copy2(src, dst)
+                    dst.chmod(0o755)
+
+            # Update settings.json env.PATH with absolute bin path
+            des_bin_path = str(context.claude_dir / "bin")
+            self._update_path_in_settings(context, des_bin_path)
+
+            context.logger.info(
+                f"  ✅ Installed {len(self.DES_SHIMS)} DES shims to {target_bin}"
+            )
+            return PluginResult(
+                success=True,
+                plugin_name="des",
+                message=f"Installed {len(self.DES_SHIMS)} DES shims to {target_bin}",
+            )
+
+        except Exception as e:
+            return PluginResult(
+                success=False,
+                plugin_name="des",
+                message=f"DES shims install failed: {e}",
+            )
+
+    def _update_path_in_settings(
+        self, context: InstallContext, des_bin_path: str
+    ) -> None:
+        """Prepend the absolute DES bin path to settings.json env.PATH if not present.
+
+        Idempotent: skips prepend if des_bin_path is already a colon-delimited
+        segment of the current PATH value.
+
+        Normalizes pre-existing $HOME entries to absolute paths. Claude Code passes
+        env.PATH verbatim to exec() without shell expansion, so $HOME literals never
+        resolve to the actual filesystem directory. Re-running install on a settings.json
+        with $HOME entries rewrites them to absolute paths (BUG-2 from RCA).
+
+        Uses absolute path resolved at install time. env.PATH values are passed
+        verbatim to exec() and are never shell-expanded. Re-run 'nwave-ai install'
+        on each machine if settings.json is synced.
+        """
+        settings_file = context.claude_dir / "settings.json"
+        config = self._load_settings(settings_file)
+
+        if "env" not in config:
+            config["env"] = {}
+
+        existing_path = config["env"].get("PATH", "")
+
+        # Normalize any $HOME references in existing PATH entries to absolute paths.
+        # Claude Code does not shell-expand env values, so $HOME must be resolved now.
+        if existing_path and "$HOME" in existing_path:
+            home = str(Path.home())
+            segments = [s.replace("$HOME", home) for s in existing_path.split(":")]
+            existing_path = ":".join(segments)
+
+        if des_bin_path in existing_path.split(":"):
+            if existing_path != config["env"].get("PATH", ""):
+                config["env"]["PATH"] = existing_path
+                if not context.dry_run:
+                    self._save_settings(settings_file, config, context)
+            return
+
+        if existing_path:
+            config["env"]["PATH"] = des_bin_path + ":" + existing_path
+        else:
+            config["env"]["PATH"] = des_bin_path + ":" + self.SYSTEM_PATH_FALLBACK
+
+        if not context.dry_run:
+            self._save_settings(settings_file, config, context)
 
     def _hooks_already_installed(self, config: dict) -> bool:
         """Check if DES hooks are already installed.

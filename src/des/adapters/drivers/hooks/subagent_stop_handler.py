@@ -18,6 +18,7 @@ from pathlib import Path
 
 from des.adapters.driven.time.system_time import SystemTimeProvider
 from des.adapters.drivers.hooks import des_task_signal, hook_protocol, service_factory
+from des.adapters.drivers.hooks.execution_log_resolver import resolve_execution_log_path
 from des.adapters.drivers.hooks.hook_protocol import (
     EXIT_CODE_TO_DECISION,
     STDERR_CAPTURE_MAX_CHARS,
@@ -173,9 +174,21 @@ def _resolve_des_context(
 
     project_id = des_context["project_id"]
     step_id = des_context["step_id"]
-    execution_log_path = os.path.join(
-        cwd, "docs", "feature", project_id, "deliver", "execution-log.json"
-    )
+    try:
+        from pathlib import Path as _Path
+
+        resolved = resolve_execution_log_path(
+            project_id,
+            base=_Path(cwd) / "docs" / "feature",
+        )
+        execution_log_path = str(resolved)
+    except (FileNotFoundError, ValueError) as exc:
+        # No log found or ambiguous — fall back to deliver/ path so downstream
+        # validation produces a meaningful "not found" error message.
+        execution_log_path = os.path.join(
+            cwd, "docs", "feature", project_id, "deliver", "execution-log.json"
+        )
+        _ = exc  # error surfaced by SubagentStopService when log not found
     return execution_log_path, project_id, step_id
 
 

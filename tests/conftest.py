@@ -223,6 +223,7 @@ TIER_MAP = {
     "tests/bugs/": "acceptance",
     # Root-level tests
     "tests/validation/": "unit",
+    "tests/e2e/": "e2e",  # testcontainers-driven Docker tests (post Phase 5 retirement of Dockerfiles)
     "tests/": "unit",  # catch-all default
 }
 

@@ -1,17 +1,66 @@
 # nWave
 
-AI agents that guide you from idea to working code — with human judgment at every gate.
+AI agents that guide you from idea to working code, with human judgment at every gate.
 
-nWave runs inside [Claude Code](https://claude.com/product/claude-code). It breaks feature delivery into seven waves (discover, diverge, discuss, design, devops, distill, deliver). Specialized agents produce artifacts at each wave. You review and approve before proceeding. The machine never runs unsupervised end-to-end.
+nWave runs inside [Claude Code](https://claude.com/product/claude-code). It breaks feature delivery into seven waves (discover, diverge, discuss, design, devops, distill, deliver). Specialized agents produce artifacts at each wave. You review and approve before proceeding.
+
+## Install in 5 Minutes
+
+**Requirements**: Python 3.10+ and Claude Code.
+
+```bash
+# Step 1: install uv (skip if you already have it)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Step 2: install the nWave CLI
+uv tool install nwave-ai
+
+# Step 3: install nWave into Claude Code
+nwave-ai install
+
+# Step 4: verify everything is healthy
+nwave-ai doctor
+```
+
+Restart Claude Code after step 3. The installer prints a success panel with the installed version number; run `nwave-ai doctor` to confirm everything is healthy.
+
+## Your First Command
+
+Inside Claude Code, type:
+
+```
+/nw-buddy What should I do next?
+```
+
+The buddy reads your project and tells you which wave to start, where your artifacts are, and how to use nWave for your specific context. It works on day one with no configuration.
+
+**Before nWave**: "Where do I start? Requirements doc or code first? Which agent?"
+**After nWave**: The buddy reads your project and gives you a concrete next step.
+
+Using pipx or OpenCode instead? [See alternative install methods](#alternative-install-methods).
+
+## Learn More
+
+| Resource | What it covers |
+|----------|---------------|
+| **[Your First Feature](https://github.com/nWave-ai/nWave/tree/main/docs/guides/tutorial-first-feature/)** | End-to-end walkthrough, zero to working code |
+| **[Team Rollout Guide](https://github.com/nWave-ai/nWave/tree/main/docs/guides/team-rollout.md)** | Onboard a second developer onto an nWave project |
+| **[Offline / Air-Gapped Install](https://github.com/nWave-ai/nWave/tree/main/docs/guides/offline-install.md)** | Install nWave on a machine without PyPI access |
+| **[Jobs To Be Done](https://github.com/nWave-ai/nWave/tree/main/docs/guides/jobs-to-be-done-guide/)** | Which wave fits your task |
+| **[Wave Directory Structure](https://github.com/nWave-ai/nWave/tree/main/docs/guides/wave-directory-structure/)** | How artifacts are organized per feature |
+| **[Agents and Commands Reference](https://github.com/nWave-ai/nWave/tree/main/docs/reference/index.md)** | All agents and commands |
+| **[Troubleshooting](https://github.com/nWave-ai/nWave/tree/main/docs/guides/troubleshooting-guide/)** | Common issues and fixes |
+
+---
 
 ## What's New in v3.5
 
-**[Full changelog →](https://github.com/nWave-ai/nWave/tree/main/docs/guides/whats-new-v35/)**
+**[Full changelog](https://github.com/nWave-ai/nWave/tree/main/docs/guides/whats-new-v35/)**
 
 - **`/nw-buddy`** — Your AI concierge. Not sure where to start? Ask the buddy. It reads your project and gives contextual answers about methodology, commands, project state, and troubleshooting.
 - **DIVERGE wave** — Structured brainstorming before convergence. Explore design options with JTBD analysis, competitive research, and SCAMPER ideation before locking into a solution.
 - **Three DESIGN architects** — Routes to the right specialist for your need: system-level architecture (Titan), domain/DDD modeling (Hera), or application-level design (Morgan).
-- **SSOT document model** — Single source of truth for product documents. Build feature spec once, reuse across requirements, design, testing, and delivery — no document sprawl.
+- **SSOT document model** — Single source of truth for product documents. Build feature spec once, reuse across requirements, design, testing, and delivery, no document sprawl.
 
 For upgrading from v3.3 or earlier, see [Breaking Changes](#breaking-changes) below.
 
@@ -45,7 +94,7 @@ The workflow has seven waves. Entry point depends on your context:
 - **Bug fix**: Jump straight to DISTILL (write failing test) then DELIVER
 - **Refactoring**: Jump to DELIVER (green already, refactor inside existing tests)
 
-DISTILL → DELIVER is always the terminal pair. See the [Wave Routing Guide](https://github.com/nWave-ai/nWave/tree/main/docs/guides/wave-routing-and-entry-points/) for the full decision matrix.
+DISTILL then DELIVER is always the terminal pair. See the [Wave Routing Guide](https://github.com/nWave-ai/nWave/tree/main/docs/guides/wave-routing-and-entry-points/) for the full decision matrix.
 
 40 agents total: 10 wave agents (including 3 DESIGN specialists), 1 concierge, 8 cross-wave specialists, 14 peer reviewers, 7 business agents. Full list: **[Commands Reference](https://github.com/nWave-ai/nWave/tree/main/docs/reference/commands/index.md)**
 
@@ -57,23 +106,39 @@ DISTILL → DELIVER is always the terminal pair. See the [Wave Routing Guide](ht
 
 ### CLI Installer
 
-Install from PyPI with `pipx` or `uv`:
+Follow the [Install in 5 Minutes](#install-in-5-minutes) steps at the top of this page. Agents and commands go to `~/.claude/`.
 
-```bash
-pipx install nwave-ai        # or: uv tool install nwave-ai
-nwave-ai install
-```
-
-Agents and commands go to `~/.claude/`.
-
-> **Don't have pipx?** Install with: `pip install pipx && pipx ensurepath`, then restart your terminal. Alternatively, [install `uv`](https://docs.astral.sh/uv/getting-started/installation/).
+> **Don't have uv?** Install with: `curl -LsSf https://astral.sh/uv/install.sh | sh` or see [uv installation docs](https://docs.astral.sh/uv/getting-started/installation/). Alternatively, use [pipx](https://pipx.pypa.io/stable/installation/) (requires Python 3.10+): `pip install pipx && pipx ensurepath`.
 > **Windows users**: Use WSL (Windows Subsystem for Linux). Install with: `wsl --install`
 
 Full setup details: **[Installation Guide](https://github.com/nWave-ai/nWave/blob/main/docs/guides/installation-guide/README.md)**
 
+### Alternative Install Methods
+
+<a name="alternative-install-methods"></a>
+
+**Using pipx:**
+```bash
+pipx install nwave-ai
+nwave-ai install
+nwave-ai doctor
+```
+
+**Using OpenCode** (open-source IDE alternative):
+```bash
+npm install -g opencode-ai
+uv tool install nwave-ai        # or: pipx install nwave-ai
+mkdir -p ~/.config/opencode
+echo '{"model": "openai/gpt-4o-mini"}' > ~/.config/opencode/opencode.json
+export OPENAI_API_KEY=your-key-here
+nwave-ai install
+```
+
+OpenCode compatibility: about 67% of nWave features work natively. For full feature parity, Claude Code remains the primary environment. See [OpenCode compatibility notes](#opencode-support-alternative-ide) below.
+
 ### Plugin marketplace (not recommended)
 
-> ⚠️ **DES enforcement does not work via the plugin marketplace and never will.** The plugin marketplace install path is blocked on an upstream Claude Code limitation ([anthropics/claude-code#24529](https://github.com/anthropics/claude-code/issues/24529)) where `${CLAUDE_PLUGIN_ROOT}` is not populated in plugin hook execution contexts. Without DES hooks, you lose phase enforcement, TDD validation, rigor profiles, and audit logging — the core of what nWave does.
+> **DES enforcement does not work via the plugin marketplace and never will.** The plugin marketplace install path is blocked on an upstream Claude Code limitation ([anthropics/claude-code#24529](https://github.com/anthropics/claude-code/issues/24529)) where `${CLAUDE_PLUGIN_ROOT}` is not populated in plugin hook execution contexts. Without DES hooks, you lose phase enforcement, TDD validation, rigor profiles, and audit logging, which are the core of what nWave does.
 >
 > **Use the CLI installer above.** The plugin marketplace ships agents, commands, and skills only; consider it a degraded preview, not a supported install method.
 
@@ -84,7 +149,7 @@ nWave also works with [OpenCode](https://github.com/opencode-dev/opencode), an o
 **Install prerequisites:**
 ```bash
 npm install -g opencode-ai
-pipx install nwave-ai        # or: uv tool install nwave-ai
+uv tool install nwave-ai        # or: pipx install nwave-ai
 ```
 
 **Configure OpenCode:**
@@ -104,9 +169,9 @@ nwave-ai install
 ```
 
 **Compatibility notes:**
-- ~67% of nWave features work natively on OpenCode via compatibility paths
+- About 67% of nWave features work natively on OpenCode via compatibility paths
 - DES hooks integrate via OpenCode's `tool.execute.before` mechanism
-- Some advanced subagent coordination may differ from Claude Code — use the core `/nw-discuss`, `/nw-design`, `/nw-distill`, `/nw-deliver` commands for best results
+- Some advanced subagent coordination may differ from Claude Code. Use the core `/nw-discuss`, `/nw-design`, `/nw-distill`, `/nw-deliver` commands for best results
 - For full feature parity and support, Claude Code remains the primary environment
 
 ### Which method?
@@ -194,9 +259,11 @@ Picked once, persists across sessions. Every `/nw-deliver`, `/nw-design`, `/nw-r
 
 ## Understanding DES Messages
 
-DES is nWave's quality enforcement layer — it monitors every Agent tool invocation during feature delivery to enforce TDD discipline and protect accidental edits. Most DES messages are normal enforcement, not errors. They appear when agents skip required safety checks or when your code contains patterns that look like step execution.
+DES is nWave's quality enforcement layer. It monitors every Agent tool invocation during feature delivery to enforce TDD discipline and protect accidental edits. Most DES messages are normal enforcement, not errors. They appear when agents skip required safety checks or when your code contains patterns that look like step execution.
 
 DES also runs automatic housekeeping at every session start: it removes audit logs beyond the retention window, cleans up signal files left by crashed sessions, and rotates the skill-loading log when it grows too large. This happens silently in the background and never blocks your session.
+
+If `nwave-ai doctor` reports a problem at startup, you will see an advisory in your Claude Code session context. Run `nwave-ai doctor` from the terminal to get the specific fix.
 
 | Message | What It Means | What To Do |
 |---------|---------------|-----------|
@@ -206,7 +273,7 @@ DES also runs automatic housekeeping at every session start: it removes audit lo
 | **nWave update available** | SessionStart detected a newer version available. | Optional. Run `pipx upgrade nwave-ai && nwave-ai install` when ready to upgrade, or dismiss and continue working. |
 | **False positive blocks** | Your prompt accidentally matches step-ID pattern (e.g., dates like "2026-02-09"). | Add `<!-- DES-ENFORCEMENT : exempt -->` comment to exempt the agent call from step-ID enforcement. |
 
-These messages protect code quality but never prevent your work — they guide you toward the safe path.
+These messages protect code quality but never prevent your work. They guide you toward the safe path.
 
 ## Documentation
 
@@ -214,11 +281,12 @@ These messages protect code quality but never prevent your work — they guide y
 
 - **[Installation Guide](https://github.com/nWave-ai/nWave/blob/main/docs/guides/installation-guide/README.md)** — Setup instructions
 - **[Your First Feature](https://github.com/nWave-ai/nWave/tree/main/docs/guides/tutorial-first-feature/)** — Build a feature end-to-end (tutorial)
+- **[Team Rollout Guide](https://github.com/nWave-ai/nWave/tree/main/docs/guides/team-rollout.md)** — Onboard a second developer onto an nWave project
 - **[Jobs To Be Done](https://github.com/nWave-ai/nWave/tree/main/docs/guides/jobs-to-be-done-guide/)** — Which workflow fits your task
 
-### Guides & Reference
+### Guides and Reference
 
-- **[Agents & Commands Reference](https://github.com/nWave-ai/nWave/tree/main/docs/reference/index.md)** — All agents, commands, skills, templates
+- **[Agents and Commands Reference](https://github.com/nWave-ai/nWave/tree/main/docs/reference/index.md)** — All agents, commands, skills, templates
 - **[Wave Directory Structure](https://github.com/nWave-ai/nWave/tree/main/docs/guides/wave-directory-structure/)** — How wave outputs are organized per feature
 - **[Invoke Reviewers](https://github.com/nWave-ai/nWave/tree/main/docs/guides/invoke-reviewer-agents/)** — Peer review workflow
 - **[Troubleshooting](https://github.com/nWave-ai/nWave/tree/main/docs/guides/troubleshooting-guide/)** — Common issues and fixes

@@ -102,7 +102,31 @@ def _patch_wheel_packages(text: str, new_name: str) -> tuple[str, str | None]:
         re.MULTILINE,
     )
     # Selective includes: only directories needed in the public package.
-    # Avoids broken symlinks and dev-only directories.
+    # Avoids broken symlinks, dev-only directories, and closed-source runtime.
+    #
+    # Historical note (fix-wheel-leaks-des-config-p0, 2026-04-23):
+    # Previously this block force-included broad "scripts" = "scripts" and
+    # "src/des" = "src/des", which shipped 136 files of dev-only tooling
+    # (release/, hooks/, framework/, validation/) and 149 files of closed-source
+    # DES runtime to the public 3.11.0 wheel.  The fix:
+    #   - narrows scripts to scripts/install + scripts/shared (the only subtrees
+    #     imported by nwave_ai/cli.py AND scripts/install/*.py at runtime,
+    #     verified by grep);
+    #   - replaces raw src/des with the pre-built lib/python/des tree (which
+    #     scripts/build_dist.py produces with imports rewritten src.des -> des)
+    #     and places it under nWave/ so installer lookup matches.
+    # The CI pypi-publish job (release-prod.yml) must run `scripts/build_dist.py`
+    # and stage `dist/lib` -> `./lib` before `python -m build --wheel` for the
+    # nWave/lib/python/des force-include to resolve.
+    #
+    # Path semantics for "lib/python/des" = "nWave/lib/python/des":
+    #   LHS = source path relative to repo root -> <repo>/lib/python/des/
+    #   RHS = destination inside wheel          -> site-packages/nWave/lib/python/des/
+    # The installer's des_plugin.py:222 looks up
+    # `context.framework_source / "lib/python/des"`.  When installed via pipx,
+    # install_nwave.py sets framework_source = site-packages/nWave/, so files
+    # must land at site-packages/nWave/lib/python/des/ — which only happens if
+    # the force-include destination is prefixed with "nWave/".
     replacement = (
         "[tool.hatch.build.targets.wheel]\n"
         f'packages = ["{pkg_name}"]\n'
@@ -116,8 +140,9 @@ def _patch_wheel_packages(text: str, new_name: str) -> tuple[str, str | None]:
         '"nWave/framework-catalog.yaml" = "nWave/framework-catalog.yaml"\n'
         '"nWave/VERSION" = "nWave/VERSION"\n'
         '"nWave/README.md" = "nWave/README.md"\n'
-        '"scripts" = "scripts"\n'
-        '"src/des" = "src/des"\n'
+        '"scripts/install" = "scripts/install"\n'
+        '"scripts/shared" = "scripts/shared"\n'
+        '"lib/python/des" = "nWave/lib/python/des"\n'
     )
     new_text, count = wheel_section.subn(replacement, text_clean)
     if count == 0:

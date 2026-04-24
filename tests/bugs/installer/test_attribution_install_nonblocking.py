@@ -30,6 +30,10 @@ from scripts.install.plugins.attribution_plugin import AttributionPlugin
 from scripts.install.plugins.base import InstallContext
 
 
+# Serialize tests touching .git/hooks/ to avoid xdist races on shared state.
+pytestmark = pytest.mark.xdist_group("git_hooks")
+
+
 @pytest.fixture(autouse=True)
 def _isolate_hook_installation(tmp_path: Path):
     """Prevent the plugin from touching real .git/hooks/ during tests."""

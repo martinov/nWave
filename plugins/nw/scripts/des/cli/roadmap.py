@@ -197,6 +197,27 @@ def main(argv: list[str] | None = None) -> int:
     if argv is None:
         argv = sys.argv[1:]
 
+    if argv and argv[0] in ("--help", "-h"):
+        print(
+            "Usage: python -m des.cli.roadmap {init|validate} [OPTIONS]\n\n"
+            "Subcommands:\n"
+            "  init      Generate a roadmap.json skeleton\n"
+            "  validate  Validate an existing roadmap.json\n\n"
+            "init options:\n"
+            "  --project-id ID      Project identifier (required)\n"
+            "  --goal TEXT          Goal description\n"
+            "  --phases N           Number of phases (default: 1)\n"
+            "  --steps SPEC         Steps per phase, e.g. '01:3,02:2'\n"
+            "  --output FILE        Output path (default: stdout)\n\n"
+            "validate options:\n"
+            "  ROADMAP_PATH         Path to the roadmap.json to validate\n\n"
+            "Exit codes:\n"
+            "  0  Success or valid (warnings OK)\n"
+            "  1  Validation errors found\n"
+            "  2  Usage error"
+        )
+        return 0
+
     if not argv:
         print(
             "Usage: python -m des.cli.roadmap {init|validate} [OPTIONS]",

@@ -90,7 +90,7 @@ INPUT: "{feature-description}"
   |
   1. Parse input|derive feature-id (kebab-case)|create docs/feature/{feature-id}/deliver/
      a. Create execution-log.json if missing via CLI:
-        PYTHONPATH=$HOME/.claude/lib/python $(command -v python3 || command -v python) -m des.cli.init_log --project-dir docs/feature/{feature-id}/deliver --feature-id {feature-id}
+        des-init-log --project-dir docs/feature/{feature-id}/deliver --feature-id {feature-id}
         Do NOT create execution-log.json directly with Write — use the CLI only.
      b. Create deliver session marker: .nwave/des/deliver-session.json
   |
@@ -136,7 +136,7 @@ INPUT: "{feature-description}"
         c2. Dispatch ONE Agent with ONE DES-STEP-ID using DES Prompt Template from execute.md
             Use crafter from step 1.5|@nw-functional-software-crafter → PBT default|@property tags signal PBT
             Include DES markers (DES-VALIDATION|DES-PROJECT-ID|DES-STEP-ID) + all mandatory sections
-            OUTCOME_RECORDING: agents use DES CLI (PYTHONPATH=$HOME/.claude/lib/python $(command -v python3 || command -v python) -m des.cli.log_phase)|CLI bypass → SubagentStop hook corrects timestamps
+            OUTCOME_RECORDING: agents use DES CLI (des-log-phase)|CLI bypass → SubagentStop hook corrects timestamps
         c3. WAIT for Agent to complete before dispatching next step
         c4. Verify COMMIT/PASS in execution-log.json for THIS step
         c5. Missing phase → RE-DISPATCH a NEW agent for the SAME step. NEVER write entries yourself.
@@ -189,7 +189,7 @@ INPUT: "{feature-description}"
      disabled → SKIP|log "disabled per project configuration"
   |
   7. Phase 6 — Deliver Integrity Verification
-     a. PYTHONPATH=$HOME/.claude/lib/python $(command -v python3 || command -v python) -m des.cli.verify_deliver_integrity docs/feature/{feature-id}/deliver/
+     a. des-verify-integrity docs/feature/{feature-id}/deliver/
      b. Exit 0 → proceed|Exit 1 → STOP, read output
      c. No entries = not executed through DES|Partial = incomplete TDD
      d. Violations → re-execute via Task with DES markers|Only proceed after pass

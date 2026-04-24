@@ -70,12 +70,26 @@ def _parse_execution_log(exec_log: dict) -> dict[str, list[str]]:
     return entries
 
 
-def main() -> int:
-    if len(sys.argv) < 2:
+def main(argv: list[str] | None = None) -> int:
+    args = sys.argv[1:] if argv is None else list(argv)
+    if args and args[0] in ("--help", "-h"):
+        print(
+            "Usage: python -m des.cli.verify_deliver_integrity <project-dir>\n\n"
+            "Verify TDD phase completeness for all steps in a feature deliver.\n\n"
+            "Arguments:\n"
+            "  project-dir   Path to the feature directory containing roadmap.json\n"
+            "                and execution-log.json (e.g. docs/feature/<id>/deliver/)\n\n"
+            "Exit codes:\n"
+            "  0  All steps have complete DES traces\n"
+            "  1  Integrity violations found\n"
+            "  2  Usage error"
+        )
+        return 0
+    if len(args) < 1:
         print("Usage: python -m des.cli.verify_deliver_integrity <project-dir>")
         return 2
 
-    project_dir = Path(sys.argv[1])
+    project_dir = Path(args[0])
 
     roadmap_path = project_dir / "roadmap.json"
     exec_log_path = project_dir / "execution-log.json"

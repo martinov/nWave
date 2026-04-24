@@ -639,6 +639,9 @@ def show_installation_summary(logger: Logger) -> None:
         logger.info(f"    {cmd:<16} {desc}")
     logger.info("")
     logger.info(
+        "  ⚠️  Quit and reopen Claude Code to load the new agents, skills, and commands."
+    )
+    logger.info(
         "  💡 Open Claude Code in any project directory and type a /nw- command."
     )
     logger.info("  📚 Docs: https://github.com/nWave-ai/nWave")

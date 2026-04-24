@@ -24,6 +24,10 @@ import pytest
 from scripts.hooks.nwave_attribution_hook import process_commit_message
 
 
+# Serialize tests touching .git/hooks/ to avoid xdist races on shared state.
+pytestmark = pytest.mark.xdist_group("git_hooks")
+
+
 def _write_global_config(
     config_dir: Path,
     *,

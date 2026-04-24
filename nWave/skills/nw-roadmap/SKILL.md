@@ -33,7 +33,7 @@ You MUST execute these steps in order. Do NOT skip any.
 2. **Scaffold Skeleton** — Run `des.cli.roadmap init` via Bash BEFORE invoking agent. Gate: CLI exits 0; stop and report error on non-zero exit.
 
 ```bash
-PYTHONPATH=~/.claude/lib/python $(command -v python3 || command -v python) -m des.cli.roadmap init \
+des-roadmap init \
   --project-id {feature-id} \
   --goal "{goal-description}" \
   --output docs/feature/{feature-id}/deliver/roadmap.json
@@ -57,10 +57,10 @@ Goal: {goal-description}
 
 Context to pass (if available): measurement baseline|mikado-graph.md|existing docs.
 
-4. **Validate** — Run `des.cli.roadmap validate` via Bash. Gate: exit 0 = success; exit 1 = print errors and stop; exit 2 = usage error, stop.
+4. **Validate** — Run `des-roadmap validate` via Bash. Gate: exit 0 = success; exit 1 = print errors and stop; exit 2 = usage error, stop.
 
 ```bash
-PYTHONPATH=~/.claude/lib/python $(command -v python3 || command -v python) -m des.cli.roadmap validate docs/feature/{feature-id}/deliver/roadmap.json
+des-roadmap validate docs/feature/{feature-id}/deliver/roadmap.json
 ```
 
 ## Invocation Principles

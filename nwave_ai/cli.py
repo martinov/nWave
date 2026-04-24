@@ -4,6 +4,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+from nwave_ai.doctor.context import DoctorContext
+from nwave_ai.doctor.formatter import render_human, render_json
+from nwave_ai.doctor.runner import run_doctor
 from scripts.install.attribution_utils import (
     install_attribution_hook,
     read_attribution_preference,
@@ -87,6 +90,51 @@ def _handle_attribution(args: list[str]) -> int:
     return 1
 
 
+def _handle_doctor(args: list[str]) -> int:
+    """Handle 'doctor [--json] [--fix] [--help]' subcommand."""
+    json_output = False
+    fix = False
+
+    for arg in args:
+        if arg in ("--help", "-h"):
+            print("Usage: nwave-ai doctor [--json] [--fix]")
+            print()
+            print("Run diagnostic checks on the nWave installation.")
+            print()
+            print("Options:")
+            print("  --json    Emit JSON output instead of human-readable text.")
+            print("  --fix     Attempt to fix detected issues (not yet implemented).")
+            print("  --help    Show this message and exit.")
+            return 0
+        elif arg == "--json":
+            json_output = True
+        elif arg == "--fix":
+            fix = True
+        else:
+            print(f"Unknown option for doctor: {arg}", file=sys.stderr)
+            print("Run 'nwave-ai doctor --help' for usage.", file=sys.stderr)
+            return 2
+
+    if fix:
+        print(
+            "--fix not yet implemented. "
+            "Run `nwave-ai install` to restore a broken installation."
+        )
+        return 2
+
+    context = DoctorContext.from_defaults()
+    results = run_doctor(context)
+
+    if json_output:
+        print(render_json(results))
+    else:
+        print(render_human(results))
+
+    if any(not r.passed for r in results):
+        return 1
+    return 0
+
+
 def _print_usage() -> int:
     ver = _get_version()
     print(f"nwave-ai {ver}")
@@ -96,6 +144,7 @@ def _print_usage() -> int:
     print("Commands:")
     print("  install        Install nWave framework to ~/.claude/")
     print("  uninstall      Remove nWave framework from ~/.claude/")
+    print("  doctor         Run diagnostics on the nWave installation")
     print("  attribution    Toggle commit attribution (on/off/status)")
     print("  version        Show nwave-ai version")
     print()
@@ -122,6 +171,8 @@ def main() -> int:
         return _run_script("uninstall_nwave.py", sys.argv[2:])
     elif command == "attribution":
         return _handle_attribution(sys.argv[2:])
+    elif command == "doctor":
+        return _handle_doctor(sys.argv[2:])
     elif command == "version":
         print(f"nwave-ai {_get_version()}")
         return 0

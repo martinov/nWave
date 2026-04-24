@@ -84,7 +84,7 @@ At the start of execution, create these tasks using TaskCreate and follow them i
 0.5. **Prior Wave Consultation** — Read DISTILL (all files in `docs/feature/{feature-id}/distill/`) + DESIGN (`docs/product/architecture/brief.md`, `wave-decisions.md`). Flag contradictions, resolve before proceeding. Summarize key design decisions into a reusable DESIGN_CONTEXT block for crafter dispatch (component structure, boundaries, tech choices, data models). Gate: all required files read, confirmation checklist output, no unresolved contradictions.
 
 1. **Setup** — Parse input, derive `feature-id` (kebab-case), create `docs/feature/{feature-id}/deliver/`.
-   - a. Create `execution-log.json` via CLI: `PYTHONPATH=$HOME/.claude/lib/python $(command -v python3 || command -v python) -m des.cli.init_log --project-dir docs/feature/{feature-id}/deliver --feature-id {feature-id}`. Do NOT use Write tool directly.
+   - a. Create `execution-log.json` via CLI: `des-init-log --project-dir docs/feature/{feature-id}/deliver --feature-id {feature-id}`. Do NOT use Write tool directly.
    - b. Create deliver session marker: `.nwave/des/deliver-session.json`.
    - Gate: directory exists, `execution-log.json` created via CLI, session marker written.
 
@@ -105,7 +105,7 @@ At the start of execution, create these tasks using TaskCreate and follow them i
    - a. Skip if `docs/feature/{feature-id}/deliver/roadmap.json` exists with `validation.status == "approved"`. If found in `design/` instead, move to `deliver/` and log warning.
    - b. Dispatch `@nw-solution-architect` to create `roadmap.json` (load `~/.claude/skills/nw-roadmap/SKILL.md`). Step IDs MUST match `NN-NN` format (01-01, 01-02). If `distill/` exists, architect MUST populate `test_file` and `scenario_name` per step.
    - c. Run automated quality gate (see Roadmap Quality Gate section below).
-   - c2. Run roadmap integrity verification (HARD GATE): `PYTHONPATH=$HOME/.claude/lib/python $(command -v python3 || command -v python) -m des.cli.verify_deliver_integrity docs/feature/{feature-id}/deliver/ --roadmap-only`. BLOCK on any format error; fix before dispatching any crafter.
+   - c2. Run roadmap integrity verification (HARD GATE): `des-verify-integrity docs/feature/{feature-id}/deliver/ --roadmap-only`. BLOCK on any format error; fix before dispatching any crafter.
    - d. Dispatch `@nw-acceptance-designer-reviewer` to review roadmap (load `~/.claude/skills/nw-review/SKILL.md`): verify every DISTILL scenario has a step, flag orphan scenarios as BLOCKER; flag steps covering 8+ scenarios as `@sizing-review-needed`; verify walking skeleton scenarios map to Phase 1 steps.
    - e. Retry once on rejection → stop for manual intervention.
 
@@ -151,7 +151,7 @@ At the start of execution, create these tasks using TaskCreate and follow them i
    - `disabled` → SKIP; log "disabled per project configuration".
 
 7. **Phase 6 — Deliver Integrity Verification** — Gate: `verify_deliver_integrity` exits 0.
-   - a. Run: `PYTHONPATH=$HOME/.claude/lib/python $(command -v python3 || command -v python) -m des.cli.verify_deliver_integrity docs/feature/{feature-id}/deliver/`.
+   - a. Run: `des-verify-integrity docs/feature/{feature-id}/deliver/`.
    - b. Exit 0 → proceed. Exit 1 → STOP, read output.
    - c. No entries = not executed through DES. Partial = incomplete TDD.
    - d. Violations → re-execute via Task with DES markers. Proceed only after pass.

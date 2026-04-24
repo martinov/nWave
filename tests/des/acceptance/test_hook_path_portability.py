@@ -286,3 +286,109 @@ class TestHookInstallIdempotency:
         # Exactly 2 SubagentStop (subagent-stop + deliver-progress) and 1 PostToolUse
         assert len(config["hooks"]["SubagentStop"]) == 2
         assert len(config["hooks"]["PostToolUse"]) == 1
+
+
+# =============================================================================
+# RUNTIME GUARD: Hook module is actually executable (Category A -> runtime layer)
+#
+# The mock-based tests above verify the generated command STRINGS have the
+# correct shape. This class answers the orthogonal question:
+#   "Does the DES hook module that those strings reference actually execute?"
+#
+# Deletion test: if des.adapters.drivers.hooks.claude_code_hook_adapter were
+# removed or renamed, ALL the string-pattern tests above would still PASS
+# (they test the template text, not the module), but the tests below FAIL
+# immediately -- catching the regression before users hit "Task Hook Error".
+# =============================================================================
+
+
+class TestHookModuleExecutable:
+    """Runtime guard: the DES hook module referenced in commands is importable."""
+
+    def test_hook_module_importable_via_installed_pythonpath(self, install_context):
+        """
+        GIVEN DES hooks are installed and PYTHONPATH=$HOME/.claude/lib/python is set
+        WHEN the hook module is invoked as python3 -m des.adapters.drivers.hooks...
+        THEN the module launches without ImportError or ModuleNotFoundError
+
+        Runtime counterpart to test_pythonpath_uses_home_variable.
+        Answers: does the adapter module actually exist at that path?
+
+        Container-level coverage (real PATH resolution with $HOME expansion) is
+        owned by tests/e2e/test_fresh_install.py. This test uses the real
+        installed lib path from the developer/CI environment.
+        """
+        import os
+        import subprocess
+        import sys
+
+        home = str(Path.home())
+        lib_path = home + "/.claude/lib/python"
+
+        if not Path(lib_path).exists():
+            pytest.skip(
+                f"DES not installed at {lib_path} -- "
+                "container-level coverage owned by tests/e2e/test_fresh_install.py"
+            )
+
+        env = {**os.environ, "PYTHONPATH": lib_path}
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "des.adapters.drivers.hooks.claude_code_hook_adapter",
+                "pre-tool-use",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            env=env,
+            input="{}",
+        )
+
+        assert "ModuleNotFoundError" not in result.stderr, (
+            f"Hook module import failed -- DES adapter unreachable at "
+            f"PYTHONPATH={lib_path}\nstderr: {result.stderr}"
+        )
+        assert "ImportError" not in result.stderr, (
+            f"Hook module has broken imports at {lib_path}\nstderr: {result.stderr}"
+        )
+
+    def test_hook_command_module_path_matches_installed_module(self, install_context):
+        """
+        GIVEN DES hooks are installed
+        WHEN the hook command is extracted and the module path parsed
+        THEN the module path references a file that exists in the installed lib
+
+        Bridges mock tests (verify command strings) and runtime tests (verify
+        module exists): confirms string in settings.json and file on disk
+        refer to the same module.
+        """
+        home = str(Path.home())
+        lib_path = home + "/.claude/lib/python"
+
+        if not Path(lib_path).exists():
+            pytest.skip(
+                f"DES not installed at {lib_path} -- "
+                "container-level coverage owned by tests/e2e/test_fresh_install.py"
+            )
+
+        config = _install_hooks(install_context)
+        commands = _extract_all_hook_commands(config)
+
+        module_names = set()
+        for cmd in commands:
+            m = re.search(r"-m\s+([\w.]+)", cmd)
+            if m:
+                module_names.add(m.group(1))
+
+        assert module_names, "No '-m <module>' found in any hook command"
+
+        for module_name in module_names:
+            module_rel = module_name.replace(".", "/") + ".py"
+            module_path = Path(lib_path) / module_rel
+            assert module_path.exists(), (
+                f"Hook command references module '{module_name}' "
+                f"but file not found at {module_path}.\n"
+                f"settings.json and installed DES are out of sync."
+            )

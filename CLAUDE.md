@@ -12,6 +12,37 @@ nWave is an AI-powered workflow framework that orchestrates specialized Claude A
 
 ---
 
+## Repository Topology (three channels, one source)
+
+This is the canonical truth about what is public vs private. Do not infer from filenames — follow the matrix below.
+
+| Channel | What | Visibility | Example paths |
+|---------|------|------------|---------------|
+| **nWave-dev** (this repo) | Full development environment — source, tests, CI, dev tooling, internal docs, all agents (public + private) | **PRIVATE** (github.com/nWave-ai internal org) | everything you see in `/home/alexd/Projects/nWave-dev` |
+| **nWave prod** (github.com/nWave-ai/nWave) | Public-facing source mirror — open-source subset synced from this repo at release time by `release-prod.yml:sync-public`. Strips private agents via `scripts/release/strip_private_agents.py` (fail-closed by catalog), removes `docs/analysis/`, `docs/internal/`, `.github/`, `nWave/checklists/`, caches | **PUBLIC** (open source) | `src/des/`, `scripts/install/`, `scripts/release/`, `nWave/` (public agents only), `nwave_ai/`, `tests/`, `docs/guides/`, `docs/reference/`, `CONTRIBUTING.md`, `LICENSE`, `PRIVACY.md` |
+| **nwave-ai** (PyPI wheel) | Minimal installer CLI — `pipx install nwave-ai` entry. Built from the public tree with minimized payload via `patch_pyproject.py` | **PUBLIC** (PyPI, MIT-licensed) | `nwave_ai/` + a narrow force-include subset |
+| **nWave-hardening** (worktree `~/Projects/nWave-hardening/`, branch `des-hardening`) — also known as "software factory" | Closed-source enterprise track: DES 3.0 dispatch layer, expectations engine, hardening agents. Never merged to master of this repo | **CLOSED SOURCE** (commercial) | `feature/des-hardening` branch artifacts; never reference from master commits |
+
+### What is open vs closed — the simple rule
+
+- **Open**: everything that lands on `nWave-ai/nWave` after the release rsync. That includes `src/des/` (DES runtime source, open), `scripts/install`, `scripts/release`, `scripts/hooks`, the framework catalog's **public** agents+skills, and user-facing docs.
+- **Private (but not closed-source)**: internal analysis docs (`docs/analysis/`, `docs/internal/`), checklists, CI workflow internals (`.github/`), non-public agents (flagged `public: false` in `framework-catalog.yaml`), plus every cache/artifact directory.
+- **Closed source**: only the nWave-hardening track lives here. Not in this repo's master branch. See `feedback_branch_isolation.md` / `feedback_no_des_hardening_on_master.md` for the hard rule: **zero references** to DES 3.0, CPE, dispatch layer, expectations engine, or the hardening worktree in any master commit.
+
+### Wheel vs GitHub (for `nwave-ai`)
+
+The **GitHub repo** `nWave-ai/nWave` ships the full open-source tree (source, tests, scripts, docs). The **PyPI wheel** `nwave-ai` is the *install-time-only* subset: the packaged `nwave_ai/` Python module plus the minimum `scripts/install`, `scripts/shared`, `nWave/` assets, and pre-built `lib/python/des/`. Source browsing/forking goes through GitHub — not through `pipx show nwave-ai -v`. When a file appears both on GitHub and in the wheel, it is double-distribution (not a privacy issue but a packaging-bloat concern).
+
+### Release sync rules (for reference)
+
+- `.github/workflows/release-prod.yml:sync-public` does `rsync -avL --delete` from this repo to the public target with explicit excludes: `.github/`, `docs/analysis/`, `docs/internal/`, `nWave/checklists/`, plus caches and bookkeeping files. `docs/*` excluded by default; only `docs/guides/` and `docs/reference/` explicitly included.
+- `scripts/release/strip_private_agents.py` then filters the public tree against the catalog's `public: true` allow-list (fail-closed: anything uncatalogued is stripped).
+- `scripts/release/patch_pyproject.py` then rewrites `pyproject.toml` for the `nwave-ai` PyPI build, defining a narrow Hatch `force-include` map that controls exactly which paths enter the `.whl`.
+
+**If something is leaking where it shouldn't** (e.g. private agent in public repo, unused script in the PyPI wheel), the fix path is usually: (a) update `framework-catalog.yaml` `public:` flags, (b) tighten rsync excludes, or (c) narrow `patch_pyproject.py` force-include. Do not modify the tests that guard these contracts.
+
+---
+
 ## Project Structure
 
 ```

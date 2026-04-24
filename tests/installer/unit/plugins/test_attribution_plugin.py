@@ -27,6 +27,10 @@ from scripts.install.plugins.attribution_plugin import AttributionPlugin
 from scripts.install.plugins.base import InstallContext
 
 
+# Serialize tests touching .git/hooks/ to avoid xdist races on shared state.
+pytestmark = pytest.mark.xdist_group("git_hooks")
+
+
 # ---------------------------------------------------------------------------
 # Guard fixture: snapshot .git/hooks/ before module, verify unchanged after.
 # This is the safety net -- if the isolation fixture below is ever removed or
@@ -84,18 +88,30 @@ def guard_git_hooks():
 # module to prevent tests from writing to the real .git/hooks/ directory.
 # The plugin tests validate consent flow, not hook installation (tested
 # separately in TestAttributionHookInstallation with subprocess mocks).
+#
+# Module-scoped autouse: applies to EVERY test class in this module
+# (TestAttributionPluginInstall, TestAttributionPluginVerify,
+# TestAttributionPluginMetadata, TestAttributionUpgradePreservation,
+# TestAttributionHookInstallation) without requiring opt-in at the class
+# or function level. This prevents regressions where a new test class
+# forgets to request the fixture and accidentally runs the real hook
+# installation against the project's .git/hooks/ directory.
 # ---------------------------------------------------------------------------
-@pytest.fixture(autouse=True)
-def _isolate_hook_installation(tmp_path: Path):
+@pytest.fixture(autouse=True, scope="module")
+def mock_install_attribution_hook(tmp_path_factory: pytest.TempPathFactory):
     """Prevent plugin.install() from calling real install_attribution_hook.
 
     The real function resolves hooks dir from the process's git config,
     which points to the project's .git/hooks/ -- corrupting it with a
     tmp_path-based hook script path that becomes invalid after the test.
+
+    Module-scoped so the patch covers every test class, including future
+    additions, with no per-class opt-in required.
     """
+    mock_hooks_dir = tmp_path_factory.mktemp("attribution_mock_hooks")
     with patch(
         "scripts.install.plugins.attribution_plugin.install_attribution_hook",
-        return_value=tmp_path / ".nwave" / "hooks" / "prepare-commit-msg",
+        return_value=mock_hooks_dir / "prepare-commit-msg",
     ) as mock_hook:
         yield mock_hook
 
@@ -513,3 +529,37 @@ class TestAttributionHookInstallation:
             f"install_attribution_hook() must NEVER set global core.hooksPath, "
             f"but called: {global_set_calls}"
         )
+
+    def test_explicit_git_dir_bypasses_git_probing(self, tmp_path: Path) -> None:
+        """Passing git_dir=<path> writes to <path>/hooks/ without any git probe.
+
+        Guarantees tests cannot accidentally resolve to the surrounding
+        repo's .git/hooks/ even if subprocess.run mocks are incomplete:
+        when git_dir is provided, subprocess.run is never called.
+        """
+        nwave_dir = tmp_path / ".nwave"
+        explicit_git = tmp_path / "isolated-repo" / ".git"
+        explicit_git.mkdir(parents=True)
+
+        subprocess_calls: list[list[str]] = []
+
+        def fail_on_any_subprocess(cmd, **kwargs):
+            subprocess_calls.append(list(cmd))
+            raise AssertionError(
+                f"git_dir was provided; subprocess.run must not be called, "
+                f"but got: {cmd}"
+            )
+
+        with patch(
+            "scripts.install.attribution_utils.subprocess.run",
+            side_effect=fail_on_any_subprocess,
+        ):
+            result_path = install_attribution_hook(
+                config_dir=nwave_dir,
+                git_dir=explicit_git,
+            )
+
+        assert subprocess_calls == []
+        assert result_path.parent == explicit_git / "hooks"
+        assert result_path.name == "prepare-commit-msg"
+        assert result_path.exists()

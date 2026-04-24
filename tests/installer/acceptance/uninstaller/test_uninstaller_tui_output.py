@@ -8,8 +8,18 @@ The uninstaller is executed ONCE (module-scoped fixture) against a freshly
 installed config dir. All tests assert against the same captured stdout.
 """
 
+import pytest
+
 from scripts.install.install_nwave import __version__ as install_version
 from scripts.install.uninstall_nwave import __version__ as uninstall_version
+
+
+# Pin to the installer_walking_skeleton xdist group — both this file
+# and test_installer_tui_output.py exercise installer/uninstaller fixtures
+# that write to ~/.config/opencode/ (a real path, NOT temp); running them
+# on different xdist workers triggers File-exists races on shared state.
+# Same group => same worker => serialized + safe.
+pytestmark = pytest.mark.xdist_group("installer_walking_skeleton")
 
 
 # ─── Design constraints ─────────────────────────────────────────────

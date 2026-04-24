@@ -19,7 +19,7 @@ Feature: Correct Import Paths in Installed DES
   # When bugs are fixed, these tests will PASS
   # ============================================================================
 
-  @bug-3 @failing @priority-critical
+  @bug-3 @priority-critical
   Scenario: Installed DES should not contain "from src.des" imports
     # Current Behavior (BUG): Files contain imports like:
     #   from src.des.adapters.driven.logging.audit_logger import get_audit_logger
@@ -33,7 +33,7 @@ Feature: Correct Import Paths in Installed DES
     Then no files should contain "from src.des"
     And no files should contain "import src.des"
 
-  @bug-3 @failing @priority-critical
+  @bug-3 @priority-critical
   Scenario: DES should be importable with only installed path in PYTHONPATH
     # Current Behavior (BUG): Import fails with ImportError unless
     # PYTHONPATH includes project root (where src/ exists)
@@ -44,7 +44,7 @@ Feature: Correct Import Paths in Installed DES
     When I import "from des.application.orchestrator import DESOrchestrator"
     Then the import should succeed without ImportError
 
-  @bug-3 @failing @priority-critical
+  @bug-3 @priority-critical
   Scenario: DES hooks should work with only installed path
     # This is the production scenario - hooks must work without dev directory
 
@@ -70,7 +70,7 @@ Feature: Correct Import Paths in Installed DES
       | des.ports.driver_ports.hook_port                 |
     Then all imports should succeed without ImportError
 
-  @bug-3 @failing @priority-high
+  @bug-3 @priority-high
   Scenario: Hook adapter entry point should work standalone
     # The claude_code_hook_adapter.py is the main entry point
     # It must work when invoked as: python3 -m des.adapters.drivers.hooks.claude_code_hook_adapter
@@ -80,7 +80,7 @@ Feature: Correct Import Paths in Installed DES
     Then the command should fail with usage error (missing command)
     And the error should NOT be ImportError
 
-  @bug-3 @failing @priority-high
+  @bug-3 @priority-high
   Scenario: Verify no src.des references in installed files
     # Detailed scan for all problematic import patterns
 
@@ -91,7 +91,7 @@ Feature: Correct Import Paths in Installed DES
     And I should find 0 occurrences of "src.des." as a string literal
     And all imports should use "from des." or "import des." patterns
 
-  @bug-3 @failing @priority-medium
+  @bug-3 @priority-medium
   Scenario: Installed DES should have correct package structure
     # Verify the installed package has proper __init__.py files
 
@@ -105,7 +105,7 @@ Feature: Correct Import Paths in Installed DES
       | des/adapters/drivers/__init__.py                 |
       | des/ports/__init__.py                            |
 
-  @bug-3 @failing @priority-medium
+  @bug-3 @priority-medium
   Scenario: Import paths should be consistent across all files
     # Cross-file consistency check
 

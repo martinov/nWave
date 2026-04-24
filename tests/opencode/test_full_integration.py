@@ -23,9 +23,22 @@ TEMPLATE_PATH = (
 
 
 def _run_adapter(
-    action: str, stdin_json: dict, env_extra: dict | None = None
+    action: str,
+    stdin_json: dict,
+    env_extra: dict | None = None,
+    cwd: Path | None = None,
 ) -> subprocess.CompletedProcess:
-    """Invoke the Python DES adapter as a subprocess."""
+    """Invoke the Python DES adapter as a subprocess.
+
+    Args:
+        action: Hook action name (e.g. 'pre-write').
+        stdin_json: Payload passed to the adapter via stdin.
+        env_extra: Additional environment variables merged over os.environ.
+        cwd: Working directory for the subprocess. Pass ``tmp_path`` from the
+            test fixture so the adapter's CWD-relative path lookups
+            (.nwave/des/deliver-session.json) resolve inside the hermetic
+            temp dir rather than the test runner's repo root.
+    """
     env = os.environ.copy()
     env["PYTHONPATH"] = PROJECT_ROOT
     if env_extra:
@@ -38,6 +51,7 @@ def _run_adapter(
         text=True,
         timeout=10,
         env=env,
+        cwd=cwd,
     )
 
 
@@ -150,6 +164,7 @@ class TestWriteGuard:
             "pre-write",
             cc_json,
             env_extra={"DES_PROJECT_DIR": str(tmp_path)},
+            cwd=tmp_path,
         )
 
         assert result.returncode == 2, (
@@ -171,6 +186,7 @@ class TestWriteGuard:
             "pre-write",
             cc_json,
             env_extra={"DES_PROJECT_DIR": str(tmp_path)},
+            cwd=tmp_path,
         )
 
         assert result.returncode == 0, (
@@ -222,9 +238,54 @@ class TestEditGuard:
             "pre-write",
             cc_json,
             env_extra={"DES_PROJECT_DIR": str(tmp_path)},
+            cwd=tmp_path,
         )
 
         assert result.returncode == 2, (
             f"Edit to execution-log.json must be blocked (exit 2), "
             f"got {result.returncode}.\nstdout: {result.stdout}\nstderr: {result.stderr}"
+        )
+
+
+class TestWriteGuardCwdIsolation:
+    """Regression gate: adapter must respect the subprocess cwd, not the test
+    runner's cwd. A deliver-session marker inside tmp_path must be visible to
+    the adapter; a marker only in the parent repo must NOT affect tests."""
+
+    def test_write_guard_respects_hermetic_cwd(self, tmp_path):
+        """Adapter blocks a normal-file write when a deliver-session marker
+        exists inside the hermetic tmp_path cwd.
+
+        This regression test proves that the cwd= kwarg is threaded through
+        _run_adapter → subprocess.run, so the adapter's CWD-relative path
+        lookup (.nwave/des/deliver-session.json) resolves inside tmp_path
+        rather than the parent repo root.
+        """
+        # Simulate an active deliver session inside the hermetic workspace
+        nwave_des = tmp_path / ".nwave" / "des"
+        nwave_des.mkdir(parents=True)
+        (nwave_des / "deliver-session.json").write_text(
+            json.dumps({"feature_id": "hermetic-test", "active": True})
+        )
+
+        cc_json = {
+            "tool_name": "Write",
+            "tool_input": {
+                "file_path": str(tmp_path / "src" / "some_module.py"),
+                "content": "# normal file",
+            },
+        }
+
+        # cwd=tmp_path: the adapter sees the hermetic marker → must block (exit 2)
+        result = _run_adapter(
+            "pre-write",
+            cc_json,
+            env_extra={"DES_PROJECT_DIR": str(tmp_path)},
+            cwd=tmp_path,
+        )
+
+        assert result.returncode == 2, (
+            "Adapter must block writes when a deliver-session marker exists "
+            "inside the hermetic cwd. "
+            f"Got exit {result.returncode}.\nstdout: {result.stdout}\nstderr: {result.stderr}"
         )

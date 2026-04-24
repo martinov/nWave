@@ -18,7 +18,12 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
 from nwave_ai.cli import main
+
+
+# Serialize tests touching .git/hooks/ to avoid xdist races on shared state.
+pytestmark = pytest.mark.xdist_group("git_hooks")
 
 
 def _write_config(config_dir: Path, *, enabled: bool) -> None:

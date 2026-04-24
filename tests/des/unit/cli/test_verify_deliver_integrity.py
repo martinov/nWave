@@ -1,6 +1,12 @@
 """Unit tests for verify_deliver_integrity CLI step extraction and log parsing."""
 
-from des.cli.verify_deliver_integrity import _extract_step_ids, _parse_execution_log
+import sys
+
+from des.cli.verify_deliver_integrity import (
+    _extract_step_ids,
+    _parse_execution_log,
+    main,
+)
 
 
 class TestExtractStepIds:
@@ -122,3 +128,18 @@ class TestParseExecutionLog:
     def test_no_events_key(self):
         """Missing events key returns empty dict."""
         assert _parse_execution_log({}) == {}
+
+
+class TestMainArgvParameter:
+    """Tests for main() accepting optional argv parameter (step 01-02)."""
+
+    def test_main_accepts_argv_parameter_exits_2_for_nonexistent_path(self):
+        """main(argv=[path]) returns 2 for nonexistent project dir, without patching sys.argv."""
+        result = main(argv=["/tmp/nonexistent_nwave_test_dir"])
+        assert result == 2
+
+    def test_main_sys_argv_fallback_preserved(self, monkeypatch):
+        """main() with no args falls back to sys.argv; nonexistent path returns 2."""
+        monkeypatch.setattr(sys, "argv", ["prog", "/tmp/nonexistent_nwave_test_dir"])
+        result = main()
+        assert result == 2

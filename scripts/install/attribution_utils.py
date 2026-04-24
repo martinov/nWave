@@ -174,7 +174,10 @@ def _read_shim_template() -> str:
     )
 
 
-def install_attribution_hook(config_dir: Path | None = None) -> Path:
+def install_attribution_hook(
+    config_dir: Path | None = None,
+    git_dir: Path | None = None,
+) -> Path:
     """Install prepare-commit-msg hook for attribution trailer.
 
     1. Resolve hooks directory from git config (or .git/hooks/ default)
@@ -188,6 +191,12 @@ def install_attribution_hook(config_dir: Path | None = None) -> Path:
 
     Args:
         config_dir: Override for ~/.nwave/ (testing).
+        git_dir: Explicit path to the .git directory. When provided, the
+            hook shim is written to ``git_dir / "hooks"`` and the git
+            config probe (``git rev-parse`` / ``git config
+            core.hooksPath``) is skipped entirely. Primarily for tests
+            that must guarantee isolation from the surrounding
+            repository.
 
     Returns:
         Path to installed hook shim.
@@ -195,7 +204,7 @@ def install_attribution_hook(config_dir: Path | None = None) -> Path:
     if config_dir is None:
         config_dir = Path.home() / ".nwave"
 
-    hooks_dir = _resolve_hooks_dir()
+    hooks_dir = git_dir / "hooks" if git_dir is not None else _resolve_hooks_dir()
     hooks_dir.mkdir(parents=True, exist_ok=True)
 
     # Copy hook script to config_dir/hooks/

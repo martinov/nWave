@@ -17,6 +17,8 @@ import json
 import sys
 from typing import TYPE_CHECKING
 
+from des.adapters.drivers.hooks.substrate_probe import run_probe
+
 
 if TYPE_CHECKING:
     from des.adapters.driven.config.des_config import DESConfig
@@ -162,6 +164,13 @@ def handle_session_start() -> int:
             )
             print(json.dumps({"additionalContext": message}))
 
+    except Exception:
+        pass
+
+    try:
+        advisory = run_probe()
+        if advisory:
+            print(advisory, end="")
     except Exception:
         pass
 

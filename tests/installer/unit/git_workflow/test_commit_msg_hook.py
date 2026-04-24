@@ -17,6 +17,10 @@ from pathlib import Path
 import pytest
 
 
+# Serialize tests touching .git/hooks/ to avoid xdist races on shared state.
+pytestmark = pytest.mark.xdist_group("git_hooks")
+
+
 # Constants for clarity and maintainability
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1

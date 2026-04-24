@@ -9,7 +9,14 @@ assert against the same captured stdout, making the suite fast while
 covering every visible step of the installation journey.
 """
 
+import pytest
+
 from scripts.install.install_nwave import __version__
+
+
+# Pin all tests in this file to one xdist worker — module-scoped fixture
+# (e.g. installer_result) is class-mutating and not safe across xdist workers.
+pytestmark = pytest.mark.xdist_group("installer_walking_skeleton")
 
 
 # ─── Design constraints ─────────────────────────────────────────────
