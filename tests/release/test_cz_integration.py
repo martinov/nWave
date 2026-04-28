@@ -92,7 +92,14 @@ class CZRepo:
             capture_output=True,
             text=True,
             cwd=str(self.path),
-            env={**os.environ, "CZ_ROOT": str(self.path)},
+            # Layer 3 (RCA fix): GIT_CEILING_DIRECTORIES stops any subprocess
+            # git invoked transitively by commitizen from walking up into the
+            # host repo. Belt-and-braces with the conftest autouse fixture.
+            env={
+                **os.environ,
+                "CZ_ROOT": str(self.path),
+                "GIT_CEILING_DIRECTORIES": str(self.path.parent),
+            },
         )
         if result.returncode != 0:
             return None
@@ -105,6 +112,12 @@ class CZRepo:
             capture_output=True,
             text=True,
             cwd=str(self.path),
+            # Layer 3 (RCA fix): explicit GIT_CEILING_DIRECTORIES on every
+            # subprocess git call. This _git() helper used to inherit only
+            # `cwd=` and rely on global env — the failure mode that caused
+            # the 2026-04-27 incident. See
+            # docs/analysis/rca-test-git-pollution-2026-04-27.md Branch A.
+            env={**os.environ, "GIT_CEILING_DIRECTORIES": str(self.path.parent)},
         )
         if result.returncode != 0:
             msg = f"git {' '.join(args)} failed: {result.stderr}"

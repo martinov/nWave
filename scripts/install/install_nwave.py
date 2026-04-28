@@ -217,13 +217,45 @@ class NWaveInstaller:
         log_file = self.claude_config_dir / "nwave-install.log"
         self.logger = Logger(log_file if not dry_run else None)
         self.backup_manager = BackupManager(self.logger, "install")
+        # Public observability contract for restore_backup: after a successful
+        # restore, this attribute exposes the path of the backup that was
+        # selected. Acceptance tests inspect this to verify selection without
+        # re-running glob/sort logic in the test step (see DWD-09).
+        self.last_restored_from: Path | None = None
 
     def create_backup(self) -> None:
-        """Create backup of existing installation."""
+        """Create backup of existing installation, then enforce retention.
+
+        Wires backup creation and retention pruning into a single seam so
+        ``main()`` and any other caller automatically gets retention without
+        having to remember to call ``apply_retention`` themselves.
+
+        Retention is intentionally NOT applied in dry-run mode: dry-run must
+        not delete anything from disk. In live runs, retention runs even when
+        ``create_backup`` returns ``None`` (no prior install) — older
+        accumulated backups from previous runs may still need pruning, and
+        ``apply_retention`` is a no-op when the cap is not exceeded.
+
+        Raises:
+            ConfigValidationError: when ``~/.nwave/global-config.json``
+                provides an invalid ``backups.max_count`` value. Bubbled up
+                so ``main()`` aborts the install BEFORE ``install_framework``
+                runs — see scope.md S9 ("no backup is touched if config is
+                invalid"); equivalently, no install proceeds either.
+        """
         self.backup_manager.create_backup(dry_run=self.dry_run)
+        if self.dry_run:
+            return
+        self.backup_manager.apply_retention(max_count=None)
 
     def restore_backup(self) -> bool:
-        """Restore from most recent backup."""
+        """Restore from most recent backup.
+
+        Returns True on success, False on failure. On success, the selected
+        backup path is also exposed via ``self.last_restored_from`` (public
+        observability contract — see ``__init__``). Bool return is preserved
+        for the existing caller in ``main()``.
+        """
         self.logger.info("  🔍 Looking for backups to restore...")
 
         backup_root = self.claude_config_dir / "backups"
@@ -238,6 +270,7 @@ class NWaveInstaller:
             return False
 
         latest_backup = backups[-1]
+        self.last_restored_from = latest_backup
         self.logger.info(f"  ⏳ Restoring from {latest_backup}")
 
         # Remove current installation

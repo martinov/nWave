@@ -16,6 +16,10 @@ import time
 import uuid
 from pathlib import Path
 
+from des.adapters.driven.logging.audit_events import (
+    AgentUsageObservedEvent,
+    EventType,
+)
 from des.adapters.driven.time.system_time import SystemTimeProvider
 from des.adapters.drivers.hooks import des_task_signal, hook_protocol, service_factory
 from des.adapters.drivers.hooks.execution_log_resolver import resolve_execution_log_path
@@ -29,6 +33,9 @@ from des.adapters.drivers.hooks.hook_protocol import (
 )
 from des.adapters.drivers.hooks.skill_tracking_hooks import (
     maybe_track_skill_loads as _maybe_track_skill_loads,
+)
+from des.adapters.drivers.hooks.token_usage_extractor import (
+    extract_token_usage_events,
 )
 from des.domain.des_marker_parser import DesMarkerParser
 from des.ports.driven_ports.audit_log_writer import AuditEvent
@@ -225,6 +232,75 @@ Never write log entries for phases that were not actually executed."""
     }
 
 
+def _read_transcript_entries(transcript_path: str) -> list[dict]:
+    """Parse a transcript JSONL file into a list of dict entries.
+
+    Fail-open: malformed lines are skipped silently. Missing file yields
+    empty list. Never raises.
+    """
+    path = Path(transcript_path)
+    if not path.exists():
+        return []
+    entries: list[dict] = []
+    try:
+        with open(path) as f:
+            for line in f:
+                stripped = line.strip()
+                if not stripped:
+                    continue
+                try:
+                    entry = json.loads(stripped)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(entry, dict):
+                    entries.append(entry)
+    except (OSError, PermissionError):
+        return []
+    return entries
+
+
+def _emit_token_usage_events(
+    transcript_path: str | None,
+    *,
+    agent_name: str | None,
+    feature_id: str | None = None,
+    wave: str | None = None,
+) -> None:
+    """Read transcript, extract token-usage events, write each via the audit port.
+
+    Per D4 (fail-open): any failure inside this routine is swallowed so
+    the SubagentStop hook itself is never blocked by token instrumentation.
+    """
+    if not transcript_path:
+        return
+    try:
+        entries = _read_transcript_entries(transcript_path)
+        events = extract_token_usage_events(
+            entries,
+            agent_name=agent_name or "unknown",
+            feature_id=feature_id,
+            wave=wave,
+        )
+        if not events:
+            return
+        writer = hook_protocol.get_audit_writer()
+        for event in events:
+            writer.log_event(_to_audit_event(event))
+    except Exception:
+        # Fail-open: token instrumentation must never block the hook.
+        pass
+
+
+def _to_audit_event(event: AgentUsageObservedEvent) -> AuditEvent:
+    """Convert a domain event to the port-level AuditEvent for logging."""
+    return AuditEvent(
+        event_type=EventType.AGENT_USAGE_OBSERVED.value,
+        timestamp=event.timestamp or SystemTimeProvider().now_utc().isoformat(),
+        feature_name=event.feature_id,
+        data=event.to_audit_data(),
+    )
+
+
 def _extract_execution_stats(hook_input: dict) -> tuple[int | None, int | None]:
     """Extract turns_used and tokens_used from hook input.
 
@@ -301,6 +377,13 @@ def handle_subagent_stop() -> int:
                     is not None,
                 },
                 hook_id=hook_id,
+            )
+
+            # L1 token instrumentation — additive walk of the same transcript.
+            # Fail-open per D4: never blocks the hook on instrumentation errors.
+            _emit_token_usage_events(
+                hook_input.get("agent_transcript_path"),
+                agent_name=hook_input.get("agent_type"),
             )
 
             # Resolve DES context from either protocol

@@ -1,9 +1,18 @@
 """Root conftest.py for all tests - ensures test isolation."""
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
 
 import pytest
+
+
+# ---------------------------------------------------------------------------
+# Project root (single source of truth for autouse fixtures below).
+# ---------------------------------------------------------------------------
+
+_PROJECT_ROOT = Path(__file__).parent.parent
 
 
 @pytest.fixture(autouse=True)
@@ -21,13 +30,35 @@ def restore_working_directory():
     original_cwd = os.getcwd()
 
     # Ensure we're in the project root (directory containing pytest.ini)
-    project_root = Path(__file__).parent.parent
-    os.chdir(project_root)
+    os.chdir(_PROJECT_ROOT)
 
     yield
 
     # Restore original working directory after test
     os.chdir(original_cwd)
+
+
+# ---------------------------------------------------------------------------
+# Layer 1 — repo-wide GIT_CEILING_DIRECTORIES (Fix 1 from RCA).
+# Function-scoped so pytest-xdist workers each get their own env, and so the
+# var is cleaned up after every test (no global env mutation).
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def _git_ceiling(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Stop subprocess git from walking up into the host repo.
+
+    Sets ``GIT_CEILING_DIRECTORIES`` to the parent of the project root for
+    every test. If a subprocess git invocation has its cwd resolve above
+    its tmp_path (race / inode reuse / chdir interaction), git will fail
+    to find a parent ``.git`` instead of mutating the host repo.
+
+    Pairs with ``_git_pollution_guard`` below: env stops the leak, the
+    detective guard catches it if env is bypassed (some tests build their
+    own subprocess env dict and inherit only ``os.environ`` selectively).
+    """
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(_PROJECT_ROOT.parent))
 
 
 # ---------------------------------------------------------------------------
@@ -151,6 +182,306 @@ def guard_git_hooks():
             + f"\n  hooks dir: {hooks_dir}"
             + "\n  (hooks dir has been RESTORED to the pre-session snapshot)\n"
         )
+
+
+# ---------------------------------------------------------------------------
+# Layer 2 — Detective guard: snapshot+diff+restore .git/{config,HEAD,refs/}.
+#
+# Two pure helpers form the API contract that tests/test_guard_fixtures.py
+# locks (Step 01-01): _compute_git_state_snapshot and _diff_git_state. The
+# autouse fixture _git_pollution_guard wraps them.
+#
+# Unlike `guard_git_hooks` (which warns), this fixture uses pytest.fail()
+# because config/HEAD/refs corruption — unlike hooks corruption — is
+# immediately repo-breaking and must halt the suite.
+# ---------------------------------------------------------------------------
+
+
+def _resolve_git_common_dir(project_root: Path) -> Path:
+    """Resolve the git common dir, following worktree indirection.
+
+    For a normal clone: ``<project_root>/.git`` (a directory).
+    For a worktree: ``<project_root>/.git`` is a file containing
+    ``gitdir: <path>/<common>/worktrees/<name>``; the common dir is two
+    levels up.
+
+    Pure: only reads filesystem state. No subprocess (deliberate — the
+    guard runs per-test in worker scope; a `git rev-parse` would itself
+    walk up and could trigger the very corruption we are trying to detect
+    on a misconfigured repo).
+    """
+    git_path = project_root / ".git"
+    if git_path.is_dir():
+        return git_path
+    if git_path.is_file():
+        gitdir_line = git_path.read_text().strip()
+        if gitdir_line.startswith("gitdir:"):
+            worktree_git = Path(gitdir_line[len("gitdir:") :].strip())
+            # <common>/worktrees/<name> -> <common>
+            return worktree_git.parent.parent
+    return git_path
+
+
+def _resolve_head_path(project_root: Path) -> Path:
+    """Return the path to the HEAD that this worktree owns.
+
+    Normal clone: ``<common>/HEAD``.
+    Worktree: ``<common>/worktrees/<name>/HEAD`` (per-worktree HEAD).
+    """
+    git_path = project_root / ".git"
+    if git_path.is_dir():
+        return git_path / "HEAD"
+    if git_path.is_file():
+        gitdir_line = git_path.read_text().strip()
+        if gitdir_line.startswith("gitdir:"):
+            return Path(gitdir_line[len("gitdir:") :].strip()) / "HEAD"
+    return git_path / "HEAD"
+
+
+def _resolve_head_target(head_path: Path, common_dir: Path) -> bytes | None:
+    """Return the SHA HEAD currently resolves to, or the raw HEAD bytes.
+
+    Pure function. Reads ``HEAD`` directly; if it is a symbolic ref of the
+    shape ``ref: refs/heads/<branch>\\n``, follows the pointer once to the
+    target ref file and returns its bytes (the commit SHA). For detached
+    HEAD (raw 40-char SHA in the file) returns the file bytes directly.
+
+    Falls back to the literal HEAD bytes if the target ref does not exist
+    (newborn branch, packed-refs only). Returns ``None`` if HEAD is absent.
+
+    The reason we resolve the target rather than only snapshot the HEAD
+    file: ``git commit`` does NOT touch HEAD when on a branch — it
+    mutates ``refs/heads/<branch>``. The user-visible "HEAD moved"
+    symptom of the RCA Branch A pollution therefore manifests as a
+    change in the resolved target, not in HEAD's symbolic-ref text.
+    Snapshotting only the literal bytes would miss that exact failure.
+    """
+    if not head_path.is_file():
+        return None
+    raw = head_path.read_bytes()
+    text = raw.decode("utf-8", errors="replace").strip()
+    if text.startswith("ref:"):
+        ref_name = text[len("ref:") :].strip()
+        target = common_dir / ref_name
+        if target.is_file():
+            return target.read_bytes()
+    return raw
+
+
+def _compute_git_state_snapshot(project_root: Path) -> dict[str, object]:
+    """Return a byte-level snapshot of the load-bearing host git state.
+
+    Pure function. The snapshot covers the three artifacts whose mutation
+    constitutes pollution: ``config`` (shared across worktrees),
+    ``HEAD`` (per-worktree), and the union of ``refs/heads/`` and
+    ``refs/tags/``.
+
+    Returns a dict with the contract:
+        {
+            "config":       <bytes | None>,      # raw .git/config bytes
+            "HEAD_raw":     <bytes | None>,      # literal HEAD file bytes
+            "HEAD_resolved":<bytes | None>,      # SHA target of HEAD, or
+                                                 #   the raw bytes if HEAD
+                                                 #   is detached / target
+                                                 #   ref missing
+            "refs":         <list[(str, bytes)]> # sorted (refname, sha-bytes)
+        }
+
+    Two HEAD fields exist by design (adversarial review D1 fix):
+    ``HEAD_raw`` is what restore writes back so a symbolic-ref HEAD
+    (``ref: refs/heads/<branch>\\n``) is preserved across restores —
+    writing the resolved SHA would leave the worktree in detached-HEAD
+    state. ``HEAD_resolved`` is what diff compares so ``git commit``
+    (which only mutates ``refs/heads/<branch>``, not HEAD itself) is
+    detected as a corruption: the resolved target advances even though
+    HEAD's literal bytes are unchanged.
+
+    Designed for ``_diff_git_state`` (returns subset of {"config","HEAD","refs"}
+    naming what changed). Worktree gitdir indirection is resolved via
+    ``_resolve_git_common_dir`` and ``_resolve_head_path``.
+
+    Returns ``None`` for missing files instead of raising — a non-existent
+    repo is still a deterministic state to diff against.
+    """
+    common_dir = _resolve_git_common_dir(project_root)
+    config_path = common_dir / "config"
+    head_path = _resolve_head_path(project_root)
+
+    config_bytes = config_path.read_bytes() if config_path.is_file() else None
+
+    # HEAD_raw: literal file bytes — used by restore to preserve the
+    # symbolic-ref form (`ref: refs/heads/<branch>\n`).
+    head_raw = head_path.read_bytes() if head_path.is_file() else None
+
+    # HEAD_resolved: target SHA via _resolve_head_target. Used by diff so
+    # `git commit` (which advances refs/heads/<branch> but leaves HEAD's
+    # literal bytes unchanged) is detected as a HEAD corruption — that IS
+    # the user-visible symptom of the RCA Branch A pollution.
+    head_resolved = _resolve_head_target(head_path, common_dir)
+
+    # refs: glob refs/heads/* and refs/tags/* under the common dir.
+    refs: list[tuple[str, bytes]] = []
+    for category in ("heads", "tags"):
+        refs_dir = common_dir / "refs" / category
+        if not refs_dir.is_dir():
+            continue
+        for ref_file in sorted(refs_dir.rglob("*")):
+            if not ref_file.is_file():
+                continue
+            ref_name = f"refs/{category}/" + str(
+                ref_file.relative_to(refs_dir)
+            ).replace(os.sep, "/")
+            refs.append((ref_name, ref_file.read_bytes()))
+
+    return {
+        "config": config_bytes,
+        "HEAD_raw": head_raw,
+        "HEAD_resolved": head_resolved,
+        "refs": sorted(refs),
+    }
+
+
+def _diff_git_state(before: dict[str, object], after: dict[str, object]) -> list[str]:
+    """Return subset of {"config", "HEAD", "refs"} listing what changed.
+
+    Pure function. Empty list = no corruption. Used by the autouse guard
+    to drive ``pytest.fail()`` with a precise corruption-type list, and
+    by ``tests/test_guard_fixtures.py`` to verify the predicate detects
+    the exact failure modes of the 2026-04-27 incident.
+
+    Symmetric in argument order modulo set semantics: the diff of
+    (before, after) equals the diff of (after, before) — proven by
+    property test in tests/test_guard_internals.py.
+    """
+    diff: list[str] = []
+    if before.get("config") != after.get("config"):
+        diff.append("config")
+    # Compare HEAD_resolved (the SHA target) so `git commit` — which only
+    # advances refs/heads/<branch> while leaving HEAD's literal bytes
+    # unchanged — is still flagged. Adversarial review D1: HEAD_raw is the
+    # restore field; HEAD_resolved is the diff field.
+    if before.get("HEAD_resolved") != after.get("HEAD_resolved"):
+        diff.append("HEAD")
+    if before.get("refs") != after.get("refs"):
+        diff.append("refs")
+    return diff
+
+
+# Recursion-safety flag: while we are mid-restore, the guard MUST NOT
+# re-enter (e.g. if a finalizer somehow re-invokes the snapshot path).
+_GUARD_RESTORE_IN_PROGRESS = False
+
+
+def _atomic_restore_git_state(project_root: Path, before: dict[str, object]) -> None:
+    """Restore .git/{config,HEAD,refs/heads,refs/tags} from a snapshot.
+
+    Direct file writes only — never invokes ``git`` as a subprocess
+    because that is the exact escape vector this guard exists to defend
+    against. Idempotent: calling twice with the same snapshot is a no-op.
+
+    HEAD restore uses ``HEAD_raw`` (literal file bytes), NOT
+    ``HEAD_resolved`` (the SHA target). Writing the SHA back would leave
+    the worktree in detached-HEAD state — the original HEAD contained
+    ``ref: refs/heads/<branch>\\n`` (a symbolic ref), and that text must
+    be preserved verbatim. Adversarial review D1.
+
+    Refs restore performs TWO passes (adversarial review D2): first
+    writes back snapshot-before entries, then deletes any refs that
+    appeared during the test (i.e. files under refs/heads or refs/tags
+    that are not in ``refs_before``). Mirrors ``_restore_hooks_dir``'s
+    pattern (lines 96-99). Detection alone is insufficient when the
+    autouse guard wants the next test to start from a CLEAN snapshot —
+    leftover refs would themselves be picked up as a corruption signal
+    on the very next test, masking the true offender.
+
+    Sets the recursion flag so any concurrent guard invocation skips its
+    snapshot phase while the restore is in flight.
+    """
+    global _GUARD_RESTORE_IN_PROGRESS
+    _GUARD_RESTORE_IN_PROGRESS = True
+    try:
+        common_dir = _resolve_git_common_dir(project_root)
+        config_path = common_dir / "config"
+        head_path = _resolve_head_path(project_root)
+
+        config_before = before.get("config")
+        if isinstance(config_before, bytes):
+            config_path.write_bytes(config_before)
+
+        # D1: write HEAD_raw (the literal file bytes), not HEAD_resolved.
+        # Preserves the `ref: refs/heads/<branch>\n` text so the worktree
+        # stays attached.
+        head_raw = before.get("HEAD_raw")
+        if isinstance(head_raw, bytes):
+            head_path.write_bytes(head_raw)
+
+        refs_before = before.get("refs")
+        if isinstance(refs_before, list):
+            # Pass 1: write back every snapshot-before ref.
+            ref_names_before: set[str] = set()
+            for ref_name, ref_bytes in refs_before:
+                if not isinstance(ref_name, str) or not isinstance(ref_bytes, bytes):
+                    continue
+                ref_names_before.add(ref_name)
+                ref_path = common_dir / ref_name
+                ref_path.parent.mkdir(parents=True, exist_ok=True)
+                ref_path.write_bytes(ref_bytes)
+
+            # Pass 2 (D2): delete refs that appeared during the test.
+            # Walk current refs/heads and refs/tags; anything not in
+            # ref_names_before is post-snapshot pollution and must go.
+            for category in ("heads", "tags"):
+                refs_dir = common_dir / "refs" / category
+                if not refs_dir.is_dir():
+                    continue
+                for ref_file in refs_dir.rglob("*"):
+                    if not ref_file.is_file():
+                        continue
+                    ref_name = f"refs/{category}/" + str(
+                        ref_file.relative_to(refs_dir)
+                    ).replace(os.sep, "/")
+                    if ref_name not in ref_names_before:
+                        ref_file.unlink(missing_ok=True)
+    finally:
+        _GUARD_RESTORE_IN_PROGRESS = False
+
+
+@pytest.fixture(autouse=True)
+def _git_pollution_guard():
+    """Fail-fast if a test mutates host .git/{config,HEAD,refs/}.
+
+    Snapshots before yield, snapshots after, computes the diff. On any
+    non-empty diff: ATOMICALLY restore the snapshot (so the next test
+    starts from a clean state) and THEN ``pytest.fail()`` naming the
+    corruption type ("config", "HEAD", "refs"). Restore happens inside a
+    try/finally so even if it raises, the test still fails with the
+    original corruption message.
+
+    Unlike ``guard_git_hooks`` which warns, this fixture uses
+    ``pytest.fail()`` because config/HEAD/refs corruption — unlike hooks
+    corruption — is immediately repo-breaking and must halt the suite.
+    """
+    if _GUARD_RESTORE_IN_PROGRESS:
+        # Re-entry safety: never snapshot during a restore in flight.
+        yield
+        return
+
+    before = _compute_git_state_snapshot(_PROJECT_ROOT)
+    diff: list[str] = []
+    try:
+        yield
+    finally:
+        after = _compute_git_state_snapshot(_PROJECT_ROOT)
+        diff = _diff_git_state(before, after)
+        if diff:
+            try:
+                _atomic_restore_git_state(_PROJECT_ROOT, before)
+            finally:
+                pytest.fail(
+                    f"Test corrupted host git state: {diff}. "
+                    "See docs/analysis/rca-test-git-pollution-2026-04-27.md "
+                    "for the failure-mode lineage."
+                )
 
 
 # ---------------------------------------------------------------------------
@@ -288,6 +619,12 @@ _TOP_LEVEL_TEST_ALLOWLIST: frozenset[str] = frozenset(
         "test_reinforce_skill_loading.py",
         # No canonical sibling — keep at top level until migrated.
         "test_docgen.py",
+        # Detective-guard self-validation harness (Step 01-01 of
+        # fix-test-git-pollution). Lives at top level by design — it
+        # validates the conftest-level autouse guard whose snapshot logic
+        # is in this same file. Moving it to a subdir would obscure the
+        # locality between guard implementation and its self-test.
+        "test_guard_fixtures.py",
     }
 )
 
