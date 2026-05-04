@@ -460,6 +460,10 @@
 
 - [nw-opportunity-mapping](../../../nWave/skills/nw-opportunity-mapping/SKILL.md) — Opportunity Solution Trees, opportunity scoring, Lean Canvas, JTBD job mapping, and technique selection guide
 
+## nw-optimize-tests
+
+- [nw-optimize-tests](../../../nWave/skills/nw-optimize-tests/SKILL.md) — Minimizes test count while preserving coverage. Detects byte-identical pairs, parametrize-inflation, language-guarantee tests, AST-shape tests, stale migration nets. Approval gate before any change.
+
 ## nw-outcome-kpi-framework
 
 - [nw-outcome-kpi-framework](../../../nWave/skills/nw-outcome-kpi-framework/SKILL.md) — Outcome KPI definition methodology - synthesizes Who Does What By How Much (Gothelf/Seiden), Running Lean (Maurya), and Measure What Matters (Doerr) into a practical framework for measurable outcome KPIs
@@ -718,6 +722,10 @@
 ## nw-test-design-mandates
 
 - [nw-test-design-mandates](../../../nWave/skills/nw-test-design-mandates/SKILL.md) — Four design mandates for acceptance tests - hexagonal boundary enforcement, business language abstraction, user journey completeness, walking skeleton strategy, and pure function extraction
+
+## nw-test-optimization
+
+- [nw-test-optimization](../../../nWave/skills/nw-test-optimization/SKILL.md) — Methodology for minimizing test count while maximizing behavioral coverage - behavior definition, anti-pattern catalog, consolidation patterns, stopping criterion, coverage-preserving validation
 
 ## nw-test-organization-conventions
 

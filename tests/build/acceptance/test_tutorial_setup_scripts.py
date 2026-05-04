@@ -39,8 +39,18 @@ SCRIPT_IDS = [s.parent.name for s in SETUP_SCRIPTS]
 
 
 def _run_setup(script: Path, workdir: Path, *args: str) -> subprocess.CompletedProcess:
-    """Run a setup script in workdir, capturing output."""
+    """Run a setup script in workdir, capturing output.
+
+    Sets ``GIT_CEILING_DIRECTORIES`` to the workdir so any ``git`` invocation
+    inside the setup script cannot walk up to the host nwave-dev repo and
+    mutate its refs/config (per docs/analysis/rca-test-git-pollution-2026-04-27.md).
+    Strips inherited ``GIT_*`` vars for the same reason.
+    """
+    import os
     import sys
+
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    env["GIT_CEILING_DIRECTORIES"] = str(workdir)
 
     return subprocess.run(
         [sys.executable, str(script.resolve()), *args],
@@ -49,6 +59,7 @@ def _run_setup(script: Path, workdir: Path, *args: str) -> subprocess.CompletedP
         text=True,
         timeout=300,
         check=False,
+        env=env,
     )
 
 

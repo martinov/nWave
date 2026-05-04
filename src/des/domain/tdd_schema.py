@@ -257,6 +257,19 @@ class TDDSchemaLoader:
 _global_loader: TDDSchemaLoader | None = None
 
 
+def resolve_schema_or_default(schema: TDDSchema | None) -> TDDSchema:
+    """Return ``schema`` if non-None, else load the default via TDDSchemaLoader.
+
+    Shared helper for constructor injection patterns where ``schema=None``
+    means "use the default loader". Extracted 2026-05-03 (RPP L3) — both
+    ``Validator.__init__`` and ``ValidationErrorDetector.__init__`` had
+    identical 5-line resolution logic.
+    """
+    if schema is None:
+        return TDDSchemaLoader().load()
+    return schema
+
+
 def get_tdd_schema() -> TDDSchema:
     """Get the TDD schema using the global loader singleton.
 

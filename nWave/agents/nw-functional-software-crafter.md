@@ -34,6 +34,7 @@ skills:
   - nw-pbt-go
   - nw-pbt-rust
   - nw-tlaplus-verification
+  - nw-test-optimization
 ---
 
 # nw-functional-software-crafter
@@ -149,6 +150,7 @@ Read these files NOW:
 | `~/.claude/skills/nw-legacy-refactoring-ddd/SKILL.md` | When refactoring legacy code using DDD patterns (strangler fig, bubble context, ACL) |
 | `~/.claude/skills/nw-sc-review-dimensions/SKILL.md` | `/nw-review` invocation |
 | `~/.claude/skills/nw-tlaplus-verification/SKILL.md` | When formal verification needed |
+| `~/.claude/skills/nw-test-optimization/SKILL.md` | COMMIT phase stopping-criterion check, or when test count exceeds budget |
 | `~/.claude/skills/nw-fp-fsharp/SKILL.md` | Load when needed |
 | `~/.claude/skills/nw-fp-haskell/SKILL.md` | Load when needed |
 | `~/.claude/skills/nw-fp-scala/SKILL.md` | Load when needed |
@@ -218,13 +220,33 @@ Gate: all tests green.
 **If stuck after 3 attempts**: revert to last green state, document approaches tried, return `{ESCALATION_NEEDED: true, reason: "3 attempts exhausted", test: "<path>", approaches: [...]}`. NEVER weaken the test.
 
 ### Phase 5: COMMIT
-Commit with detailed message. No push until `/nw-finalize`.
+Before commit, load `~/.claude/skills/nw-test-optimization/SKILL.md` and run its stopping-criterion check on the new tests (skill section 4). For functional code, properties count as 1 behavior each — re-derive carefully. If budget exceeded, apply the relevant consolidation pattern (skill section 3) or convert example-based tests to a property before committing. Then commit with detailed message. No push until `/nw-finalize`.
 
 ## Behavior-First Test Budget (Functional)
 
 Formula: `max_tests = 2 x number_of_distinct_behaviors`
 
-Properties count as one test even with many inputs. A property covering three edge cases of same behavior = one test.
+Properties count as one test even with many inputs. A property covering three edge cases of same behavior = one test. PBT amplifies the budget rule: where OO needs 1 parametrized test for N variations, FP often needs 1 property covering the same N variations plus the entire input domain — count it as 1 behavior either way.
+
+Canonical "behavior" definition lives in `~/.claude/skills/nw-test-optimization/SKILL.md` section 1. Load that skill before counting when AC involves markdown contracts, migration regression nets, or example-based parametrize multipliers > 20 (properties replace most of these).
+
+### Banned Anti-Patterns
+
+These automatically block at review. Full catalog with counter-examples in `~/.claude/skills/nw-test-optimization/SKILL.md` section 2:
+
+- Language-guarantee tests (asserting type system facts, dataclass storage, Protocol membership) — type checker already enforces
+- AST-shape tests (parsing source) — replace with CI matrix runtime check
+- Stub-asserting-stub (calling a pure stub, asserting its return matches what you defined) — same anti-pattern as mock-asserting-mock
+- Example-based-inflation when a property fits (1 contract → N example tests; replace with 1 property)
+- Stale migration regression nets (must collapse within 1 stable release per skill 3.5)
+
+### Migration-Collapse Lifecycle
+
+Regression nets created for one-time migrations MUST collapse within 1 stable release after migration completion. Stable release = 1 release with the migration code green in CI for >= 7 days, no follow-up bug reports referencing the migration. After stabilization, replace per-item parametrized tests with 1 single-iteration test reporting all violations at once. Document the collapse: `refactor(tests): collapse {migration} regression net (N → M) — stable since {date}`. Full procedure in `~/.claude/skills/nw-test-optimization/SKILL.md` section 3.5.
+
+### Enforcement
+
+When test count exceeds budget at review, the crafter MUST cite the consolidation pattern applied (skill section 3) OR justify the exception in commit body. Reviewer hard-blocks if neither is present.
 
 ## Testing Strategy by Layer
 
@@ -309,7 +331,7 @@ Beyond the 7 Deadly Patterns inherited above, reject these smells on sight:
 3. **Implementation Coupling** -- tests that break on refactoring because they verify HOW (method calls, internal state) not WHAT (observable outcomes).
 4. **Excessive Mocking** -- mocking the SUT itself or mocking so deeply that the test only tests mock wiring. In FP: using mock libraries when a pure function stub suffices.
 5. **Flaky Tests** -- tests that pass/fail randomly due to timing, ordering, or shared mutable state. Fix immediately or quarantine with explanation.
-6. **Test Duplication** -- same behavior tested in 5 places; all break for 1 change. Consolidate to one parametrized test or one property.
+6. **Test Duplication** -- same behavior tested in 5 places; all break for 1 change. Consolidate to one parametrized test or one property. Consolidation patterns (parametrize collapse, dict iteration, fixture scope promotion, xdist_group, migration collapse, cross-tier dedup) catalogued in `~/.claude/skills/nw-test-optimization/SKILL.md` section 3. For FP, prefer property collapse over parametrize collapse.
 7. **Missing Edge Cases** -- only happy path tested; errors, boundaries, and empty inputs ignored. Properties help catch this systematically.
 8. **Testing Theater** -- tests that pass but verify nothing meaningful (see 7 Deadly Patterns for full taxonomy).
 

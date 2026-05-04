@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import json
 import shlex
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from nwave_ai.common.check_result import CheckResult
+from nwave_ai.doctor.checks._settings import read_settings
 
 
 if TYPE_CHECKING:
@@ -106,23 +106,9 @@ class HookPythonPathCheck:
         Returns:
             CheckResult with binary resolution details in message.
         """
-        if not context.settings_path.exists():
-            return CheckResult(
-                passed=False,
-                error_code="SETTINGS_MISSING",
-                message="settings.json not found — cannot verify hook python paths",
-                remediation="Run `nwave-ai install` to create the Claude settings file.",
-            )
-
-        try:
-            data = json.loads(context.settings_path.read_text())
-        except (json.JSONDecodeError, OSError) as exc:
-            return CheckResult(
-                passed=False,
-                error_code="SETTINGS_UNREADABLE",
-                message=f"settings.json could not be parsed: {exc}",
-                remediation="Inspect settings.json for syntax errors.",
-            )
+        data, error = read_settings(context.settings_path)
+        if error is not None:
+            return error
 
         hook_entries = _extract_hook_entries(data)
         if not hook_entries:

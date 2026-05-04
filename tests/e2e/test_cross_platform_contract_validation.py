@@ -36,6 +36,8 @@ import pytest
 from tests.e2e.conftest import exec_in_container, require_docker
 
 
+pytestmark = pytest.mark.e2e_smoke
+
 _REPO_ROOT = Path(__file__).parent.parent.parent
 _IMAGE = "python:3.12-slim"
 _CONTAINER_SRC = "/home/tester/nwave-dev"

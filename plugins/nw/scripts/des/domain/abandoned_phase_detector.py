@@ -42,10 +42,6 @@ class AbandonedPhaseDetector:
     DEFAULT_TIMEOUT_MINUTES = 30
     DEFAULT_STALLED_THRESHOLD_MINUTES = 20
 
-    def __init__(self):
-        """Initialize detector with default timeout thresholds."""
-        pass
-
     def is_abandoned(
         self,
         phase: dict[str, Any],

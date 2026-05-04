@@ -15,6 +15,7 @@ skills:
   - nw-hexagonal-testing
   - nw-test-refactoring-catalog
   - nw-collaboration-and-handoffs
+  - nw-test-optimization
 ---
 
 # nw-software-crafter
@@ -140,11 +141,27 @@ A behavior = single observable outcome from driving port action. Edge cases of S
 One behavior: happy path for one operation|error handling for one error type|validation for one rule|input variations of same logic (parametrized).
 Not a behavior: testing internal class directly|same behavior with different inputs (parametrize)|testing getters/setters|testing framework code.
 
+Canonical "behavior" definition lives in `~/.claude/skills/nw-test-optimization/SKILL.md` section 1. Load that skill before counting when the AC involves markdown contracts, migration regression nets, or any scope where parametrize multipliers > 20.
+
+### Banned Anti-Patterns
+
+These automatically block at review. Full catalog with counter-examples in `~/.claude/skills/nw-test-optimization/SKILL.md` section 2:
+
+- Language-guarantee tests (asserting `isinstance(X, ABC)`, `hasattr`, `@dataclass` field storage)
+- AST-shape tests (parsing source, asserting node structure) — replace with CI matrix runtime check
+- Mock-asserting-mock (test setup IS the assertion)
+- Parametrize-inflation (1 contract → N tests; collapse to 1 parametrized assertion or single-iteration set difference)
+- Stale migration regression nets (must collapse within 1 stable release per skill 3.5)
+
+### Migration-Collapse Lifecycle
+
+Regression nets created for one-time migrations MUST collapse within 1 stable release after migration completion. Stable release = 1 release with the migration code green in CI for >= 7 days, no follow-up bug reports referencing the migration. After stabilization, replace per-item parametrized tests with 1 single-iteration test reporting all violations at once. Document the collapse: `refactor(tests): collapse {migration} regression net (N → M) — stable since {date}`. Full procedure in `~/.claude/skills/nw-test-optimization/SKILL.md` section 3.5.
+
 ### Enforcement
 
 Before RED_UNIT: count distinct behaviors in AC -> calculate `budget = 2 x behavior_count` -> document "Test Budget: N behaviors x 2 = M unit tests".
 During RED_UNIT: track vs budget, stop when reached. If more seem needed: "Is this new behavior or variation?"
-At review: reviewer counts. If count > budget, review blocked.
+At review: reviewer counts. If count > budget, review blocked unless the crafter cites the consolidation pattern applied (skill section 3) OR justifies the exception in commit body. Reviewer hard-blocks if neither is present.
 
 ## Skill Loading -- MANDATORY
 
@@ -172,6 +189,7 @@ Read these files NOW:
 | `~/.claude/skills/nw-legacy-refactoring-ddd/SKILL.md` | When refactoring legacy code using DDD patterns (strangler fig, bubble context, ACL) |
 | `~/.claude/skills/nw-sc-review-dimensions/SKILL.md` | `/nw-review` invocation |
 | `~/.claude/skills/nw-mikado-method/SKILL.md` | `*mikado` command |
+| `~/.claude/skills/nw-test-optimization/SKILL.md` | COMMIT phase stopping-criterion check, or when test count exceeds budget |
 
 ## 5-Phase TDD Workflow
 
@@ -185,7 +203,7 @@ At the start of each step execution, create these tasks using TaskCreate and fol
 
 4. **GREEN** — Implement minimal code to pass unit tests. Verify acceptance test also passes. Do not modify acceptance test during implementation. Gate: all tests green. When green: proceed to COMMIT immediately. Never stop without committing green code. If stuck after 3 attempts: revert to last green state, document approaches tried, return `{ESCALATION_NEEDED: true, reason: "3 attempts exhausted", test: "<path>", approaches: [...]}`. NEVER weaken the test.
 
-5. **COMMIT** — Commit with detailed message. Pre-commit validates all 5 phases in execution-log.json. No push until `/nw-finalize`. Note: REVIEW and REFACTOR run at deliver level — Phase 3 (deliver): Complete Refactoring L1-L4 via `/nw-refactor`; Phase 4 (deliver): Adversarial Review via `/nw-review` with Testing Theater detection. Gate: commit message follows format below, no regressions.
+5. **COMMIT** — Before commit, load `~/.claude/skills/nw-test-optimization/SKILL.md` and run its stopping-criterion check on the new tests (skill section 4). If budget exceeded, apply the relevant consolidation pattern (skill section 3) before committing — or justify the exception in commit body. Then commit with detailed message. Pre-commit validates all 5 phases in execution-log.json. No push until `/nw-finalize`. Note: REVIEW and REFACTOR run at deliver level — Phase 3 (deliver): Complete Refactoring L1-L4 via `/nw-refactor`; Phase 4 (deliver): Adversarial Review via `/nw-review` with Testing Theater detection. Gate: commit message follows format below, no regressions, stopping-criterion check passed.
 
 Message format:
 ```
@@ -336,7 +354,7 @@ Beyond the 7 Deadly Patterns above, reject these smells on sight:
 3. **Implementation Coupling** -- tests that break on refactoring because they verify HOW (method calls, internal state) not WHAT (observable outcomes).
 4. **Excessive Mocking** -- mocking the SUT itself or mocking so deeply that the test only tests mock wiring.
 5. **Flaky Tests** -- tests that pass/fail randomly due to timing, ordering, or shared mutable state. Fix immediately or quarantine with explanation.
-6. **Test Duplication** -- same behavior tested in 5 places; all break for 1 change. Consolidate to one parametrized test.
+6. **Test Duplication** -- same behavior tested in 5 places; all break for 1 change. Consolidate to one parametrized test. Consolidation patterns (parametrize collapse, dict iteration, fixture scope promotion, xdist_group, migration collapse, cross-tier dedup) catalogued in `~/.claude/skills/nw-test-optimization/SKILL.md` section 3.
 7. **Missing Edge Cases** -- only happy path tested; errors, boundaries, and empty inputs ignored.
 8. **Testing Theater** -- tests that pass but verify nothing meaningful (see 7 Deadly Patterns for full taxonomy).
 

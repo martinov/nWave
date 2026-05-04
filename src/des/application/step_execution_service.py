@@ -43,7 +43,6 @@ def execute_step(
     current_phase = step_repository.get_current_phase(step_data)
     phase_name = current_phase["phase_name"]
 
-    # Initialize TimeoutMonitor with phase start timestamp
     timeout_monitor = None
     warnings: list[str] = []
     if timeout_thresholds:
@@ -55,10 +54,8 @@ def execute_step(
 
     _restore_turn_count(counter, current_phase, phase_name)
 
-    # Track validated features
     features_validated: list[str] = []
 
-    # Execute iterations with threshold checking
     for i in range(simulated_iterations):
         counter.increment_turn(phase_name)
         features_validated.append("turn_counting")

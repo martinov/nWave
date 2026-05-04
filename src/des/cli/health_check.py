@@ -154,28 +154,34 @@ def _check_log_directory(logs_dir: Path) -> CheckResult:
         return CheckResult("log_directory", False, str(exc))
 
 
+def _check_artifact_count(
+    check_name: str, target_dir: Path, glob_pattern: str, noun: str
+) -> CheckResult:
+    """Shared count-based health check: glob a pattern under target_dir.
+
+    Extracted 2026-05-03 (RPP L3) — `_check_agents_installed` and
+    `_check_skills_installed` were 9-line clones differing only in
+    check name, glob pattern, and noun.
+    """
+    try:
+        if not target_dir.exists():
+            return CheckResult(check_name, False, f"{noun} directory not found")
+        matches = list(target_dir.glob(glob_pattern))
+        return CheckResult(check_name, True, f"{len(matches)} {noun}")
+    except Exception as exc:
+        return CheckResult(check_name, False, str(exc))
+
+
 def _check_agents_installed(agents_dir: Path) -> CheckResult:
     """Check 6: Count .md files in agents directory."""
-    try:
-        if not agents_dir.exists():
-            return CheckResult("agents_installed", False, "agents directory not found")
-        md_files = list(agents_dir.glob("*.md"))
-        count = len(md_files)
-        return CheckResult("agents_installed", True, f"{count} agents")
-    except Exception as exc:
-        return CheckResult("agents_installed", False, str(exc))
+    return _check_artifact_count("agents_installed", agents_dir, "*.md", "agents")
 
 
 def _check_skills_installed(skills_dir: Path) -> CheckResult:
     """Check 7: Count nw-*/SKILL.md dirs in skills directory."""
-    try:
-        if not skills_dir.exists():
-            return CheckResult("skills_installed", False, "skills directory not found")
-        skill_files = list(skills_dir.glob("nw-*/SKILL.md"))
-        count = len(skill_files)
-        return CheckResult("skills_installed", True, f"{count} skills")
-    except Exception as exc:
-        return CheckResult("skills_installed", False, str(exc))
+    return _check_artifact_count(
+        "skills_installed", skills_dir, "nw-*/SKILL.md", "skills"
+    )
 
 
 def _run_all_checks(

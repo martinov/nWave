@@ -60,6 +60,8 @@ _IMPORT_PATTERN = re.compile(r"\bimport\s+src\.des\b")
 _GENERAL_PATTERN = re.compile(r"\bsrc\.des\.")
 
 # Utility scripts to include in dist/scripts/
+# Entries may include subdirectory prefixes (e.g. "hooks/foo.py") — the file is
+# copied from scripts/<entry> into dist/scripts/<basename>.
 UTILITY_SCRIPTS = [
     "install_nwave_target_hooks.py",
     "validate_step_file.py",
@@ -232,7 +234,12 @@ class DistBuilder:
         return files_modified
 
     def build_utilities(self) -> int:
-        """scripts/*.py → dist/scripts/ (selected utility scripts only)."""
+        """scripts/*.py → dist/scripts/ (selected utility scripts only).
+
+        Entries in UTILITY_SCRIPTS may include a subdirectory prefix
+        (e.g. "hooks/check_probe_method.py") — the file is copied flat
+        into dist/scripts/<basename>.
+        """
         src = self.project_root / "scripts"
         dst = self.dist_dir / "scripts"
         dst.mkdir(parents=True, exist_ok=True)
@@ -240,8 +247,9 @@ class DistBuilder:
         count = 0
         for script_name in UTILITY_SCRIPTS:
             script_file = src / script_name
+            dest_name = Path(script_name).name  # flatten subdirectory
             if script_file.exists():
-                shutil.copy2(script_file, dst / script_name)
+                shutil.copy2(script_file, dst / dest_name)
                 count += 1
 
         self._log(f"Utility scripts: {count} files")

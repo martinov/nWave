@@ -156,11 +156,9 @@ class TDDPhaseValidator:
         Args:
             schema: TDDSchema instance. If None, loads from default path.
         """
-        if schema is None:
-            from des.domain.tdd_schema import TDDSchemaLoader
+        from des.domain.tdd_schema import resolve_schema_or_default
 
-            schema = TDDSchemaLoader().load()
-        self._schema = schema
+        self._schema = resolve_schema_or_default(schema)
         self.MANDATORY_PHASES = self._schema.tdd_phases
 
     def validate(self, prompt: str) -> list[str]:
@@ -325,20 +323,16 @@ class ExecutionLogValidator:
         if not phase_log:
             return errors
 
-        # Skip schema-level validation if requested (for unit testing individual rules)
         if not skip_schema_validation:
-            # Get expected phases and count from schema (single source of truth)
             expected_phases = len(self._schema.tdd_phases)
             required_phases = set(self._schema.tdd_phases)
 
-            # Check phase count
             if len(phase_log) != expected_phases:
                 errors.append(
                     f"INVALID: Phase log has {len(phase_log)} phases, "
                     f"expected {expected_phases} phases from schema"
                 )
 
-            # Check for required phases
             present_phases = {
                 phase.get("phase_name")
                 for phase in phase_log
@@ -354,14 +348,12 @@ class ExecutionLogValidator:
             phase_name = phase.get("phase_name", "unknown")
             status = phase.get("status")
 
-            # Check 1: Detect IN_PROGRESS (abandoned state)
             if status == PhaseStatus.IN_PROGRESS:
                 errors.append(
                     f"INCOMPLETE: Phase {phase_name} left in IN_PROGRESS state - "
                     f"task may have been abandoned"
                 )
 
-            # Check 2: EXECUTED must have outcome
             elif status == PhaseStatus.EXECUTED:
                 if "outcome" not in phase or phase.get("outcome") is None:
                     errors.append(
@@ -369,7 +361,6 @@ class ExecutionLogValidator:
                         f"Must specify outcome (PASS or FAIL)"
                     )
 
-            # Check 3: SKIPPED must have blocked_by
             elif status == PhaseStatus.SKIPPED:
                 if "blocked_by" not in phase or not phase.get("blocked_by"):
                     errors.append(
@@ -377,7 +368,6 @@ class ExecutionLogValidator:
                         f"Must explain why phase was skipped"
                     )
 
-            # Check 4: Reject NOT_EXECUTED
             elif status == PhaseStatus.NOT_EXECUTED:
                 errors.append(
                     f"ERROR: Phase {phase_name} NOT_EXECUTED. "
@@ -489,13 +479,11 @@ class TemplateValidator:
             execution_log_data, schema_version="4.0"
         )
 
-        # Combine all errors (marker first, then sections, then phases, then execution log)
         all_errors = (
             marker_errors + section_errors + phase_errors + execution_log_errors
         )
 
-        # Generate recovery guidance for errors
-        recovery_guidance = []
+        recovery_guidance: list[str] = []
         if section_errors:
             section_guidance = self.section_checker.get_recovery_guidance(
                 section_errors
@@ -509,14 +497,8 @@ class TemplateValidator:
             if log_guidance:
                 recovery_guidance.extend(log_guidance)
 
-        # Return None if no guidance was generated
-        if not recovery_guidance:
-            recovery_guidance = None
-
-        # Calculate duration
         duration_ms = (time.perf_counter() - start_time) * 1000
 
-        # Determine if invocation is allowed
         status = "PASSED" if not all_errors else "FAILED"
         task_invocation_allowed = not all_errors
 

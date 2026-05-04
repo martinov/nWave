@@ -4,6 +4,8 @@ Provides:
 - ``require_docker``: pytest mark that skips when Docker is unavailable
 - ``_exec``: helper to run a command in a DockerContainer and return (exit_code, output)
 - ``_exec_ok``: run a command and assert exit 0
+- ``pypi_shape_wheel``: session-scoped local-built PyPI-shape wheel (shared by
+  test_pypi_shape_install_chain.py + test_wheel_privacy_contract.py)
 
 All E2E test modules import from here to avoid duplicating the docker-availability
 guard and the exec helper in every file.
@@ -15,6 +17,8 @@ test modules should import the shared fixtures from this file.
 """
 
 from __future__ import annotations
+
+from pathlib import Path
 
 import pytest
 
@@ -118,7 +122,6 @@ def opencode_container():
     own image via subprocess since that path requires a different
     pipx + overlay layout.
     """
-    from pathlib import Path
 
     from tests.e2e.conftest import _is_docker_available
 
@@ -180,3 +183,142 @@ def opencode_container():
         container._install_stdout = out  # type: ignore[attr-defined]
 
         yield container
+
+
+# ---------------------------------------------------------------------------
+# PyPI-shape wheel build — shared by test_pypi_shape_install_chain.py and
+# test_wheel_privacy_contract.py
+#
+# Moved here from test_pypi_shape_install_chain.py to break the
+# wheel_privacy_container catch-22: previously that fixture installed nwave-ai
+# from live PyPI via `pipx install --pip-args="--pre"`, which meant a leaked
+# wheel on PyPI could not be fixed (pre-push e2e installed the leaked wheel
+# and failed on it).  Both consumer tests now share this local-built wheel.
+# ---------------------------------------------------------------------------
+
+import shutil  # noqa: E402
+import subprocess  # noqa: E402
+import sys  # noqa: E402
+
+
+_REPO_ROOT_FOR_WHEEL: Path = Path(__file__).resolve().parent.parent.parent
+
+# Dirs/files copied into the per-session sandbox. Anything not in this list
+# is excluded from the build root: keeps the build deterministic and avoids
+# pulling in dev artefacts (tests/, docs/, .git/, .venv/).
+_SANDBOX_INCLUDES: tuple[str, ...] = (
+    "nWave",
+    "scripts",
+    "src",
+    "nwave_ai",
+    "schemas",
+    "pyproject.toml",
+    "README.md",
+    "LICENSE",
+)
+
+
+def _wheel_build_run(
+    cmd: list[str],
+    *,
+    cwd: Path | None = None,
+    env: dict[str, str] | None = None,
+    timeout: int = 300,
+) -> tuple[int, str]:
+    """Run a subprocess and return (exit_code, combined_stdout_stderr)."""
+    proc = subprocess.run(
+        cmd,
+        cwd=str(cwd) if cwd else None,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        timeout=timeout,
+        check=False,
+    )
+    return proc.returncode, proc.stdout.decode("utf-8", errors="replace")
+
+
+def _copy_repo_subset(src_root: Path, dst_root: Path) -> None:
+    """Copy the strict subset of repo dirs needed for build into dst_root."""
+    dst_root.mkdir(parents=True, exist_ok=True)
+    for name in _SANDBOX_INCLUDES:
+        src = src_root / name
+        if not src.exists():
+            continue
+        dst = dst_root / name
+        if src.is_dir():
+            shutil.copytree(src, dst, symlinks=True)
+        else:
+            shutil.copy2(src, dst)
+
+
+def _build_pypi_shape_wheel(sandbox: Path) -> Path:
+    """Build a PyPI-shape wheel inside *sandbox* and return its path.
+
+    Mirrors the .github/workflows/release-prod.yml publish-to-pypi job:
+      1. python scripts/build_dist.py        (produces dist/lib/python/des)
+      2. cp -r dist/lib ./lib                (so force-include can resolve)
+      3. python scripts/release/patch_pyproject.py   (PyPI wheel shape)
+      4. python -m build --wheel             (opaque distributable)
+    """
+    # 1. Build the DES module into sandbox/dist/lib
+    code, out = _wheel_build_run(
+        [sys.executable, "scripts/build_dist.py"],
+        cwd=sandbox,
+    )
+    assert code == 0, f"build_dist.py failed (exit {code}):\n{out}"
+
+    # 2. Move dist/lib -> lib (force-include needs lib/python/des at root)
+    dist_lib = sandbox / "dist" / "lib"
+    assert dist_lib.is_dir(), f"build_dist.py did not produce dist/lib/. Output:\n{out}"
+    shutil.copytree(dist_lib, sandbox / "lib")
+    # Clean dist so python -m build does not see stale artefacts
+    shutil.rmtree(sandbox / "dist", ignore_errors=True)
+
+    # 3. Patch pyproject.toml in place (in the sandbox copy ONLY).
+    patched_path = sandbox / "pyproject.toml"
+    code, out = _wheel_build_run(
+        [
+            sys.executable,
+            "scripts/release/patch_pyproject.py",
+            "--input",
+            str(patched_path),
+            "--output",
+            str(patched_path),
+            "--target-name",
+            "nwave-ai",
+            "--target-version",
+            "0.0.0.dev0",
+        ],
+        cwd=sandbox,
+    )
+    assert code == 0, f"patch_pyproject.py failed (exit {code}):\n{out}"
+
+    # 4. Build the wheel
+    out_dir = sandbox / "wheelhouse"
+    code, out = _wheel_build_run(
+        [sys.executable, "-m", "build", "--wheel", "--outdir", str(out_dir)],
+        cwd=sandbox,
+        timeout=600,
+    )
+    assert code == 0, f"python -m build --wheel failed (exit {code}):\n{out}"
+
+    wheels = list(out_dir.glob("nwave_ai-*.whl"))
+    assert len(wheels) == 1, (
+        f"Expected exactly one nwave_ai wheel in {out_dir}, found: {wheels}\n"
+        f"Build output:\n{out}"
+    )
+    return wheels[0]
+
+
+@pytest.fixture(scope="session")
+def pypi_shape_wheel(tmp_path_factory) -> Path:
+    """Build a PyPI-shape wheel once per session and yield its path.
+
+    Session-scoped: the build is ~60s, must amortize across all consumer tests
+    (test_pypi_shape_install_chain.py + test_wheel_privacy_contract.py).
+    """
+    sandbox = tmp_path_factory.mktemp("nwave_pypi_sandbox")
+    _copy_repo_subset(_REPO_ROOT_FOR_WHEEL, sandbox)
+    wheel = _build_pypi_shape_wheel(sandbox)
+    return wheel

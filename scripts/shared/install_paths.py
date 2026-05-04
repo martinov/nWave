@@ -22,6 +22,7 @@ DES_LIB_SUBDIR = Path("lib") / "python" / "des"
 SCRIPTS_SUBDIR = Path("scripts")
 COMMANDS_LEGACY_SUBDIR = Path("commands") / "nw"  # deprecated, cleanup only
 MANIFEST_FILENAME = "nwave-manifest.txt"
+GLOBAL_CONFIG_FILENAME = "global-config.json"
 
 
 def agents_dir(claude_dir: Path) -> Path:

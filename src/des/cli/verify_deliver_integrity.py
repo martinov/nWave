@@ -19,33 +19,16 @@ import json
 import sys
 from pathlib import Path
 
+from des.domain._roadmap_helpers import (
+    extract_step_ids as _extract_step_ids,
+)
 from des.domain.deliver_integrity_verifier import DeliverIntegrityVerifier
 from des.domain.roadmap_schema import get_roadmap_schema
 from des.domain.roadmap_validator import RoadmapValidator
 from des.domain.tdd_schema import TDDSchemaLoader
 
 
-def _extract_step_ids(roadmap: dict) -> list[str]:
-    """Extract step IDs from roadmap, supporting both flat and nested formats.
-
-    Flat format: top-level ``steps`` list with ``id`` or ``step_id`` keys.
-    Nested format: ``phases`` list, each containing a ``steps`` list.
-    """
-    # Flat format: top-level "steps" list
-    if "steps" in roadmap:
-        return [
-            s.get("id") or s.get("step_id")
-            for s in roadmap["steps"]
-            if s.get("id") or s.get("step_id")
-        ]
-    # Nested format: steps under phases
-    step_ids: list[str] = []
-    for phase in roadmap.get("phases", []):
-        for step in phase.get("steps", []):
-            step_id = step.get("id") or step.get("step_id")
-            if step_id:
-                step_ids.append(step_id)
-    return step_ids
+__all__ = ["_extract_step_ids"]  # re-export for tests/des/unit/cli/
 
 
 def _parse_execution_log(exec_log: dict) -> dict[str, list[str]]:

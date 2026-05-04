@@ -67,50 +67,29 @@ class InvocationLimitsValidator:
         if isinstance(step_file_path, str):
             step_file_path = Path(step_file_path)
 
-        # Load step file using filesystem adapter
         step_data = self._filesystem.read_json(step_file_path)
-
-        errors = []
-        guidance = []
-
-        # Check tdd_cycle section exists
         tdd_cycle = step_data.get("tdd_cycle", {})
 
-        # Validate max_turns
-        max_turns = tdd_cycle.get("max_turns")
-        if max_turns is None:
-            errors.append("MISSING: max_turns not configured in step file")
-            guidance.append(
-                "Add 'max_turns' field to tdd_cycle section with a positive integer value. "
-                'Example: "max_turns": 50'
-            )
-        elif not isinstance(max_turns, int) or max_turns <= 0:
-            errors.append(
-                f"INVALID: max_turns must be a positive integer (got: {max_turns})"
-            )
-            guidance.append(
-                "Set 'max_turns' to a positive integer value. "
-                "Typical values: 50 for simple tasks, 100 for complex refactoring"
-            )
+        errors: list[str] = []
+        guidance: list[str] = []
 
-        # Validate duration_minutes
-        duration_minutes = tdd_cycle.get("duration_minutes")
-        if duration_minutes is None:
-            errors.append("MISSING: duration_minutes not configured in step file")
-            guidance.append(
-                "Add 'duration_minutes' field to tdd_cycle section with a positive integer value. "
-                'Example: "duration_minutes": 30'
-            )
-        elif not isinstance(duration_minutes, int) or duration_minutes <= 0:
-            errors.append(
-                f"INVALID: duration_minutes must be a positive integer (got: {duration_minutes})"
-            )
-            guidance.append(
-                "Set 'duration_minutes' to a positive integer value. "
-                "Typical values: 30 for simple tasks, 60-120 for complex refactoring"
-            )
+        self._validate_positive_int_field(
+            tdd_cycle,
+            "max_turns",
+            missing_guidance="Add 'max_turns' field to tdd_cycle section with a positive integer value. Example: \"max_turns\": 50",
+            invalid_guidance="Set 'max_turns' to a positive integer value. Typical values: 50 for simple tasks, 100 for complex refactoring",
+            errors=errors,
+            guidance=guidance,
+        )
+        self._validate_positive_int_field(
+            tdd_cycle,
+            "duration_minutes",
+            missing_guidance="Add 'duration_minutes' field to tdd_cycle section with a positive integer value. Example: \"duration_minutes\": 30",
+            invalid_guidance="Set 'duration_minutes' to a positive integer value. Typical values: 30 for simple tasks, 60-120 for complex refactoring",
+            errors=errors,
+            guidance=guidance,
+        )
 
-        # Add general guidance if any errors found
         if errors:
             guidance.insert(
                 0,
@@ -118,8 +97,26 @@ class InvocationLimitsValidator:
                 "These limits enforce TDD discipline and prevent unbounded execution.",
             )
 
-        is_valid = len(errors) == 0
-
         return InvocationLimitsResult(
-            is_valid=is_valid, errors=errors, guidance=guidance
+            is_valid=not errors, errors=errors, guidance=guidance
         )
+
+    @staticmethod
+    def _validate_positive_int_field(
+        tdd_cycle: dict,
+        field_name: str,
+        missing_guidance: str,
+        invalid_guidance: str,
+        errors: list[str],
+        guidance: list[str],
+    ) -> None:
+        """Validate that a tdd_cycle field is a present positive integer."""
+        value = tdd_cycle.get(field_name)
+        if value is None:
+            errors.append(f"MISSING: {field_name} not configured in step file")
+            guidance.append(missing_guidance)
+        elif not isinstance(value, int) or value <= 0:
+            errors.append(
+                f"INVALID: {field_name} must be a positive integer (got: {value})"
+            )
+            guidance.append(invalid_guidance)

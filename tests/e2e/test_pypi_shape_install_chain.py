@@ -3,9 +3,9 @@
 Why this test exists
 --------------------
 
-The 4 v3.12.1 install-path bugs (`docs/analysis/rca-v3-12-1-install-regression.md`)
-were not caught by any existing e2e test even though the e2e suite was green.
-Rex's RCA identified four systemic gaps in the existing coverage:
+The 4 v3.12.1 install-path bugs (Bugs #1-#4 enumerated below) were not
+caught by any existing e2e test even though the e2e suite was green.
+Four systemic gaps in the existing coverage:
 
 1. **Wrong entry point** — every existing e2e test invokes
    ``python -m nwave_ai.cli install`` (e.g. ``test_fresh_install.py:154``,
@@ -56,8 +56,9 @@ and asserts the strict success contract:
 
   - install:     "Deployment validated" + 4/4 component checks pass
                  (specifically Scripts verified (2/2), locking Bug #2 fix)
-  - doctor:      "7/7 checks passed" with zero failures
-                 (specifically framework_files passes, locking Bug #4 fix)
+  - doctor:      "8/8 checks passed" with zero failures
+                 (specifically framework_files passes, locking Bug #4 fix;
+                 8th check added in v3.14 — DensityCheck per D6/D12)
 
 Implementation notes
 --------------------
@@ -85,32 +86,28 @@ Step-ID: regression-guard for fix-v3-12-2-install-regression
 from __future__ import annotations
 
 import os
-import shutil
 import subprocess
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+
+pytestmark = pytest.mark.e2e_smoke
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
-_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-
-# Dirs/files copied into the per-session sandbox. Anything not in this list
-# is excluded from the build root: keeps the build deterministic and avoids
-# pulling in dev artefacts (tests/, docs/, .git/, .venv/).
-_SANDBOX_INCLUDES: tuple[str, ...] = (
-    "nWave",
-    "scripts",
-    "src",
-    "nwave_ai",
-    "pyproject.toml",
-    "README.md",
-    "LICENSE",
-)
+# Note: _REPO_ROOT, _SANDBOX_INCLUDES, _copy_repo_subset, _build_pypi_shape_wheel,
+# and the `pypi_shape_wheel` session fixture have been moved to tests/e2e/conftest.py
+# so they can be shared with test_wheel_privacy_contract.py (closes Root Cause A
+# of the wheel_privacy_container live-PyPI catch-22, fix-wheel-privacy-self-blocking-gate
+# step 01-02).  The `pypi_shape_wheel` fixture is auto-injected from conftest.
 
 # Runtime deps required by nwave_ai/cli.py and scripts/install/install_nwave.py.
 # Mirrors the runtime stanza used by other e2e tests (test_pypi_install.py:117,
@@ -158,79 +155,6 @@ def _run(
     return proc.returncode, proc.stdout.decode("utf-8", errors="replace")
 
 
-def _copy_repo_subset(src_root: Path, dst_root: Path) -> None:
-    """Copy the strict subset of repo dirs needed for build into dst_root."""
-    dst_root.mkdir(parents=True, exist_ok=True)
-    for name in _SANDBOX_INCLUDES:
-        src = src_root / name
-        if not src.exists():
-            continue
-        dst = dst_root / name
-        if src.is_dir():
-            shutil.copytree(src, dst, symlinks=True)
-        else:
-            shutil.copy2(src, dst)
-
-
-def _build_pypi_shape_wheel(sandbox: Path) -> Path:
-    """Build a PyPI-shape wheel inside *sandbox* and return its path.
-
-    Mirrors the .github/workflows/release-prod.yml publish-to-pypi job:
-      1. python scripts/build_dist.py        (produces dist/lib/python/des)
-      2. cp -r dist/lib ./lib                (so force-include can resolve)
-      3. python scripts/release/patch_pyproject.py   (PyPI wheel shape)
-      4. python -m build --wheel             (opaque distributable)
-    """
-    # 1. Build the DES module into sandbox/dist/lib
-    code, out = _run(
-        [sys.executable, "scripts/build_dist.py"],
-        cwd=sandbox,
-    )
-    assert code == 0, f"build_dist.py failed (exit {code}):\n{out}"
-
-    # 2. Move dist/lib -> lib (force-include needs lib/python/des at root)
-    dist_lib = sandbox / "dist" / "lib"
-    assert dist_lib.is_dir(), f"build_dist.py did not produce dist/lib/. Output:\n{out}"
-    shutil.copytree(dist_lib, sandbox / "lib")
-    # Clean dist so python -m build does not see stale artefacts
-    shutil.rmtree(sandbox / "dist", ignore_errors=True)
-
-    # 3. Patch pyproject.toml in place (in the sandbox copy ONLY).
-    patched_path = sandbox / "pyproject.toml"
-    code, out = _run(
-        [
-            sys.executable,
-            "scripts/release/patch_pyproject.py",
-            "--input",
-            str(patched_path),
-            "--output",
-            str(patched_path),
-            "--target-name",
-            "nwave-ai",
-            "--target-version",
-            "0.0.0.dev0",
-        ],
-        cwd=sandbox,
-    )
-    assert code == 0, f"patch_pyproject.py failed (exit {code}):\n{out}"
-
-    # 4. Build the wheel
-    out_dir = sandbox / "wheelhouse"
-    code, out = _run(
-        [sys.executable, "-m", "build", "--wheel", "--outdir", str(out_dir)],
-        cwd=sandbox,
-        timeout=600,
-    )
-    assert code == 0, f"python -m build --wheel failed (exit {code}):\n{out}"
-
-    wheels = list(out_dir.glob("nwave_ai-*.whl"))
-    assert len(wheels) == 1, (
-        f"Expected exactly one nwave_ai wheel in {out_dir}, found: {wheels}\n"
-        f"Build output:\n{out}"
-    )
-    return wheels[0]
-
-
 def _wheel_contains(wheel: Path, *paths: str) -> dict[str, bool]:
     """Return {path: present} for each *path* against the wheel's contents."""
     import zipfile
@@ -244,15 +168,8 @@ def _wheel_contains(wheel: Path, *paths: str) -> dict[str, bool]:
 # ---------------------------------------------------------------------------
 # Session-scoped fixtures (amortize the ~60s build)
 # ---------------------------------------------------------------------------
-
-
-@pytest.fixture(scope="session")
-def pypi_shape_wheel(tmp_path_factory) -> Path:
-    """Build a PyPI-shape wheel once per session and yield its path."""
-    sandbox = tmp_path_factory.mktemp("nwave_pypi_sandbox")
-    _copy_repo_subset(_REPO_ROOT, sandbox)
-    wheel = _build_pypi_shape_wheel(sandbox)
-    return wheel
+# `pypi_shape_wheel` is provided by tests/e2e/conftest.py — auto-injected as a
+# fixture parameter below.
 
 
 @pytest.fixture(scope="session")
@@ -490,14 +407,21 @@ class TestPyPIShapeInstallChain:
 
 @pytest.mark.e2e
 class TestPyPIShapeDoctorChain:
-    """Locks Bug #4: doctor must report 7/7 passing on a clean install."""
+    """Locks Bug #4: doctor must report all checks passing on a clean install.
 
-    def test_doctor_reports_seven_of_seven(self, installed_console_script) -> None:
-        """`nwave-ai doctor` MUST exit 0 and report `7/7 checks passed, 0 failed`.
+    Check count: was 7 in v3.12; v3.14 added an 8th (DensityCheck per D6/D12).
+    The test asserts on the literal "{N}/{N} checks passed, 0 failed" pattern
+    rather than a fixed count — survives future check additions.
+    """
+
+    def test_doctor_reports_all_passing(self, installed_console_script) -> None:
+        """`nwave-ai doctor` MUST exit 0 and report all checks passing.
 
         Invokes the CONSOLE SCRIPT (not `python -m`) so a regression in
         [project.scripts] would surface here too.
         """
+        import re
+
         venv, fake_home, _ = installed_console_script
         console_script = venv / "bin" / "nwave-ai"
 
@@ -513,11 +437,18 @@ class TestPyPIShapeDoctorChain:
         assert code == 0, (
             f"`nwave-ai doctor` failed (exit {code}).\n--- stdout ---\n{out}"
         )
-        assert "7/7 checks passed" in out, (
-            "Doctor did not report 7/7 passing checks. This is the v3.12.1 "
-            "Bug #4 regression: doctor's framework_files check still requires "
-            "stale REQUIRED_DIRS entries that v2.8.0 removed.\n"
-            f"--- stdout ---\n{out}"
+        # Match N/N where total >= 7 (Bug #4 floor) and 0 failures.
+        match = re.search(r"(\d+)/(\d+) checks passed, 0 failed", out)
+        assert match is not None, (
+            "Doctor did not report '<N>/<N> checks passed, 0 failed'. "
+            "This is the v3.12.1 Bug #4 regression: doctor's framework_files "
+            "check still requires stale REQUIRED_DIRS entries that v2.8.0 "
+            f"removed.\n--- stdout ---\n{out}"
+        )
+        passed, total = int(match.group(1)), int(match.group(2))
+        assert passed == total and total >= 7, (
+            f"Doctor reported {passed}/{total} checks passed (need N/N where N>=7). "
+            f"Bug #4 floor not met.\n--- stdout ---\n{out}"
         )
         # Negative checks: nothing must indicate failure
         for forbidden in (

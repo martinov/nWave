@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import json
 from typing import TYPE_CHECKING
 
 from nwave_ai.common.check_result import CheckResult
+from nwave_ai.doctor.checks._settings import read_settings
 
 
 if TYPE_CHECKING:
@@ -29,23 +29,9 @@ class PathEnvCheck:
         Returns:
             CheckResult with PATH details in message.
         """
-        if not context.settings_path.exists():
-            return CheckResult(
-                passed=False,
-                error_code="SETTINGS_MISSING",
-                message="settings.json not found — cannot verify env.PATH",
-                remediation="Run `nwave-ai install` to create the Claude settings file.",
-            )
-
-        try:
-            data = json.loads(context.settings_path.read_text())
-        except (json.JSONDecodeError, OSError) as exc:
-            return CheckResult(
-                passed=False,
-                error_code="SETTINGS_UNREADABLE",
-                message=f"settings.json could not be parsed: {exc}",
-                remediation="Inspect settings.json for syntax errors.",
-            )
+        data, error = read_settings(context.settings_path)
+        if error is not None:
+            return error
 
         env_section = data.get("env", {})
         if not isinstance(env_section, dict) or "PATH" not in env_section:

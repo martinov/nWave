@@ -550,7 +550,9 @@ class TestAttributionHookInstallation:
         subprocess calls and verifying the install lands in the shared
         ``.git/hooks/`` directory.
 
-        See docs/analysis/rca-attribution-plugin-worktree-isolation.md.
+        Regression guard: the bug was introduced when the resolver assumed
+        ``.git`` is always a directory and shipped to PyPI for ~35 days
+        because no CI job ran the suite from inside a git worktree.
         """
         import subprocess as sp
 

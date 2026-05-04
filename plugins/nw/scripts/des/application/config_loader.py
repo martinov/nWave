@@ -61,19 +61,16 @@ class ConfigLoader:
             ConfigValidationError: If turn limits are invalid
         """
         if not self.config_path.exists():
-            # Use built-in defaults if config file doesn't exist
             return self.DEFAULT_TURN_LIMITS.copy()
 
         try:
             with open(self.config_path) as f:
                 config = json.load(f)
         except (OSError, json.JSONDecodeError):
-            # Gracefully handle malformed or unreadable files
             return self.DEFAULT_TURN_LIMITS.copy()
 
         turn_limits = config.get("turn_limits", {})
 
-        # Validate all turn limits are positive integers
         for task_type, limit in turn_limits.items():
             if not isinstance(limit, int) or limit <= 0:
                 raise ConfigValidationError(
@@ -93,7 +90,6 @@ class ConfigLoader:
             Turn limit for task type, or standard default (30) if not found
         """
         if task_type is None or task_type not in self.turn_limits:
-            # Default fallback to standard
             return self.turn_limits.get(
                 "standard", self.DEFAULT_TURN_LIMITS["standard"]
             )

@@ -18,10 +18,6 @@ class EnvironmentConfigAdapter(ConfigPort):
     ensuring the system can operate even without explicit configuration.
     """
 
-    def __init__(self):
-        """Initialize the environment config adapter."""
-        pass
-
     def get_timeout_threshold_default(self) -> int:
         """
         Get timeout threshold default from environment or use fallback.

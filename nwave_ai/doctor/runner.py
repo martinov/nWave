@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol
 
+from nwave_ai.doctor.checks.density import DensityCheck
 from nwave_ai.doctor.checks.des_module import DesModuleCheck
 from nwave_ai.doctor.checks.framework_files import FrameworkFilesCheck
 from nwave_ai.doctor.checks.hook_python_path import HookPythonPathCheck
@@ -38,6 +39,7 @@ _CHECKS: list[_DiagnosticCheck] = [
     ShimsDeployedCheck(),
     PathEnvCheck(),
     FrameworkFilesCheck(),
+    DensityCheck(),
 ]
 
 

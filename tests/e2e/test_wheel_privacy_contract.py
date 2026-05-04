@@ -34,6 +34,7 @@ Step-ID: 01-03
 
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 
 import pytest
@@ -41,17 +42,26 @@ import pytest
 from tests.e2e.conftest import exec_in_container, require_docker
 
 
+pytestmark = pytest.mark.e2e_smoke
+
 _REPO_ROOT = Path(__file__).parent.parent.parent
 _IMAGE = "python:3.12-slim"
 
 
 @pytest.fixture(scope="module")
-def wheel_privacy_container():
-    """Container with nwave-ai installed via pipx (release channel).
+def wheel_privacy_container(pypi_shape_wheel: Path):
+    """Container with nwave-ai installed from the LOCAL-built wheel.
 
-    Uses the PyPI RC channel (``pip install --pre``) to exercise the
-    same distribution path real users get.  If the RC wheel install
-    fails (e.g. network error, rate limit), tests skip gracefully.
+    Closes Root Cause A from /nw-bugfix RCA (fix-wheel-privacy-self-blocking-gate
+    step 01-02): previously this fixture installed nwave-ai from the live PyPI
+    release channel, creating a self-blocking catch-22 when a leaked wheel
+    reached PyPI — the leak fix could not be pushed because the pre-push e2e
+    installed the leaked wheel and failed on it.
+
+    The fixture now consumes the session-scoped `pypi_shape_wheel` fixture from
+    tests/e2e/conftest.py (which builds the wheel via the exact same pipeline
+    as release-prod.yml:publish-to-pypi) and installs from a container-mounted
+    path.  No live PyPI dependency.
     """
     from tests.e2e.conftest import _is_docker_available
 
@@ -65,7 +75,13 @@ def wheel_privacy_container():
     container = DockerContainer(image=_IMAGE)
     container.with_env("HOME", "/home/tester")
     container.with_env("DEBIAN_FRONTEND", "noninteractive")
+    # Mount the session-built wheel's parent directory read-only at /tmp/wheels
+    # inside the container.  pipx then installs from the local path.
+    wheel_host_dir = str(pypi_shape_wheel.parent)
+    container.with_volume_mapping(wheel_host_dir, "/tmp/wheels", "ro")
     container._command = "tail -f /dev/null"
+
+    wheel_filename = pypi_shape_wheel.name
 
     with container:
         setup = (
@@ -81,13 +97,13 @@ def wheel_privacy_container():
 
         install = (
             "su tester -c 'export PATH=/home/tester/.local/bin:$PATH && "
-            'pipx install --pip-args="--pre" nwave-ai 2>&1\' | tail -10'
+            f"pipx install /tmp/wheels/{wheel_filename} 2>&1' | tail -10"
         )
         code, out = exec_in_container(container, ["bash", "-c", install])
         if code != 0:
             pytest.skip(
-                f"pipx install --pre nwave-ai failed (exit {code}) — "
-                f"likely network/PyPI unavailable.\n{out[-400:]}"
+                f"pipx install of local wheel failed (exit {code}) — "
+                f"likely Docker volume mount or wheel-build issue.\n{out[-400:]}"
             )
 
         yield container
@@ -346,4 +362,53 @@ class TestWheelPrivacyContract:
         leaked = out.strip()
         assert leaked == "", (
             f"scripts/validation/ (CI validators) leaked into wheel:\n{leaked}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Meta-test: regression guard against re-introducing the live-PyPI anti-pattern
+# ---------------------------------------------------------------------------
+
+
+class TestWheelPrivacyFixtureShape:
+    """Regression guard: wheel_privacy_container MUST consume a local-built wheel.
+
+    Closes Root Cause A from /nw-bugfix RCA (fix-wheel-privacy-self-blocking-gate):
+    the fixture previously installed nwave-ai from live PyPI via
+    `pipx install --pip-args="--pre"`, creating a self-blocking catch-22 when a
+    leaked wheel reached PyPI — the leak fix could not be pushed because the
+    pre-push e2e installed the leaked wheel and failed on it.
+
+    The fixture must source the wheel from the local `pypi_shape_wheel` session
+    fixture (which builds the wheel via the same release-prod.yml pipeline) and
+    install it from a path inside the container, never from live PyPI.
+    """
+
+    def test_fixture_does_not_install_from_live_pypi(self) -> None:
+        """The wheel_privacy_container fixture body MUST NOT reference live PyPI."""
+        source = inspect.getsource(wheel_privacy_container)
+        assert "--pre" not in source, (
+            "wheel_privacy_container fixture installs from live PyPI via --pre. "
+            "This creates a self-blocking catch-22: a leaked wheel on PyPI cannot "
+            "be fixed because the pre-push e2e installs the leaked wheel and fails. "
+            "Consume the local-built `pypi_shape_wheel` fixture instead."
+        )
+        assert "--pip-args" not in source, (
+            "wheel_privacy_container fixture uses pipx --pip-args (live-PyPI "
+            "install pattern). Consume the local-built `pypi_shape_wheel` fixture "
+            "and install from a container-local path instead."
+        )
+
+    def test_fixture_installs_from_local_wheel_path(self) -> None:
+        """The fixture must install from a local wheel path in the container."""
+        source = inspect.getsource(wheel_privacy_container)
+        # Either /tmp/wheels/ container path or a literal .whl reference must
+        # appear in the fixture body — proving it sources from a local artifact
+        # rather than the PyPI index.
+        has_local_wheel_marker = "/tmp/wheels/" in source or ".whl" in source
+        assert has_local_wheel_marker, (
+            "wheel_privacy_container fixture body does not reference a local "
+            "wheel path (/tmp/wheels/ or .whl). The fixture must consume the "
+            "local-built `pypi_shape_wheel` fixture and install it from a "
+            "container-mounted path."
         )

@@ -69,14 +69,13 @@ def clear_git_environment():
         os.environ.pop(var, None)
 
 
-def get_targeted_test_dirs() -> list[str] | None:
+def get_targeted_test_dirs() -> list[str] | None | str:
     """Map staged files to relevant test directories.
 
-    Returns a sorted list of test directories to run, or None to run everything.
-    Falls back to None (all tests) when:
-      - git diff fails
-      - a config file changed (pyproject.toml, conftest.py, etc.)
-      - a staged file doesn't match any known mapping
+    Returns:
+      - list[str]: targeted test directories to run (non-empty)
+      - None: run the full suite (config changed, unknown file, git failed)
+      - "skip": no relevant tests for these staged files (docs/CI only)
     """
     try:
         result = subprocess.run(
@@ -121,8 +120,11 @@ def get_targeted_test_dirs() -> list[str] | None:
             return None
 
     if not test_dirs:
-        # Only non-testable files changed (docs, CI, etc.) — still run all for safety
-        return None
+        # Every staged file matched a known prefix mapped to no test dirs
+        # (docs/, scripts/hooks/, .github/, etc.). Skip pytest entirely —
+        # these files have no runtime impact on Python code under test.
+        # An "unknown file" path returns None earlier (full-suite safety net).
+        return "skip"
 
     # Keep only directories that actually exist
     existing = sorted(d for d in test_dirs if Path(d).is_dir())
@@ -181,9 +183,15 @@ def main():
         print(f"{YELLOW}No tests directory found, skipping tests{NC}")
         return 0
 
-    # Determine test scope: targeted dirs or full suite
+    # Determine test scope: skip / targeted / full suite
     targeted = get_targeted_test_dirs()
-    if targeted:
+    if targeted == "skip":
+        print(
+            f"{GREEN}Skip mode: only doc / CI / hook files staged — "
+            f"no Python runtime impact{NC}"
+        )
+        return 0
+    if isinstance(targeted, list) and targeted:
         test_targets = targeted
         print(
             f"{BLUE}Targeted mode: {len(targeted)} directories "

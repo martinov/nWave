@@ -238,6 +238,42 @@ def _resolve_head_path(project_root: Path) -> Path:
     return git_path / "HEAD"
 
 
+def _read_packed_refs(common_dir: Path) -> dict[str, str]:
+    """Parse ``<common_dir>/packed-refs`` into a ``{ref_name: sha}`` map.
+
+    Pure function. Returns ``{}`` if the file does not exist or is empty —
+    a freshly-initialised repo has no packed-refs file at all, and a repo
+    with all refs unpacked has only loose files.
+
+    File format (``man git-pack-refs``)::
+
+        # pack-refs with: peeled fully-peeled sorted
+        <sha> <ref-name>
+        ^<peeled-sha>            (annotation for the previous annotated tag)
+
+    Comment lines (start with ``#``) and peeled-tag annotation lines
+    (start with ``^``) are skipped — they are not refs themselves.
+
+    Used by ``_compute_git_state_snapshot`` to distinguish
+    routine-housekeeping promotions (loose ref appears with same SHA as
+    an existing packed entry — ignore) from genuine ref creation (loose
+    ref appears with a SHA never seen in packed-refs — flag).
+    """
+    packed_path = common_dir / "packed-refs"
+    if not packed_path.is_file():
+        return {}
+    result: dict[str, str] = {}
+    for line in packed_path.read_text().splitlines():
+        if not line or line.startswith("#") or line.startswith("^"):
+            continue
+        parts = line.split(maxsplit=1)
+        if len(parts) != 2:
+            continue
+        sha, name = parts
+        result[name.strip()] = sha.strip()
+    return result
+
+
 def _resolve_head_target(head_path: Path, common_dir: Path) -> bytes | None:
     """Return the SHA HEAD currently resolves to, or the raw HEAD bytes.
 
@@ -246,8 +282,11 @@ def _resolve_head_target(head_path: Path, common_dir: Path) -> bytes | None:
     target ref file and returns its bytes (the commit SHA). For detached
     HEAD (raw 40-char SHA in the file) returns the file bytes directly.
 
-    Falls back to the literal HEAD bytes if the target ref does not exist
-    (newborn branch, packed-refs only). Returns ``None`` if HEAD is absent.
+    When the symbolic-ref target has no loose file (``git pack-refs --all``
+    deleted it), falls back to the SHA in ``packed-refs``. Only when both
+    are absent (unborn branch, freshly-cloned bare ref) does it return the
+    literal HEAD bytes — which would otherwise spuriously diff as ``HEAD``
+    on a packed-only repo. Returns ``None`` if HEAD is absent.
 
     The reason we resolve the target rather than only snapshot the HEAD
     file: ``git commit`` does NOT touch HEAD when on a branch — it
@@ -265,16 +304,22 @@ def _resolve_head_target(head_path: Path, common_dir: Path) -> bytes | None:
         target = common_dir / ref_name
         if target.is_file():
             return target.read_bytes()
+        # Loose file absent — try packed-refs (housekeeping after pack).
+        packed = _read_packed_refs(common_dir)
+        packed_sha = packed.get(ref_name)
+        if packed_sha is not None:
+            # Match git's loose-ref on-disk shape: 40 hex + LF.
+            return (packed_sha + "\n").encode("ascii")
     return raw
 
 
 def _compute_git_state_snapshot(project_root: Path) -> dict[str, object]:
     """Return a byte-level snapshot of the load-bearing host git state.
 
-    Pure function. The snapshot covers the three artifacts whose mutation
+    Pure function. The snapshot covers the four artifacts whose mutation
     constitutes pollution: ``config`` (shared across worktrees),
-    ``HEAD`` (per-worktree), and the union of ``refs/heads/`` and
-    ``refs/tags/``.
+    ``HEAD`` (per-worktree), the union of loose ``refs/heads/`` and
+    ``refs/tags/``, and the ``packed-refs`` map.
 
     Returns a dict with the contract:
         {
@@ -285,6 +330,7 @@ def _compute_git_state_snapshot(project_root: Path) -> dict[str, object]:
                                                  #   is detached / target
                                                  #   ref missing
             "refs":         <list[(str, bytes)]> # sorted (refname, sha-bytes)
+            "packed_refs":  <dict[str, str]>     # ref_name -> sha hex map
         }
 
     Two HEAD fields exist by design (adversarial review D1 fix):
@@ -295,6 +341,12 @@ def _compute_git_state_snapshot(project_root: Path) -> dict[str, object]:
     (which only mutates ``refs/heads/<branch>``, not HEAD itself) is
     detected as a corruption: the resolved target advances even though
     HEAD's literal bytes are unchanged.
+
+    The ``packed_refs`` field exists by design (Step 01-02 fix for the
+    residual-RCA false-positive). It lets ``_diff_git_state`` distinguish
+    routine git housekeeping (a packed ref gets promoted to a loose file
+    with the same SHA — ignore) from genuine pollution (a brand-new ref
+    appears with a SHA never seen in packed-refs — flag).
 
     Designed for ``_diff_git_state`` (returns subset of {"config","HEAD","refs"}
     naming what changed). Worktree gitdir indirection is resolved via
@@ -338,7 +390,57 @@ def _compute_git_state_snapshot(project_root: Path) -> dict[str, object]:
         "HEAD_raw": head_raw,
         "HEAD_resolved": head_resolved,
         "refs": sorted(refs),
+        "packed_refs": _read_packed_refs(common_dir),
     }
+
+
+def _refs_diff_is_pollution(
+    before_refs: list[tuple[str, bytes]],
+    after_refs: list[tuple[str, bytes]],
+    before_packed: dict[str, str],
+) -> bool:
+    """Return True iff the loose-refs change is real pollution.
+
+    Pure function. Decomposes the previous all-or-nothing list-compare
+    into three independent questions:
+
+    1. New loose ref in ``after`` that was not in ``before``: is its SHA
+       already in ``before``'s ``packed-refs``? If yes -> housekeeping
+       promotion (ignore). If no -> creation (pollution).
+    2. Loose ref in ``before`` that disappeared in ``after``: was its SHA
+       in ``before``'s ``packed-refs``? If yes -> the ref was collapsed
+       back into pack (housekeeping; ignore). If no -> deletion
+       (pollution).
+    3. SHA changed for a ref that exists in both ``before`` and ``after``:
+       always pollution (the ref moved to a different commit).
+    """
+    before_map = dict(before_refs)
+    after_map = dict(after_refs)
+
+    # 1. Created loose refs.
+    for name, sha_bytes in after_map.items():
+        if name in before_map:
+            continue
+        sha = sha_bytes.decode("ascii", errors="replace").strip()
+        if before_packed.get(name) == sha:
+            continue  # promotion — housekeeping, ignore.
+        return True  # genuine creation — pollution.
+
+    # 2. Disappeared loose refs.
+    for name, sha_bytes in before_map.items():
+        if name in after_map:
+            continue
+        sha = sha_bytes.decode("ascii", errors="replace").strip()
+        if before_packed.get(name) == sha:
+            continue  # collapsed back into pack — housekeeping, ignore.
+        return True  # genuine deletion — pollution.
+
+    # 3. SHA changed on existing loose ref.
+    for name, sha_bytes in after_map.items():
+        if name in before_map and before_map[name] != sha_bytes:
+            return True
+
+    return False
 
 
 def _diff_git_state(before: dict[str, object], after: dict[str, object]) -> list[str]:
@@ -349,9 +451,16 @@ def _diff_git_state(before: dict[str, object], after: dict[str, object]) -> list
     by ``tests/test_guard_fixtures.py`` to verify the predicate detects
     the exact failure modes of the 2026-04-27 incident.
 
-    Symmetric in argument order modulo set semantics: the diff of
-    (before, after) equals the diff of (after, before) — proven by
-    property test in tests/test_guard_internals.py.
+    Refs comparison is promotion-aware (Step 01-02 fix): a new loose ref
+    whose SHA already lives in ``before["packed_refs"]`` is housekeeping
+    (the ref was promoted from pack to loose by ``git fetch`` / etc.) and
+    must NOT be flagged. A new loose ref whose SHA is NOT in the packed
+    map IS pollution — the legitimate-creation contract from
+    ``test_guard_detects_refs_corruption`` is preserved.
+
+    Symmetric in argument order modulo set semantics for config/HEAD; the
+    refs branch is asymmetric by design (the ``before`` packed-refs map
+    is the housekeeping witness, not the ``after`` one).
     """
     diff: list[str] = []
     if before.get("config") != after.get("config"):
@@ -362,7 +471,21 @@ def _diff_git_state(before: dict[str, object], after: dict[str, object]) -> list
     # restore field; HEAD_resolved is the diff field.
     if before.get("HEAD_resolved") != after.get("HEAD_resolved"):
         diff.append("HEAD")
-    if before.get("refs") != after.get("refs"):
+
+    before_refs_obj = before.get("refs")
+    after_refs_obj = after.get("refs")
+    before_packed_obj = before.get("packed_refs")
+    if (
+        isinstance(before_refs_obj, list)
+        and isinstance(after_refs_obj, list)
+        and isinstance(before_packed_obj, dict)
+    ):
+        if _refs_diff_is_pollution(before_refs_obj, after_refs_obj, before_packed_obj):
+            diff.append("refs")
+    elif before_refs_obj != after_refs_obj:
+        # Fallback for snapshots produced before packed_refs was added —
+        # preserve the old whole-list comparison so legacy callers still
+        # see refs corruption.
         diff.append("refs")
     return diff
 
@@ -394,6 +517,12 @@ def _atomic_restore_git_state(project_root: Path, before: dict[str, object]) -> 
     leftover refs would themselves be picked up as a corruption signal
     on the very next test, masking the true offender.
 
+    Pass 2 is promotion-aware (Step 01-02): a loose ref absent from
+    ``refs_before`` whose SHA matches an entry in
+    ``before["packed_refs"]`` is left in place. It was promoted from
+    pack to loose by routine git housekeeping (``git fetch``, etc.) —
+    deleting it would destroy a legitimate ref the user owns.
+
     Sets the recursion flag so any concurrent guard invocation skips its
     snapshot phase while the restore is in flight.
     """
@@ -416,6 +545,10 @@ def _atomic_restore_git_state(project_root: Path, before: dict[str, object]) -> 
             head_path.write_bytes(head_raw)
 
         refs_before = before.get("refs")
+        packed_before_obj = before.get("packed_refs")
+        packed_before: dict[str, str] = (
+            packed_before_obj if isinstance(packed_before_obj, dict) else {}
+        )
         if isinstance(refs_before, list):
             # Pass 1: write back every snapshot-before ref.
             ref_names_before: set[str] = set()
@@ -429,7 +562,9 @@ def _atomic_restore_git_state(project_root: Path, before: dict[str, object]) -> 
 
             # Pass 2 (D2): delete refs that appeared during the test.
             # Walk current refs/heads and refs/tags; anything not in
-            # ref_names_before is post-snapshot pollution and must go.
+            # ref_names_before is post-snapshot pollution and must go —
+            # UNLESS its SHA was already in packed-refs at snapshot time
+            # (Step 01-02: housekeeping promotion, not pollution).
             for category in ("heads", "tags"):
                 refs_dir = common_dir / "refs" / category
                 if not refs_dir.is_dir():
@@ -440,8 +575,18 @@ def _atomic_restore_git_state(project_root: Path, before: dict[str, object]) -> 
                     ref_name = f"refs/{category}/" + str(
                         ref_file.relative_to(refs_dir)
                     ).replace(os.sep, "/")
-                    if ref_name not in ref_names_before:
-                        ref_file.unlink(missing_ok=True)
+                    if ref_name in ref_names_before:
+                        continue
+                    # Step 01-02: skip if this is a packed-to-loose
+                    # promotion (SHA matches the packed-refs entry from
+                    # the BEFORE snapshot). Don't destroy the legitimate
+                    # ref the user owns.
+                    current_sha = (
+                        ref_file.read_bytes().decode("ascii", errors="replace").strip()
+                    )
+                    if packed_before.get(ref_name) == current_sha:
+                        continue
+                    ref_file.unlink(missing_ok=True)
     finally:
         _GUARD_RESTORE_IN_PROGRESS = False
 
@@ -550,6 +695,9 @@ TIER_MAP = {
     "tests/build/": "unit",
     # Release train tests
     "tests/release/": "unit",
+    # Outcomes registry tiers
+    "tests/outcomes/unit/": "unit",
+    "tests/outcomes/acceptance/": "acceptance",
     # Bug regression tests
     "tests/bugs/": "acceptance",
     # Root-level tests
@@ -601,7 +749,12 @@ DOMAIN_MAP = {
 # Allowlist holds top-level modules that already exist on master and are
 # scheduled for migration in a follow-up step. Adding a NEW top-level
 # test module is the violation this guard catches.
-# See docs/analysis/rca-attribution-plugin-worktree-isolation.md Branch B.
+# Structural rationale: top-level ``tests/test_*.py`` modules historically
+# drifted out of sync with their canonical siblings (e.g. an attribution
+# test had a stale top-level copy that lacked the isolation fixture used
+# by the canonical version under ``tests/installer/unit/plugins/``). The
+# 5-tier taxonomy (unit/integration/acceptance/e2e/...) is descriptive
+# elsewhere; this guard makes it enforced.
 # ---------------------------------------------------------------------------
 
 _TOP_LEVEL_TEST_ALLOWLIST: frozenset[str] = frozenset(
@@ -670,8 +823,8 @@ def pytest_collection_modifyitems(config, items):
             + ", ".join(sorted(set(offenders)))
             + ". Tests must live under a tier subdirectory "
             + "(tests/unit/, tests/installer/, tests/des/, tests/build/, etc.). "
-            + "See docs/analysis/rca-attribution-plugin-worktree-isolation.md "
-            + "Branch B for the structural rationale."
+            + "Top-level modules historically drifted out of sync with their "
+            + "canonical tier siblings; this guard enforces the 5-tier taxonomy."
         )
 
     try:

@@ -22,6 +22,8 @@ from scripts.install.plugins.base import (
 from scripts.install.plugins.opencode_common import (
     parse_frontmatter,
     render_frontmatter,
+    uninstall_with_manifest,
+    verify_with_manifest,
 )
 from scripts.shared.agent_catalog import is_public_agent, load_public_agents
 
@@ -168,19 +170,7 @@ def _write_manifest(
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
 
-def _read_manifest(target_dir: Path) -> dict | None:
-    """Read the manifest file if it exists.
-
-    Args:
-        target_dir: OpenCode agents directory
-
-    Returns:
-        Parsed manifest dict, or None if not found
-    """
-    manifest_path = target_dir / _MANIFEST_FILENAME
-    if not manifest_path.exists():
-        return None
-    return json.loads(manifest_path.read_text(encoding="utf-8"))
+# _read_manifest moved to opencode_common.read_manifest (parameterized).
 
 
 class OpenCodeAgentsPlugin(InstallationPlugin):
@@ -281,142 +271,24 @@ class OpenCodeAgentsPlugin(InstallationPlugin):
             )
 
     def uninstall(self, context: InstallContext) -> PluginResult:
-        """Uninstall only nWave-installed OpenCode agents using manifest.
-
-        Reads the manifest to determine which agents were installed by nWave,
-        removes only those, and leaves user-created agents untouched.
-
-        Args:
-            context: InstallContext with shared installation utilities
-
-        Returns:
-            PluginResult indicating success or failure
-        """
-        try:
-            context.logger.info("  \U0001f5d1\ufe0f Uninstalling OpenCode agents...")
-
-            target_dir = _opencode_agents_dir()
-            manifest = _read_manifest(target_dir)
-
-            if manifest is None:
-                context.logger.info(
-                    "  \u23ed\ufe0f No OpenCode agents manifest found, skipping"
-                )
-                return PluginResult(
-                    success=True,
-                    plugin_name=self.name,
-                    message="No OpenCode agents to uninstall (no manifest found)",
-                )
-
-            installed_agents = manifest.get("installed_agents", [])
-            removed_count = 0
-
-            for agent_name in installed_agents:
-                agent_file = target_dir / f"{agent_name}.md"
-                if agent_file.exists():
-                    agent_file.unlink()
-                    removed_count += 1
-
-            # Remove the manifest itself
-            manifest_path = target_dir / _MANIFEST_FILENAME
-            if manifest_path.exists():
-                manifest_path.unlink()
-
-            context.logger.info(
-                f"  \U0001f5d1\ufe0f Removed {removed_count} OpenCode agents"
-            )
-
-            return PluginResult(
-                success=True,
-                plugin_name=self.name,
-                message=f"OpenCode agents uninstalled ({removed_count} removed)",
-            )
-        except Exception as e:
-            context.logger.error(f"  \u274c Failed to uninstall OpenCode agents: {e}")
-            return PluginResult(
-                success=False,
-                plugin_name=self.name,
-                message=f"OpenCode agents uninstallation failed: {e!s}",
-                errors=[str(e)],
-            )
+        """Uninstall only nWave-installed OpenCode agents using manifest."""
+        return uninstall_with_manifest(
+            context=context,
+            plugin_name=self.name,
+            target_dir=_opencode_agents_dir(),
+            manifest_filename=_MANIFEST_FILENAME,
+            noun="agents",
+            installed_key="installed_agents",
+        )
 
     def verify(self, context: InstallContext) -> PluginResult:
-        """Verify OpenCode agents were installed correctly.
-
-        Checks that each agent listed in the manifest exists as a file
-        with valid YAML frontmatter.
-
-        Args:
-            context: InstallContext with shared installation utilities
-
-        Returns:
-            PluginResult indicating verification success or failure
-        """
-        try:
-            context.logger.info("  \U0001f50e Verifying OpenCode agents...")
-
-            target_dir = _opencode_agents_dir()
-            manifest = _read_manifest(target_dir)
-
-            if manifest is None:
-                agents_source = _find_agents_source(context)
-                if agents_source is None:
-                    context.logger.info(
-                        "  \u23ed\ufe0f No OpenCode agents to verify (none configured)"
-                    )
-                    return PluginResult(
-                        success=True,
-                        plugin_name=self.name,
-                        message="No OpenCode agents configured, verification skipped",
-                    )
-
-                return PluginResult(
-                    success=False,
-                    plugin_name=self.name,
-                    message="OpenCode agents verification failed: manifest not found",
-                    errors=[f"Manifest file {_MANIFEST_FILENAME} not found"],
-                )
-
-            installed_agents = manifest.get("installed_agents", [])
-            missing_agents = []
-            verified_count = 0
-
-            for agent_name in installed_agents:
-                agent_file = target_dir / f"{agent_name}.md"
-                if not agent_file.exists():
-                    missing_agents.append(f"{agent_name}.md not found")
-                else:
-                    verified_count += 1
-
-            if missing_agents:
-                context.logger.error(
-                    f"  \u274c OpenCode agents verification failed: "
-                    f"{len(missing_agents)} missing"
-                )
-                return PluginResult(
-                    success=False,
-                    plugin_name=self.name,
-                    message=(
-                        f"OpenCode agents verification failed: "
-                        f"{len(missing_agents)} agents missing"
-                    ),
-                    errors=missing_agents,
-                )
-
-            context.logger.info(f"  \u2705 Verified {verified_count} OpenCode agents")
-
-            return PluginResult(
-                success=True,
-                plugin_name=self.name,
-                message=(
-                    f"OpenCode agents verification passed ({verified_count} agents)"
-                ),
-            )
-        except Exception as e:
-            context.logger.error(f"  \u274c Failed to verify OpenCode agents: {e}")
-            return PluginResult(
-                success=False,
-                plugin_name=self.name,
-                message=f"OpenCode agents verification failed: {e!s}",
-                errors=[str(e)],
-            )
+        """Verify OpenCode agents were installed correctly."""
+        return verify_with_manifest(
+            context=context,
+            plugin_name=self.name,
+            target_dir=_opencode_agents_dir(),
+            manifest_filename=_MANIFEST_FILENAME,
+            noun="agents",
+            installed_key="installed_agents",
+            source_finder=_find_agents_source,
+        )

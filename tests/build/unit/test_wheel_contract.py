@@ -106,8 +106,8 @@ class TestMissingDesModuleFails:
         contents = WheelContents(
             file_paths=frozenset(
                 [
-                    "install/install_nwave.py",
-                    "install/install_nwave.py",
+                    "scripts/install/install_nwave.py",
+                    "scripts/install/install_nwave.py",
                     "nwave-0.0.0.dist-info/METADATA",
                 ]
             ),
@@ -136,7 +136,7 @@ class TestMissingDesModuleFails:
                     "des/__init__.py",
                     "des/application/__init__.py",
                     "des/adapters/__init__.py",
-                    "install/install_nwave.py",
+                    "scripts/install/install_nwave.py",
                     "nwave-0.0.0.dist-info/METADATA",
                 ]
             ),
@@ -230,8 +230,8 @@ class TestPrivateFileInWheelFails:
             "des/ports/__init__.py",
             "des/cli/__init__.py",
             "des/config/__init__.py",
-            "install/__init__.py",
-            "install/install_nwave.py",
+            "scripts/install/__init__.py",
+            "scripts/install/install_nwave.py",
             "nwave-0.0.0.dist-info/METADATA",
         ]
         contents = WheelContents(

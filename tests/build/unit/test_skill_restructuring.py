@@ -2,11 +2,18 @@
 
 Step 01-02: Restructure 3 troubleshooter skills (pilot).
 Step 02-01: Restructure all 146 non-colliding skills (bulk migration).
+
+Track B.1 collapse (2026-04-28): the migration is stable (last skill
+content change in commit e9dd9ef7 / PR #15 merged 2026-04-28). Per the
+"after migration GREEN + 1 stable release, collapse parametrize regression
+nets to single-iteration tests" rule, the 315-test net is collapsed to 3
+single-iteration tests. The TROUBLESHOOTER_HASHES + BULK_HASHES dicts and
+EXPECTED_*_SKILLS / FULLY_EMPTIED_AGENT_DIRS lists remain as module-level
+constants so failure messages still identify the broken skill by name.
 """
 
+import hashlib
 from pathlib import Path
-
-import pytest
 
 
 SKILLS_DIR = Path(__file__).resolve().parents[3] / "nWave" / "skills"
@@ -187,7 +194,13 @@ BULK_HASHES = {
     "nw-bdd-methodology": "09cef8098c75b9f1504a9f547c6e6bb4",
     "nw-bdd-requirements": "b7c1a43670bd2f98426c6971605b63e9",
     "nw-brainstorming": "e1b52438744b39ae52c37c89d7b4b338",
-    "nw-buddy": "de628ca01961c8a99e191b789b7dd21d",
+    # Hash updated 2026-04-28: D7 mandatory Read-tool instruction landed
+    # (Lean Wave Documentation epic v3.14). nw-buddy now imperatively reads
+    # docs/reference/global-config.md before answering config questions.
+    # Updated 2026-05-03 (v3.14.0-rc1 prep): nw-buddy gained "Version-awareness"
+    # handler section directing it to read whats-new-v<MAJOR><MINOR>/ folders
+    # when answering version/changelog/fix questions. See commit prep.
+    "nw-buddy": "15084084be76d5d3bc1cdaa794a078d0",
     "nw-buddy-command-catalog": "403ff4bf5cc44e73183e6021e0e3147d",
     "nw-buddy-project-reading": "be990dabaac7ca5b8492283fc5abdd1f",
     "nw-buddy-ssot-knowledge": "7a801cc1b1ab7379a258f621a08a71f5",
@@ -221,7 +234,7 @@ BULK_HASHES = {
     "nw-discovery-workflow": "4602c7858e3e1b8221af03c888086dc5",
     "nw-diverge": "0b577138c83c6f64501e32b3157a9a2d",
     "nw-diverger-review-criteria": "1049555d0db9de4d8b8a1e0405ca6595",
-    "nw-divio-framework": "8bb88b5fb6f476838b10b61c419119ba",
+    "nw-divio-framework": "5910a36f15a07940f874474302065e0c",
     "nw-domain-driven-design": "d3afa990b8d65675d17015c41bed49e3",
     "nw-dor-validation": "8f7e905593670b0c497e9743c5d6d6e0",
     "nw-dossier-templates": "1a9c49a2f61fccff22c828260e3026b3",
@@ -283,7 +296,7 @@ BULK_HASHES = {
     "nw-property-based-testing": "5f07746e743c026c59102f476e3ae77a",
     "nw-proposal-structure": "6703c77e63466b6e911b02afeddc4514",
     "nw-psychological-safety": "106382f562186d415f5b5ad1430542b7",
-    "nw-quality-framework": "461e7183cc413fe7655b9fd430856e1a",
+    "nw-quality-framework": "080bcb5384fb6509512846939cbb55cb",
     "nw-quality-validation": "41cee9327afa9d4e579b7c0699eb544d",
     "nw-query-optimization": "17959230c1a5f619b4a172e5e8196068",
     "nw-research-methodology": "e4910ea40aefc82f421640138986f300",
@@ -345,92 +358,74 @@ FULLY_EMPTIED_AGENT_DIRS = [
     "workshopper",
 ]
 
-
-class TestTroubleshooterSkillRestructuring:
-    """Step 01-02: Verify troubleshooter skills are restructured."""
-
-    @pytest.mark.parametrize("skill_name", EXPECTED_TROUBLESHOOTER_SKILLS)
-    def test_skill_directory_exists_with_skill_md(self, skill_name: str) -> None:
-        """Each troubleshooter skill must exist as nw-{name}/SKILL.md."""
-        skill_file = SKILLS_DIR / skill_name / "SKILL.md"
-        assert skill_file.exists(), (
-            f"Expected {skill_file.relative_to(SKILLS_DIR)} to exist"
-        )
-
-    @pytest.mark.parametrize("skill_name", EXPECTED_TROUBLESHOOTER_SKILLS)
-    def test_skill_content_preserved(self, skill_name: str) -> None:
-        """Content must be identical to original after restructuring."""
-        import hashlib
-
-        skill_file = SKILLS_DIR / skill_name / "SKILL.md"
-        if not skill_file.exists():
-            pytest.skip(f"{skill_name}/SKILL.md does not exist yet")
-
-        content = skill_file.read_bytes()
-        actual_hash = hashlib.md5(content).hexdigest()
-        assert actual_hash == TROUBLESHOOTER_HASHES[skill_name], (
-            f"Content hash mismatch for {skill_name}: "
-            f"expected {TROUBLESHOOTER_HASHES[skill_name]}, got {actual_hash}"
-        )
-
-    def test_old_troubleshooter_directory_removed(self) -> None:
-        """The old agent-grouped troubleshooter/ directory should not contain
-        the migrated files."""
-        old_dir = SKILLS_DIR / "troubleshooter"
-        old_files = [
-            "five-whys-methodology.md",
-            "investigation-techniques.md",
-            "post-mortem-framework.md",
-        ]
-        for filename in old_files:
-            old_file = old_dir / filename
-            assert not old_file.exists(), (
-                f"Old file {old_file.relative_to(SKILLS_DIR)} should have been moved"
-            )
+# Floor for total nw-* skill directories with SKILL.md. Migration baseline
+# is 149 (146 bulk + 3 troubleshooter); subsequent waves have added more.
+EXPECTED_NW_SKILL_FLOOR = 149
 
 
-class TestBulkSkillRestructuring:
-    """Step 02-01: Verify all 146 non-colliding skills are restructured to
-    nw-prefixed SKILL.md format."""
+def test_all_nw_skills_present() -> None:
+    """Every migrated skill must exist as ``nw-{name}/SKILL.md`` and the
+    total count must meet the migration floor.
 
-    @pytest.mark.parametrize("skill_name", EXPECTED_BULK_SKILLS)
-    def test_skill_directory_exists_with_skill_md(self, skill_name: str) -> None:
-        """Each non-colliding skill must exist as nw-{name}/SKILL.md."""
-        skill_file = SKILLS_DIR / skill_name / "SKILL.md"
-        assert skill_file.exists(), (
-            f"Expected {skill_file.relative_to(SKILLS_DIR)} to exist"
-        )
+    Failure message lists missing skills by name so the regression is
+    diagnosable without re-running 162 parametrized cases.
+    """
+    expected = sorted(set(EXPECTED_TROUBLESHOOTER_SKILLS) | set(EXPECTED_BULK_SKILLS))
+    missing = [
+        name for name in expected if not (SKILLS_DIR / name / "SKILL.md").exists()
+    ]
+    assert not missing, (
+        "Skill directories missing nw-{name}/SKILL.md after migration: " + str(missing)
+    )
 
-    def test_total_nw_prefixed_skill_count(self) -> None:
-        """Total nw-* directories should be 149 (146 bulk + 3 troubleshooter)."""
-        nw_dirs = sorted(
-            d for d in SKILLS_DIR.iterdir() if d.is_dir() and d.name.startswith("nw-")
-        )
-        skill_dirs_with_md = [d for d in nw_dirs if (d / "SKILL.md").exists()]
-        assert len(skill_dirs_with_md) >= 149, (
-            f"Expected >= 149 nw-*/SKILL.md directories, found {len(skill_dirs_with_md)}"
-        )
+    nw_dirs_with_md = [
+        d
+        for d in SKILLS_DIR.iterdir()
+        if d.is_dir() and d.name.startswith("nw-") and (d / "SKILL.md").exists()
+    ]
+    assert len(nw_dirs_with_md) >= EXPECTED_NW_SKILL_FLOOR, (
+        f"Expected >= {EXPECTED_NW_SKILL_FLOOR} nw-*/SKILL.md directories, "
+        f"found {len(nw_dirs_with_md)}"
+    )
 
-    @pytest.mark.parametrize("skill_name", EXPECTED_BULK_SKILLS)
-    def test_skill_content_preserved(self, skill_name: str) -> None:
-        """Content must be identical to original after restructuring."""
-        import hashlib
 
+def test_skill_content_hashes_match_baseline() -> None:
+    """Every migrated skill's content hash must match the captured baseline.
+
+    Iterates the merged hash dict (troubleshooter + bulk = 149 entries).
+    Failure message identifies which skills drifted, with expected vs actual
+    hashes side by side, so a single failure is as diagnosable as the
+    pre-collapse 149-parametrize-case version.
+    """
+    baseline = {**TROUBLESHOOTER_HASHES, **BULK_HASHES}
+    drifted: list[str] = []
+    for skill_name, expected_hash in baseline.items():
         skill_file = SKILLS_DIR / skill_name / "SKILL.md"
         if not skill_file.exists():
-            pytest.skip(f"{skill_name}/SKILL.md does not exist yet")
+            drifted.append(f"{skill_name}: SKILL.md missing")
+            continue
+        actual_hash = hashlib.md5(skill_file.read_bytes()).hexdigest()
+        if actual_hash != expected_hash:
+            drifted.append(f"{skill_name}: expected {expected_hash}, got {actual_hash}")
+    assert not drifted, (
+        "Skill content hashes drifted from migration baseline:\n  "
+        + "\n  ".join(drifted)
+    )
 
-        content = skill_file.read_bytes()
-        actual_hash = hashlib.md5(content).hexdigest()
-        assert actual_hash == BULK_HASHES[skill_name], (
-            f"Content hash mismatch for {skill_name}: "
-            f"expected {BULK_HASHES[skill_name]}, got {actual_hash}"
-        )
 
-    @pytest.mark.parametrize("agent_dir", FULLY_EMPTIED_AGENT_DIRS)
-    def test_fully_emptied_agent_directories_removed(self, agent_dir: str) -> None:
-        """Agent directories with only non-colliding skills should be removed."""
-        old_dir = SKILLS_DIR / agent_dir
-        assert not old_dir.exists(), (
-            f"Old directory {agent_dir}/ should have been removed after migration"
-        )
+def test_emptied_agent_dirs_are_empty() -> None:
+    """Every fully-emptied agent directory must be removed after migration.
+
+    Iterates FULLY_EMPTIED_AGENT_DIRS once; failure message lists every
+    directory that still exists, so the regression is diagnosable in one
+    failure rather than per-directory parametrize cases.
+    """
+    leftover = [
+        agent_dir
+        for agent_dir in FULLY_EMPTIED_AGENT_DIRS
+        if (SKILLS_DIR / agent_dir).exists()
+    ]
+    assert not leftover, (
+        "Old agent-grouped skill directories still exist after migration "
+        f"(should have been removed): {leftover}"
+    )

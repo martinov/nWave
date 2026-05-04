@@ -1,8 +1,7 @@
 """Worktree-aware resolution of the shared ``.git/hooks`` directory.
 
 Single source of truth for both attribution install and uninstall paths.
-Per RCA ``docs/analysis/rca-attribution-plugin-worktree-isolation.md``
-Branch C, the same hooks-dir resolution logic existed in three places
+The same hooks-dir resolution logic previously existed in three places
 (two in ``attribution_utils``, one in a sibling test fixture) and the
 production callers picked the wrong git API (``--show-toplevel``) while
 the sibling test had the right one (``--git-common-dir``). Extracting

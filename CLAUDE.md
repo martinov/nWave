@@ -200,6 +200,18 @@ pipenv run mutmut run                      # Run mutation tests
 
 ---
 
+## Development Paradigm
+
+object-oriented
+
+Rationale: hexagonal architecture (`src/des/{domain,application,ports,adapters}/`), heavy use of dataclasses + ABC + dependency injection via constructor. Crafter dispatch defaults to `@nw-software-crafter`.
+
+## Mutation Testing Strategy
+
+nightly-delta
+
+Rationale: `.nwave/des-config.json` has `mutation_enabled=false` for per-feature gates (mutmut runs are slow). CI runs mutmut nightly on changed modules; thresholds reviewed on a release boundary.
+
 ## Conventions
 
 ### Commits

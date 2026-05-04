@@ -23,7 +23,13 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-import yaml
+
+# Standalone-script bootstrap: this file is invoked as `python3 scripts/...`,
+# so the repo root is not on sys.path by default. Prepend it so the
+# `scripts.shared` SSOT helper resolves both locally and in CI.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from scripts.shared.frontmatter import parse_frontmatter_file
 
 
 @dataclass
@@ -36,25 +42,9 @@ class ValidationResult:
 
 
 def _parse_frontmatter(filepath: Path) -> dict | None:
-    """Extract YAML frontmatter from a markdown file."""
-    content = filepath.read_text(encoding="utf-8")
-    if not content.startswith("---\n"):
-        return None
-    rest = content[4:]
-    if "\n---\n" not in rest and not rest.endswith("\n---"):
-        return None
-    if "\n---\n" in rest:
-        end_pos = content.index("\n---\n", 4)
-        yaml_block = content[4:end_pos]
-    else:
-        yaml_block = rest[:-4]
-    try:
-        parsed = yaml.safe_load(yaml_block)
-    except yaml.YAMLError:
-        return None
-    if not isinstance(parsed, dict):
-        return None
-    return parsed
+    """Extract YAML frontmatter from a markdown file (delegates to shared SSOT)."""
+    metadata, _body = parse_frontmatter_file(filepath)
+    return metadata
 
 
 def _get_agent_skill_refs(agents_dir: Path) -> list[tuple[str, list[str]]]:

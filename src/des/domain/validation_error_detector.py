@@ -57,11 +57,9 @@ class ValidationErrorDetector:
         Args:
             schema: TDDSchema instance. If None, loads from default path.
         """
-        if schema is None:
-            from des.domain.tdd_schema import TDDSchemaLoader
+        from des.domain.tdd_schema import resolve_schema_or_default
 
-            schema = TDDSchemaLoader().load()
-        self._schema = schema
+        self._schema = resolve_schema_or_default(schema)
         self.VALID_PHASE_SEQUENCE = self._schema.tdd_phases
 
     def detect_errors(self, step: dict[str, Any]) -> list[str]:

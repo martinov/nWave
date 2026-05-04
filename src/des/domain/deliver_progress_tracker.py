@@ -13,6 +13,8 @@ import tempfile
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+from des.domain._roadmap_helpers import extract_step_ids as _extract_step_ids
+
 
 @dataclass(frozen=True)
 class DeliverProgressState:
@@ -35,23 +37,6 @@ class DeliverProgressState:
     pending_step_ids: tuple[str, ...] = ()
     all_steps_done: bool = False
     phases_completed: dict[str, str] = field(default_factory=dict)
-
-
-def _extract_step_ids(roadmap: dict) -> list[str]:
-    """Extract step IDs from roadmap, supporting flat and nested formats."""
-    if "steps" in roadmap:
-        return [
-            s.get("id") or s.get("step_id")
-            for s in roadmap["steps"]
-            if s.get("id") or s.get("step_id")
-        ]
-    step_ids: list[str] = []
-    for phase in roadmap.get("phases", []):
-        for step in phase.get("steps", []):
-            step_id = step.get("id") or step.get("step_id")
-            if step_id:
-                step_ids.append(step_id)
-    return step_ids
 
 
 def _find_committed_step_ids(execution_log: dict) -> set[str]:

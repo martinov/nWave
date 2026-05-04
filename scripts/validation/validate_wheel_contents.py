@@ -84,12 +84,19 @@ def build_wheel_manifest() -> WheelManifest:
       - des/ package (DES runtime: domain, application, adapters, ports, cli, config)
       - install/ package (installer scripts and plugins)
 
-    It must NOT contain:
-      - docs/analysis/ (internal analysis)
-      - tests/ (test suite)
-      - .github/ (CI workflows)
-      - docs/feature/ (feature delivery tracking)
-      - pyproject.toml (build configuration -- should only be in dist-info)
+    It must NOT contain (mirrors the e2e privacy contract in
+    ``tests/e2e/test_wheel_privacy_contract.py``; SSOT pinned by
+    ``tests/build/test_wheel_manifest_ssot.py``):
+      - docs/analysis/      (internal RCA reports, audits)
+      - docs/feature/       (in-flight feature tracking + acks)
+      - .github/            (CI workflows, secrets references)
+      - src/des/            (DES source — wheel ships ``des/`` rewritten)
+      - tests/              (test suite)
+      - pyproject.toml      (internal build config; METADATA is fine)
+      - scripts/release/    (release-automation tooling, private)
+      - scripts/hooks/      (pre-commit hook scripts, dev-only)
+      - scripts/framework/  (framework build utilities, dev-only)
+      - scripts/validation/ (CI validators, dev-only)
     """
     return WheelManifest(
         required_prefixes=[
@@ -100,15 +107,20 @@ def build_wheel_manifest() -> WheelManifest:
             "des/ports/",
             "des/cli/",
             "des/config/",
-            "install/install_nwave.py",
-            "install/plugins/",
+            "scripts/install/install_nwave.py",
+            "scripts/install/plugins/",
         ],
         forbidden_prefixes=[
             "docs/analysis/",
-            "tests/",
-            ".github/",
             "docs/feature/",
+            ".github/",
+            "src/des/",
+            "tests/",
             "pyproject.toml",
+            "scripts/release/",
+            "scripts/hooks/",
+            "scripts/framework/",
+            "scripts/validation/",
         ],
     )
 

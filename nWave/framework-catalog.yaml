@@ -1,5 +1,5 @@
 name: nWave
-version: 3.12.2
+version: 3.13.0
 description: "Comprehensive DISCOVER\u2192DIVERGE\u2192DISCUSS\u2192SPIKE\u2192DESIGN\u2192\
   DEVOPS\u2192DISTILL\u2192DELIVER methodology with visual architecture lifecycle\
   \ management"
@@ -216,6 +216,23 @@ agents:
     description: "nWave concierge \u2014 answers methodology questions, navigates\
       \ project state, recommends commands, assists with migration and onboarding\
       \ (Guide)"
+  test-optimizer:
+    wave: CROSS_WAVE
+    priority: 2
+    role: test_minimization
+    public: true
+    description: Minimizes test count while preserving coverage. Detects byte-identical
+      pairs, parametrize-inflation, language-guarantee tests, AST-shape tests, stale
+      migration nets. Approval gate before any change. Production code is read-only.
+      (Trim)
+  test-optimizer-reviewer:
+    wave: CROSS_WAVE
+    priority: 2
+    role: test_optimization_review
+    public: true
+    description: "Reviews test-optimizer outputs \u2014 hard-blocks on production\
+      \ drift, coverage drop without justification, unmapped removal, missing approval\
+      \ gate (Trim Review)"
 commands:
   discover:
     description: Conducts evidence-based product discovery through customer interviews
@@ -469,6 +486,20 @@ commands:
     outputs:
     - pending_update_flag
     - user_confirmation
+  optimize-tests:
+    description: Minimizes test count while preserving coverage. Detects byte-identical
+      pairs, parametrize-inflation, language-guarantee tests, AST-shape tests, stale
+      migration nets. Approval gate before any change.
+    argument_hint: '[scope] - Optional: a path (e.g. tests/des/unit/), a feature-id
+      (auto-resolves to tests/<id>/), or omit for full unit suite. --reviewer to chain
+      reviewer agent.'
+    agents:
+    - test-optimizer
+    - test-optimizer-reviewer
+    wave: CROSS_WAVE
+    outputs:
+    - optimization_plan
+    - test_reduction_report
 quality_gates:
   knowledge_preservation:
     software-crafter: 925_lines_methodology

@@ -66,6 +66,29 @@ nwave-ai uninstall --backup --force
 nwave-ai install
 ```
 
+### Uninstall left files behind (fixed in v3.14)
+
+**Symptom**: After running `nwave-ai uninstall --force` (v3.13.x or earlier), the uninstaller reported success but the following remained on disk:
+
+- `~/.claude/skills/nw-*` directories (~197 dirs)
+- `~/.claude/lib/python/des/` runtime
+- 3 specific hook entries in `~/.claude/settings.json`: one with the `des-hook:pre-bash` prefix (matcher: `Bash`), and two `claude_code_hook_adapter` entries under `SessionStart` and `SubagentStart` events. (DES installs hooks across 5 event types total — `PreToolUse`, `SubagentStop`, `PostToolUse`, `SessionStart`, `SubagentStart` — but only the first three were correctly removed pre-fix.)
+
+**Cause**: install/uninstall path drift — the installer wrote to `skills/nw-<name>/` (flat), the uninstaller searched the obsolete `skills/nw/` (nested); `lib/python/des/` was never targeted; and the hook removal iterated only 3 of the 5 registered event types (missing `SessionStart` and `SubagentStart`) plus its hook-detection pattern matched only `claude_code_hook_adapter`, not the shell-prefix `des-hook:` form used by the inline `Bash` matcher.
+
+**Fix (v3.14.0-rc1)**: upgrade and re-run uninstall — it now removes all three classes correctly while preserving any non-`nw-` prefixed skills you created. Background: GitHub issue #39.
+
+```bash
+pipx upgrade nwave-ai
+nwave-ai uninstall --force
+# Verify residuals are gone:
+ls ~/.claude/skills/nw-* 2>/dev/null | wc -l    # expected 0
+ls ~/.claude/lib/python/des 2>/dev/null         # expected: not found
+grep -c 'des\.' ~/.claude/settings.json 2>/dev/null  # expected 0
+```
+
+If you uninstalled under v3.13 and never re-installed, manually remove the leftover paths above — your custom skills (no `nw-` prefix) are untouched.
+
 ---
 
 ## Agent Issues

@@ -19,10 +19,11 @@ packages = ["nwave_ai"]
 "scripts/install_nwave_target_hooks.py" = "scripts/install_nwave_target_hooks.py"
 "scripts/validate_step_file.py" = "scripts/validate_step_file.py"
 "lib/python/des" = "nWave/lib/python/des"
+"schemas" = "schemas"
 
 [project]
 name = "nwave-ai"
-version = "3.13.0"
+version = "3.14.0"
 description = "Modern CLI installer for nwave with rich terminal UI"
 readme = "README.md"
 license = {text = "MIT"}
@@ -103,9 +104,13 @@ dev = [
     "click>=8.0.0",
     "colorama>=0.4.0",
     "tqdm>=4.64.0",
+    # Token measurement (advisory, dev-only) — DDD-1
+    "tiktoken>=0.7.0",
     # E2E container testing
     "testcontainers>=4.0.0",
-    "docker>=7.0.0"
+    "docker>=7.0.0",
+    # JSON Schema validation (used by tests/outcomes + tests/feature_delta)
+    "jsonschema>=4.0.0"
 ]
 test = [
     "pytest>=8.0.0",
@@ -113,7 +118,8 @@ test = [
     "pytest-asyncio>=0.23.0",
     "pytest-xdist>=3.5.0",
     "pytest-bdd>=7.0.0",
-    "respx>=0.20.0"
+    "respx>=0.20.0",
+    "jsonschema>=4.0.0"
 ]
 
 [project.urls]
@@ -145,6 +151,7 @@ markers = [
     "integration: Integration tests (may use external resources)",
     "acceptance: Acceptance tests (BDD scenarios, may be slow)",
     "e2e: End-to-end acceptance tests",
+    "e2e_smoke: Critical-path e2e subset run in pre-push on master (privacy contract, behavioral smoke, packaging shape, cross-platform contract). Full e2e remains gated by CI on PR.",
     "slow: Tests that take longer to run",
     "canary: Canary skill injection detection tests (ADR-006)",
     "probe_test: Tests that exercise substrate probe wiring (opt-out from _silence_probe autouse)",
@@ -298,7 +305,7 @@ line-ending = "auto"
 [tool.commitizen]
 # WARNING: the tool.commitizen.version is tracking the LAST STABLE version and is updated by the pipeline!
 # DON'T TOUCH IT!
-version = "3.13.0"
+version = "3.14.0"
 version_scheme = "pep440"
 version_files = [
     "nWave/VERSION",

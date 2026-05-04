@@ -74,8 +74,11 @@ def _stage_healthy_claude(base: Path) -> Path:
     return claude_dir
 
 
-def test_runner_executes_all_7_checks(tmp_path: Path) -> None:
-    """run_doctor() returns exactly 7 results — one per check."""
+def test_runner_executes_all_8_checks(tmp_path: Path) -> None:
+    """run_doctor() returns exactly 8 results — one per check.
+
+    Step 02-02 added DensityCheck (D6 + D12), bumping the total from 7 to 8.
+    """
     from nwave_ai.doctor.context import DoctorContext
 
     _stage_healthy_claude(tmp_path)
@@ -83,11 +86,11 @@ def test_runner_executes_all_7_checks(tmp_path: Path) -> None:
 
     results = run_doctor(context)
 
-    assert len(results) == 7
+    assert len(results) == 8
 
 
 def test_runner_preserves_check_order(tmp_path: Path) -> None:
-    """result order matches registration order: PythonVersion first."""
+    """result order matches registration order: PythonVersion first, density last."""
     from nwave_ai.doctor.context import DoctorContext
 
     _stage_healthy_claude(tmp_path)
@@ -102,3 +105,4 @@ def test_runner_preserves_check_order(tmp_path: Path) -> None:
     assert results[4].check_name == "shims_deployed"
     assert results[5].check_name == "path_env"
     assert results[6].check_name == "framework_files"
+    assert results[7].check_name == "documentation_density"

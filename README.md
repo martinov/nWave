@@ -48,19 +48,21 @@ Using pipx or OpenCode instead? [See alternative install methods](#alternative-i
 | **[Offline / Air-Gapped Install](https://github.com/nWave-ai/nWave/tree/main/docs/guides/offline-install.md)** | Install nWave on a machine without PyPI access |
 | **[Jobs To Be Done](https://github.com/nWave-ai/nWave/tree/main/docs/guides/jobs-to-be-done-guide/)** | Which wave fits your task |
 | **[Wave Directory Structure](https://github.com/nWave-ai/nWave/tree/main/docs/guides/wave-directory-structure/)** | How artifacts are organized per feature |
+| **[Feature Delta Format (L7)](https://github.com/nWave-ai/nWave/tree/main/docs/guides/feature-delta-l7-format.md)** | Author features in the lean single-file model |
+| **[Outcomes Registry](https://github.com/nWave-ai/nWave/tree/main/docs/product/outcomes/README.md)** | Catch duplicate rules and operations at design time |
+| **[Configuring Doc Density](https://github.com/nWave-ai/nWave/tree/main/docs/guides/configuring-doc-density.md)** | Control lean vs full wave output |
 | **[Agents and Commands Reference](https://github.com/nWave-ai/nWave/tree/main/docs/reference/index.md)** | All agents and commands |
 | **[Troubleshooting](https://github.com/nWave-ai/nWave/tree/main/docs/guides/troubleshooting-guide/)** | Common issues and fixes |
 
 ---
 
-## What's New in v3.5
+## What's New in v3.14
 
-**[Full changelog](https://github.com/nWave-ai/nWave/tree/main/docs/guides/whats-new-v35/)**
-
-- **`/nw-buddy`** — Your AI concierge. Not sure where to start? Ask the buddy. It reads your project and gives contextual answers about methodology, commands, project state, and troubleshooting.
-- **DIVERGE wave** — Structured brainstorming before convergence. Explore design options with JTBD analysis, competitive research, and SCAMPER ideation before locking into a solution.
-- **Three DESIGN architects** — Routes to the right specialist for your need: system-level architecture (Titan), domain/DDD modeling (Hera), or application-level design (Morgan).
-- **SSOT document model** — Single source of truth for product documents. Build feature spec once, reuse across requirements, design, testing, and delivery, no document sprawl.
+- **Lean wave docs (L7 single-file)** — Each feature lives in one `feature-delta.md` with schema-typed section headings (`## Wave: <WAVE> / [REF|WHY|HOW] <name>`). Tier-1 `[REF]` is auto-produced; Tier-2 `[WHY]` and `[HOW]` are opt-in via `--expand`. Downstream agents grep section headings instead of reading whole subdirectories. See **[Feature Delta Format (L7)](https://github.com/nWave-ai/nWave/tree/main/docs/guides/feature-delta-l7-format.md)**.
+- **Feature-delta validator** — `nwave-ai validate-feature-delta <path>` checks structural rules (E1–E5) and emits JSON for CI integration. Vendor-neutral: no hooks auto-installed; pick a recipe from **[Enforcement Recipes](https://github.com/nWave-ai/nWave/tree/main/docs/guides/enforcement-recipes.md)** (12 platforms covered).
+- **Outcomes registry** — Design-time deduplication. `nwave-ai outcomes register|check|check-delta` flags spec-level collisions before code is written, via type-shape + keyword Jaccard. See **[Why an outcomes registry?](https://github.com/nWave-ai/nWave/tree/main/docs/product/outcomes/README.md)** and **[Your first outcome](https://github.com/nWave-ai/nWave/tree/main/docs/guides/outcomes-first-outcome/README.md)**.
+- **Doc density config** — Per-project `lean` vs `full` density controls how much each wave emits. Tune token cost per wave. See **[Configuring Doc Density](https://github.com/nWave-ai/nWave/tree/main/docs/guides/configuring-doc-density.md)**.
+- **Uninstall correctness fix (v3.14.0-rc1)** — `nwave-ai uninstall --force` now removes all installed artifacts (`skills/nw-*`, `lib/python/des/`, all 5 DES hook event types in `settings.json`) while preserving user-created skills. Previous versions left ~197 skill dirs and 3 hook entries behind. See **[Troubleshooting → Uninstall left files behind](https://github.com/nWave-ai/nWave/tree/main/docs/guides/troubleshooting-guide/#uninstall-left-files-behind-fixed-in-v314)**.
 
 For upgrading from v3.3 or earlier, see [Breaking Changes](#breaking-changes) below.
 

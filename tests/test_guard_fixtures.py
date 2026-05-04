@@ -57,10 +57,11 @@ if TYPE_CHECKING:
 # Import the pure-function seams the detective guard will expose.
 # These do not exist yet — that is the RED gate. Step 01-02 introduces them
 # in tests/conftest.py.
-from tests.conftest import (  # type: ignore[attr-defined]
+from tests.conftest import (
     _atomic_restore_git_state,
     _compute_git_state_snapshot,
     _diff_git_state,
+    _read_packed_refs,
 )
 
 
@@ -298,6 +299,121 @@ def test_guard_restore_deletes_created_refs(tmp_path: Path) -> None:
     )
 
 
+def test_guard_does_not_trigger_on_packed_promotion(tmp_path: Path) -> None:
+    """Promotion of a packed ref into a loose file is NOT pollution.
+
+    Residual-RCA (2026-04-28): the v3.13.0 guard flags ANY new file under
+    refs/heads/ or refs/tags/ as ``"refs"`` corruption — even when the new
+    loose ref's SHA already exists in ``packed-refs`` and the file was
+    therefore created by routine git housekeeping (``git fetch``,
+    ``git update-ref``, branch checkout after a ``git pack-refs --all``).
+
+    Failure-mode reproduction (real subprocess git, no mocks):
+
+    1. Initialise a repo and create one commit so ``refs/heads/main`` is a
+       real loose ref.
+    2. Run ``git pack-refs --all`` — this moves every ref into
+       ``packed-refs`` and DELETES the loose files. After this the only
+       on-disk record of ``refs/heads/main`` is its line in
+       ``.git/packed-refs``; ``.git/refs/heads/main`` is absent.
+    3. Take the BEFORE snapshot. ``refs`` is the empty list (no loose
+       files), but the ref is fully resolvable from ``packed-refs``.
+    4. Re-create ``.git/refs/heads/main`` with the EXACT SHA from
+       ``packed-refs``. This is what ``git fetch`` does when it pulls a
+       remote ref the local repo had previously packed: it writes the
+       loose file back with the same SHA, never touching ``packed-refs``.
+       It is housekeeping, not user-driven mutation.
+    5. Take the AFTER snapshot. The ``refs`` list now contains
+       ``("refs/heads/main", <sha>)``.
+    6. Compute the diff. The contract this test locks is: the guard MUST
+       report an empty diff. The promoted ref's SHA matches the
+       packed-refs entry, so no semantic state has changed — only the
+       on-disk representation.
+
+    Today this test FAILS: the snapshot has no awareness of
+    ``packed-refs``, so the diff returns ``["refs"]``. Step 01-02 will
+    add ``_read_packed_refs`` and teach ``_diff_git_state`` to ignore new
+    loose refs whose SHA already lives in the packed-refs map.
+
+    The companion test ``test_guard_detects_refs_corruption`` (above)
+    locks the OPPOSITE contract: a genuinely new ref (created by
+    ``git tag``, SHA NOT present in ``packed-refs``) MUST still trigger
+    the guard. Together they pin the behavioural envelope: promotion is
+    silent, creation is loud.
+    """
+    repo_root = tmp_path / "victim_repo"
+    repo_root.mkdir()
+    _init_isolated_repo(repo_root)
+    _create_initial_commit(repo_root)
+
+    # Step 1: confirm the loose ref exists at refs/heads/main BEFORE pack.
+    main_ref_path = repo_root / ".git" / "refs" / "heads" / "main"
+    assert main_ref_path.is_file(), (
+        "Setup failure: expected loose refs/heads/main after initial commit; "
+        "the test relies on `git commit` writing the loose file before pack."
+    )
+    sha_before_pack = main_ref_path.read_text().strip()
+    assert len(sha_before_pack) == 40, (
+        f"Setup failure: expected 40-char SHA in refs/heads/main, got "
+        f"{sha_before_pack!r}."
+    )
+
+    # Step 2: pack all refs. This deletes the loose files and writes
+    # them into .git/packed-refs.
+    env = {**os.environ, "GIT_CEILING_DIRECTORIES": str(repo_root.parent)}
+    subprocess.run(
+        ["git", "-C", str(repo_root), "pack-refs", "--all"],
+        check=True,
+        capture_output=True,
+        env=env,
+    )
+
+    # Sanity: loose file is gone, packed-refs contains the SHA.
+    assert not main_ref_path.exists(), (
+        "Setup failure: `git pack-refs --all` should have deleted the loose "
+        "refs/heads/main file. Without this precondition the rest of the test "
+        "cannot exercise the promotion-vs-creation distinction."
+    )
+    packed_refs_path = repo_root / ".git" / "packed-refs"
+    assert packed_refs_path.is_file(), (
+        "Setup failure: `git pack-refs --all` should have written a "
+        ".git/packed-refs file."
+    )
+    packed_text = packed_refs_path.read_text()
+    assert sha_before_pack in packed_text, (
+        f"Setup failure: expected SHA {sha_before_pack!r} in packed-refs; "
+        f"contents were:\n{packed_text!r}"
+    )
+
+    # Step 3: snapshot AFTER the pack — `refs` list is empty, only
+    # packed-refs holds the data.
+    before = _compute_git_state_snapshot(repo_root)
+
+    # Step 4: simulate `git fetch` / housekeeping promotion. Re-create
+    # the loose file with the SAME SHA as in packed-refs. We use direct
+    # filesystem write rather than `git update-ref` to make the test
+    # independent of git internals; the on-disk shape is what the guard
+    # observes either way.
+    main_ref_path.parent.mkdir(parents=True, exist_ok=True)
+    main_ref_path.write_text(sha_before_pack + "\n")
+
+    # Step 5: snapshot after the promotion.
+    after = _compute_git_state_snapshot(repo_root)
+
+    # Step 6: the contract under test. Promotion is housekeeping, not
+    # pollution. The diff must be empty.
+    diff = _diff_git_state(before, after)
+    assert diff == [], (
+        f"Detective guard reported false-positive on packed-to-loose "
+        f"promotion; diff returned {diff!r}. The promoted ref "
+        f"refs/heads/main has SHA {sha_before_pack!r}, which is already "
+        f"present in .git/packed-refs — no semantic state has changed. "
+        f"This false-positive is the residual bug fixed in Step 01-02 by "
+        f"teaching the guard to read packed-refs and ignore loose refs "
+        f"whose SHA matches a packed entry."
+    )
+
+
 def test_guard_restore_preserves_symbolic_head(tmp_path: Path) -> None:
     """Restore must preserve the symbolic-ref form of HEAD, not write a raw SHA.
 
@@ -349,4 +465,119 @@ def test_guard_restore_preserves_symbolic_head(tmp_path: Path) -> None:
     assert restored_head_text.startswith("ref:"), (
         f"Restore left HEAD detached; HEAD now reads {restored_head_text!r}. "
         f"Worktree should remain attached to refs/heads/main."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Step 01-02 unit tests: _read_packed_refs and genuine-creation regression.
+# ---------------------------------------------------------------------------
+
+
+def test_read_packed_refs_returns_empty_dict_when_file_missing(tmp_path: Path) -> None:
+    """No ``packed-refs`` file -> empty dict, never raises.
+
+    Many freshly-initialised repos have no packed-refs file at all; the
+    helper must treat absence as "no packed entries", not as an error.
+    """
+    common_dir = tmp_path / ".git"
+    common_dir.mkdir()
+    assert _read_packed_refs(common_dir) == {}
+
+
+def test_read_packed_refs_returns_empty_dict_when_file_empty(tmp_path: Path) -> None:
+    """Empty ``packed-refs`` file -> empty dict.
+
+    git can produce a header-only or genuinely-empty packed-refs after
+    ``git pack-refs --all`` on a repo with no refs to pack.
+    """
+    common_dir = tmp_path / ".git"
+    common_dir.mkdir()
+    (common_dir / "packed-refs").write_text("")
+    assert _read_packed_refs(common_dir) == {}
+
+
+def test_read_packed_refs_parses_real_pack_refs_output(tmp_path: Path) -> None:
+    """Real ``git pack-refs --all`` output parses into name -> sha map.
+
+    Skips comment lines and peeled-tag annotation lines (``^<sha>``).
+    Pinned via real subprocess git so the parser is verified against the
+    actual on-disk format git emits, not a hand-rolled imitation.
+    """
+    repo_root = tmp_path / "victim_repo"
+    repo_root.mkdir()
+    _init_isolated_repo(repo_root)
+    _create_initial_commit(repo_root)
+
+    # Create an annotated tag so packed-refs gets a peeled (`^...`) line.
+    env = {**os.environ, "GIT_CEILING_DIRECTORIES": str(repo_root.parent)}
+    subprocess.run(
+        ["git", "-C", str(repo_root), "tag", "-a", "v0.0.1", "-m", "annotated"],
+        check=True,
+        capture_output=True,
+        env=env,
+    )
+    subprocess.run(
+        ["git", "-C", str(repo_root), "pack-refs", "--all"],
+        check=True,
+        capture_output=True,
+        env=env,
+    )
+
+    common_dir = repo_root / ".git"
+    packed = _read_packed_refs(common_dir)
+
+    # Both refs must be present, peeled line must NOT show up as its own
+    # entry (it has no ref-name, just `^<sha>`).
+    assert "refs/heads/main" in packed, (
+        f"Expected refs/heads/main in packed-refs map; got {packed!r}"
+    )
+    assert "refs/tags/v0.0.1" in packed, (
+        f"Expected refs/tags/v0.0.1 in packed-refs map; got {packed!r}"
+    )
+    # Each value must be a 40-char SHA hex string.
+    for name, sha in packed.items():
+        assert len(sha) == 40, f"Expected 40-char SHA for {name!r}, got {sha!r}"
+        assert all(c in "0123456789abcdef" for c in sha), (
+            f"Expected hex SHA for {name!r}, got {sha!r}"
+        )
+    # No spurious "^<sha>" key from the peeled line.
+    assert not any(k.startswith("^") for k in packed), (
+        f"Peeled-tag annotation line leaked into map: {packed!r}"
+    )
+
+
+def test_guard_detects_genuine_ref_creation_not_promotion(tmp_path: Path) -> None:
+    """Brand-new ref (SHA NOT in packed-refs) MUST still flag as ``"refs"``.
+
+    Companion to ``test_guard_does_not_trigger_on_packed_promotion``: pins
+    the OTHER edge of the behavioural envelope. After the 01-02 fix
+    teaches the snapshot to ignore promotions, we MUST still surface
+    genuine creation — otherwise pollution that creates a new ref slips
+    through.
+
+    Setup: one commit, then snapshot. Then ``git tag v9.9.9`` which
+    creates a ref whose SHA was never in packed-refs. The diff must
+    contain ``"refs"``.
+    """
+    repo_root = tmp_path / "victim_repo"
+    repo_root.mkdir()
+    _init_isolated_repo(repo_root)
+    _create_initial_commit(repo_root)
+
+    before = _compute_git_state_snapshot(repo_root)
+
+    # Genuine creation: the SHA points at HEAD (which IS in main's history)
+    # but the REF NAME refs/tags/v9.9.9 is brand new — never existed in
+    # packed-refs. The promotion-detection logic must not silence this.
+    subprocess.run(
+        ["git", "-C", str(repo_root), "tag", "v9.9.9"],
+        check=True,
+        capture_output=True,
+    )
+
+    after = _compute_git_state_snapshot(repo_root)
+    diff = _diff_git_state(before, after)
+    assert "refs" in diff, (
+        f"Genuine ref creation must still flag as 'refs'; diff={diff!r}. "
+        f"Promotion detection must not silence creation of brand-new ref names."
     )

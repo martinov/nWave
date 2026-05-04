@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import importlib.machinery
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from nwave_ai.common.check_result import CheckResult
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from nwave_ai.doctor.context import DoctorContext
 
 _DES_PACKAGE = "des"

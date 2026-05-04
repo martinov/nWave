@@ -12,8 +12,11 @@ the stdlib.
 
 References
 ----------
-* RCA: ``docs/analysis/rca-issue-43-typing-self-python-310.md``
-* Issue: https://github.com/nWave-ai/nWave/issues/43
+* Issue: https://github.com/nWave-ai/nWave/issues/43 — ``nwave-ai install``
+  failed on Python 3.10 because ``src/des/domain/value_objects.py`` did
+  ``from typing import Self`` unconditionally; ``typing.Self`` lands in
+  the stdlib only at 3.11 (PEP 673). The repo declares
+  ``requires-python = ">=3.10"``, so this module backports the symbol.
 * PEP 673 — ``Self`` type, added to stdlib ``typing`` in Python 3.11
 """
 

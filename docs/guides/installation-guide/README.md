@@ -88,9 +88,10 @@ Both methods install the same components to your `~/.claude/` directory:
 ├── agents/nw/                 # 23 agents (12 primary + 11 reviewers)
 ├── commands/nw/               # 22 slash commands
 ├── templates/                 # Wave and DES templates
-├── skills/                    # Agent knowledge files
+├── skills/nw-*/               # 197 agent skill files (flat layout)
 ├── scripts/                   # DES utilities
-└── settings.json              # DES hooks
+├── lib/python/des/            # DES runtime imported by hooks
+└── settings.json              # DES hooks (5 events: PreToolUse, SessionStart, SubagentStart, SubagentStop, PostToolUse)
 ```
 
 All agents and commands become available globally across all Claude Code projects.

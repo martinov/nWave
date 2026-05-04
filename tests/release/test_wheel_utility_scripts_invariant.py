@@ -1,7 +1,11 @@
 """Wheel invariant: every UTILITY_SCRIPTS entry must be force-included.
 
-Bug-fix regression guard for v3.12.1 install regression
-(docs/analysis/rca-v3-12-1-install-regression.md, Bug #1).
+Bug-fix regression guard for the v3.12.1 install regression (Bug #1):
+PyPI wheel `nwave_ai==3.12.1` shipped with `install_nwave_target_hooks.py`
+and `validate_step_file.py` ABSENT because two whitelists diverged — the
+dev-tarball list in `build_dist.py` and the Hatch force-include map in
+`patch_pyproject.py` were never wired together. Installer reported
+"Scripts verified (0/0)" and aborted with `agent/command sync mismatch`.
 
 The dev-build whitelist `scripts.build_dist.UTILITY_SCRIPTS` enumerates the
 top-level scripts (e.g. install_nwave_target_hooks.py, validate_step_file.py)
